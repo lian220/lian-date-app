@@ -1,15 +1,18 @@
 import { Region } from '@/types/region';
+import { getHighlightedText } from '@/lib/search';
 
 interface RegionCardProps {
   region: Region;
   isSelected: boolean;
   onSelect: (region: Region) => void;
+  searchQuery?: string;
 }
 
 export default function RegionCard({
   region,
   isSelected,
   onSelect,
+  searchQuery = '',
 }: RegionCardProps) {
   return (
     <button
@@ -30,7 +33,7 @@ export default function RegionCard({
             : 'text-gray-900 dark:text-gray-100'
         }`}
       >
-        {region.name}
+        {getHighlightedText(region.name, searchQuery)}
       </h3>
       <div className="flex flex-wrap gap-1.5">
         {region.keywords.map(keyword => (
@@ -45,7 +48,7 @@ export default function RegionCard({
               }
             `}
           >
-            {keyword}
+            {getHighlightedText(keyword, searchQuery)}
           </span>
         ))}
       </div>

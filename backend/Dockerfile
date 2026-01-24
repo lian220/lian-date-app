@@ -37,8 +37,10 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-# 기본 Spring 프로파일 설정
-ENV SPRING_PROFILES_ACTIVE=local
+# Spring 프로파일은 docker-compose.yml 또는 환경 변수로 설정
+# Default: no profile (uses application.yml with Flyway enabled)
+# Local dev in IDE: set SPRING_PROFILES_ACTIVE=local (Flyway disabled, uses RegionDataLoader)
+# Production: set SPRING_PROFILES_ACTIVE=prod (Flyway enabled with strict validation)
 
 # 애플리케이션 실행
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -4,9 +4,21 @@ import com.dateclick.api.infrastructure.persistence.region.RegionEntity
 import com.dateclick.api.infrastructure.persistence.region.RegionJpaRepository
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 
+/**
+ * Local-only data loader for quick local testing.
+ * Production environment uses Flyway migrations (V2__insert_regions_data.sql) instead.
+ *
+ * This loader is restricted to local profile only to avoid:
+ * - Race conditions on concurrent application startups in production
+ * - Duplicate key violations from non-atomic count-then-insert pattern
+ *
+ * @see db.migration.V2__insert_regions_data.sql for production-safe idempotent inserts with ON CONFLICT DO NOTHING
+ */
 @Component
+@Profile("local")
 class RegionDataLoader(
     private val regionJpaRepository: RegionJpaRepository
 ) : ApplicationRunner {

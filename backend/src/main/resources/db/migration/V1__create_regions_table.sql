@@ -1,4 +1,4 @@
--- Regions table
+-- Create regions table
 CREATE TABLE IF NOT EXISTS regions (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS regions (
     center_lng DOUBLE PRECISION NOT NULL
 );
 
--- Region keywords table (ElementCollection)
+-- Create region keywords table (ElementCollection)
 CREATE TABLE IF NOT EXISTS region_keywords (
     region_id VARCHAR(50) NOT NULL,
     keyword VARCHAR(255) NOT NULL,

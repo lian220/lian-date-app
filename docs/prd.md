@@ -1535,7 +1535,7 @@ Then:
 
 **목표**
 - Terraform 프로젝트 구조를 생성하고 AWS Provider 설정을 완료합니다
-- 환경별(dev, prod) 설정 분리 및 State 관리 기반을 마련합니다
+- 환경별(local, prod) 설정 분리 및 State 관리 기반을 마련합니다
 
 **작업 내용**
 1. Terraform 디렉토리 구조 생성
@@ -1548,7 +1548,7 @@ Then:
    ├── versions.tf          # Provider 버전 관리
    ├── modules/             # 모듈 디렉토리
    └── environments/        # 환경별 설정
-       ├── dev/
+       ├── local/
        │   └── terraform.tfvars
        └── prod/
            └── terraform.tfvars
@@ -1565,7 +1565,7 @@ Then:
    - State 파일 암호화 활성화
 
 4. 환경별 변수 정의
-   - `environment`: dev, prod
+   - `environment`: local, prod
    - `project_name`: lian-date-app
    - `region`: ap-northeast-2
 
@@ -1712,7 +1712,7 @@ Then:
 2. RDS Instance 생성
    - Engine: PostgreSQL 16
    - Instance Class
-     - Dev: `db.t3.micro`
+    - Local: `db.t3.micro`
      - Prod: `db.t3.small` (추후 확장)
    - Storage: 20GB (General Purpose SSD)
    - Multi-AZ: Prod 환경만 활성화
@@ -1810,7 +1810,7 @@ Then:
      - Image: ECR Repository URI
      - Port: 8080
      - Environment Variables
-       - `SPRING_PROFILES_ACTIVE`: dev/prod
+      - `SPRING_PROFILES_ACTIVE`: local/prod
        - `KAKAO_API_KEY`: Secrets Manager 참조
        - `OPENAI_API_KEY`: Secrets Manager 참조
        - `DB_HOST`, `DB_PORT`, `DB_NAME`: RDS 정보
@@ -1826,7 +1826,7 @@ Then:
      - S3 접근 권한 (추후 파일 업로드용)
 
 4. ECS Service 생성
-   - Desired Count: 2 (Dev: 1, Prod: 2)
+  - Desired Count: 2 (Local: 1, Prod: 2)
    - Deployment Configuration
      - Rolling Update
      - Minimum healthy percent: 100
@@ -1872,7 +1872,7 @@ Then:
 1. CloudWatch Log Groups 생성
    - ECS Task 로그: `/ecs/lian-date-app`
    - ALB 접근 로그: `/aws/alb/lian-date-alb`
-   - Retention: 7일 (Dev), 30일 (Prod)
+  - Retention: 7일 (Local), 30일 (Prod)
 
 2. CloudWatch Alarms 생성
    - ECS Service
@@ -1921,7 +1921,7 @@ Then:
    .github/
    └── workflows/
        ├── ci.yml           # PR 시 테스트/빌드
-       ├── cd-dev.yml       # dev 환경 배포
+      ├── cd-local.yml     # local 환경 배포
        └── cd-prod.yml      # prod 환경 배포
    ```
 
@@ -1940,7 +1940,7 @@ Then:
 
 **산출물**
 - `.github/workflows/ci.yml`
-- `.github/workflows/cd-dev.yml`
+- `.github/workflows/cd-local.yml`
 - `.github/workflows/cd-prod.yml`
 - `.github/actions/build-and-test/action.yml`
 - `.github/actions/docker-build-push/action.yml`
@@ -1999,14 +1999,14 @@ Then:
 
 ---
 
-#### 티켓 #11: CD 파이프라인 구현 - Dev 환경
+#### 티켓 #11: CD 파이프라인 구현 - Local 환경
 
 **우선순위**: High
 **예상 공수**: 5 Story Points
 **의존성**: 티켓 #9, #10
 
 **목표**
-- develop 브랜치에 머지 시 자동으로 Dev 환경에 배포합니다
+- develop 브랜치에 머지 시 자동으로 Local 환경에 배포합니다
 
 **작업 내용**
 1. Trigger 설정
@@ -2019,13 +2019,13 @@ Then:
      - AWS 자격증명 설정
      - ECR 로그인
      - Docker 이미지 빌드
-       - 태그: `dev-{commit_sha}`, `dev-latest`
+      - 태그: `local-{commit_sha}`, `local-latest`
      - ECR에 이미지 Push
 
    - **Job 2: Deploy to ECS**
      - 새로운 Task Definition 등록
        - 이미지 URI: ECR에서 Push한 이미지
-       - Environment: `dev`
+      - Environment: `local`
      - ECS Service 업데이트
        - Force new deployment
        - Wait for stability (타임아웃: 10분)
@@ -2036,7 +2036,7 @@ Then:
    - Deployment Circuit Breaker 활성화
 
 **산출물**
-- `.github/workflows/cd-dev.yml` (완성)
+- `.github/workflows/cd-local.yml` (완성)
 - `.github/actions/docker-build-push/action.yml` (완성)
 
 **Acceptance Criteria**
@@ -2118,7 +2118,7 @@ Then:
 **작업 내용**
 1. GitHub Actions Status Badge 추가
    - README.md에 워크플로우 상태 배지 추가
-   - CI, CD-Dev, CD-Prod 각각 표시
+  - CI, CD-Local, CD-Prod 각각 표시
 
 2. Slack 알림 설정
    - 채널: `#deployments`
@@ -2212,16 +2212,16 @@ Then:
 **작업 내용**
 1. Spring Boot 프로파일 설정
    - `application.yml`: 공통 설정
-   - `application-dev.yml`: Dev 환경
+  - `application-local.yml`: Local 환경
    - `application-prod.yml`: Prod 환경
 
 2. AWS Secrets Manager 연동
    - Spring Cloud AWS Secrets Manager 의존성 추가
    - 런타임 시 Secrets 자동 주입
    - Secrets 항목
-     - `/lian-date/dev/db`: DB 자격증명
-     - `/lian-date/dev/kakao`: Kakao API Key
-     - `/lian-date/dev/openai`: OpenAI API Key
+    - `/lian-date/local/db`: DB 자격증명
+    - `/lian-date/local/kakao`: Kakao API Key
+    - `/lian-date/local/openai`: OpenAI API Key
      - `/lian-date/prod/...`: Prod 환경 동일 구조
 
 3. ECS Task Definition에서 Secrets 참조
@@ -2229,7 +2229,7 @@ Then:
    "secrets": [
      {
        "name": "DB_PASSWORD",
-       "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:xxx:secret:/lian-date/dev/db:password::"
+      "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:xxx:secret:/lian-date/local/db:password::"
      }
    ]
    ```
@@ -2239,7 +2239,7 @@ Then:
    - LocalStack 또는 AWS Secrets Manager 로컬 모드 사용
 
 **산출물**
-- `backend/src/main/resources/application-dev.yml`
+- `backend/src/main/resources/application-local.yml`
 - `backend/src/main/resources/application-prod.yml`
 - `backend/.env.example`
 - Terraform Secrets Manager 리소스 추가
@@ -2269,7 +2269,7 @@ Then:
 #### Phase 3: CI/CD 파이프라인 구축 (Week 3-4)
 9. 티켓 #9: GitHub Actions 초기 설정
 10. 티켓 #10: CI 파이프라인
-11. 티켓 #11: CD Dev 환경
+11. 티켓 #11: CD Local 환경
 12. 티켓 #12: CD Prod 환경
 
 #### Phase 4: 최적화 및 운영 (Week 4)
@@ -2338,7 +2338,7 @@ Then:
 
 ### 8.5 비용 예측
 
-**Dev 환경 (월간 예상 비용)**
+**Local 환경 (월간 예상 비용)**
 
 | 리소스 | 사양 | 예상 비용 |
 |--------|------|----------|
@@ -2363,7 +2363,7 @@ Then:
 | ACM Certificate | 무료 | $0 |
 | **총계** | - | **$162/월** |
 
-**총 예상 비용**: Dev + Prod = **$261/월** (~30만원)
+**총 예상 비용**: Local + Prod = **$261/월** (~30만원)
 
 ---
 

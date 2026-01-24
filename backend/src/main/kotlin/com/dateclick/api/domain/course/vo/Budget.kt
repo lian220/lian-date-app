@@ -13,10 +13,10 @@ value class Budget(val value: IntRange) {
     }
 
     fun toDisplayName(): String = when {
-        value.last == 30000 -> "~3만원"
+        value.first == 0 && value.last == 30000 -> "~3만원"
         value.first == 30000 && value.last == 50000 -> "3~5만원"
         value.first == 50000 && value.last == 100000 -> "5~10만원"
-        value.first == 100000 -> "10만원~"
+        value.first == 100000 && value.last == Int.MAX_VALUE -> "10만원~"
         else -> "${value.first}~${value.last}원"
     }
 }

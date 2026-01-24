@@ -8,4 +8,8 @@ value class EstimatedCost(val value: Int) {
 
     operator fun plus(other: EstimatedCost): EstimatedCost =
         EstimatedCost(this.value + other.value)
+
+    companion object {
+        val ZERO = EstimatedCost(0)
+    }
 }

@@ -58,7 +58,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:8080
+      NEXT_PUBLIC_API_URL: http://localhost:8080
       NODE_ENV: development
       # Next.js 핫 리로딩을 위한 설정
       WATCHPACK_POLLING: "true"

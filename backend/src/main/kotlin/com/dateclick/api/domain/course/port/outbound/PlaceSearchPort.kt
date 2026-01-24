@@ -7,15 +7,15 @@ import com.dateclick.api.domain.region.vo.RegionId
 import com.dateclick.api.domain.course.entity.Route
 
 interface PlaceSearchPort {
-    suspend fun searchPlaces(
+    fun searchPlaces(
         regionId: RegionId,
         category: PlaceCategory,
         limit: Int
     ): List<Place>
 
-    suspend fun getPlaceDetail(placeId: PlaceId): Place?
+    fun getPlaceDetail(placeId: PlaceId): Place?
 
-    suspend fun calculateRoute(from: Location, to: Location): Route
+    fun calculateRoute(from: Location, to: Location): Route
 }
 
 enum class PlaceCategory(val code: String) {

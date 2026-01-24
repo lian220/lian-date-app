@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 class RegionController {
 
     @GetMapping
-    suspend fun getRegions(
+    fun getRegions(
         @RequestParam(required = false) city: String?
     ): ApiResponse<RegionListResponse> {
         // TODO: Implement with GetRegionsUseCase

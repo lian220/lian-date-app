@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 class PlaceController {
 
     @GetMapping("/{placeId}")
-    suspend fun getPlaceDetail(
+    fun getPlaceDetail(
         @PathVariable placeId: String
     ): ApiResponse<PlaceDetailResponse> {
         // TODO: Implement with GetPlaceDetailUseCase

@@ -6,7 +6,7 @@ import com.dateclick.api.domain.course.vo.DateType
 import com.dateclick.api.domain.region.vo.RegionId
 
 interface CreateCourseUseCase {
-    suspend fun execute(command: CreateCourseCommand): Course
+    fun execute(command: CreateCourseCommand): Course
 }
 
 data class CreateCourseCommand(

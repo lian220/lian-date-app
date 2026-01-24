@@ -4,7 +4,7 @@ import com.dateclick.api.domain.course.entity.Course
 import com.dateclick.api.domain.course.vo.CourseId
 
 interface RegenerateCourseUseCase {
-    suspend fun execute(command: RegenerateCourseCommand): Course
+    fun execute(command: RegenerateCourseCommand): Course
 }
 
 data class RegenerateCourseCommand(

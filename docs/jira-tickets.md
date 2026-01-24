@@ -21,7 +21,7 @@ Terraform 프로젝트 구조를 생성하고 AWS Provider 설정을 완료합�
 - Backend 설정 (S3 + DynamoDB for state lock)
   - S3 버킷: lian-date-terraform-state
   - DynamoDB 테이블: lian-date-terraform-locks
-- 환경별 변수 정의 (dev, prod)
+- 환경별 변수 정의 (local, prod)
 
 **산출물**
 - terraform/main.tf
@@ -29,7 +29,7 @@ Terraform 프로젝트 구조를 생성하고 AWS Provider 설정을 완료합�
 - terraform/outputs.tf
 - terraform/backend.tf
 - terraform/versions.tf
-- terraform/environments/dev/terraform.tfvars
+- terraform/environments/local/terraform.tfvars
 - terraform/environments/prod/terraform.tfvars
 
 **Acceptance Criteria**
@@ -158,7 +158,7 @@ PostgreSQL RDS 인스턴스를 생성하고 백업/보안 설정을 완료합니
 - DB Subnet Group 생성 (Private Subnet 2개)
 - RDS Instance 생성
   - Engine: PostgreSQL 16
-  - Instance Class: db.t3.micro (dev), db.t3.small (prod)
+- Instance Class: db.t3.micro (local), db.t3.small (prod)
   - Storage: 20GB (GP3)
   - Multi-AZ: Prod만 활성화
   - Backup retention: 7일
@@ -239,7 +239,7 @@ ECS Cluster와 Fargate Service를 구성하여 컨테이너 애플리케이션�
   - Logging: CloudWatch Logs
 - IAM Role 생성 (Task Execution Role, Task Role)
 - ECS Service 생성
-  - Desired Count: 1 (dev), 2 (prod)
+- Desired Count: 1 (local), 2 (prod)
   - Rolling Update
   - Private Subnet 배치
   - ALB Target Group 연결
@@ -316,13 +316,13 @@ GitHub Actions 워크플로우 초기 설정
 GitHub Actions를 이용한 CI/CD 파이프라인의 기본 구조를 설정합니다.
 
 **작업 내용**
-- 워크플로우 파일 생성 (.github/workflows/ci.yml, cd-dev.yml, cd-prod.yml)
+- 워크플로우 파일 생성 (.github/workflows/ci.yml, cd-local.yml, cd-prod.yml)
 - GitHub Secrets 설정 (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, ECR_REPOSITORY 등)
 - Composite Actions 생성 (build-and-test, docker-build-push)
 
 **산출물**
 - .github/workflows/ci.yml
-- .github/workflows/cd-dev.yml
+- .github/workflows/cd-local.yml
 - .github/workflows/cd-prod.yml
 - .github/actions/build-and-test/action.yml
 - .github/actions/docker-build-push/action.yml
@@ -373,7 +373,7 @@ Pull Request 생성 시 자동으로 테스트 및 빌드를 수행합니다.
 
 ---
 
-### LAD-13: CD 파이프라인 구현 - Dev 환경
+### LAD-13: CD 파이프라인 구현 - Local 환경
 
 **Issue Type**: Task
 **Priority**: High
@@ -382,16 +382,16 @@ Pull Request 생성 시 자동으로 테스트 및 빌드를 수행합니다.
 **Blocked By**: LAD-11, LAD-12
 
 **Summary**
-CD 파이프라인 구현 - Dev 환경
+CD 파이프라인 구현 - Local 환경
 
 **Description**
-develop 브랜치에 머지 시 자동으로 Dev 환경에 배포합니다.
+develop 브랜치에 머지 시 자동으로 Local 환경에 배포합니다.
 
 **작업 내용**
 - Trigger: push (branch: develop)
 - Job 1: Build and Push
   - ECR 로그인
-  - Docker 이미지 빌드 (태그: dev-{commit_sha}, dev-latest)
+- Docker 이미지 빌드 (태그: local-{commit_sha}, local-latest)
   - ECR에 이미지 Push
 - Job 2: Deploy to ECS
   - 새로운 Task Definition 등록
@@ -400,7 +400,7 @@ develop 브랜치에 머지 시 자동으로 Dev 환경에 배포합니다.
 - Rollback 전략 (배포 실패 시 자동 롤백)
 
 **산출물**
-- .github/workflows/cd-dev.yml (완성)
+- .github/workflows/cd-local.yml (완성)
 - .github/actions/docker-build-push/action.yml (완성)
 
 **Acceptance Criteria**
@@ -534,14 +534,14 @@ Docker 이미지 크기를 최적화하고 빌드 시간을 단축합니다.
 환경별 설정을 안전하게 관리하고 Secrets Manager와 통합합니다.
 
 **작업 내용**
-- Spring Boot 프로파일 설정 (application-dev.yml, application-prod.yml)
+- Spring Boot 프로파일 설정 (application-local.yml, application-prod.yml)
 - AWS Secrets Manager 연동 (Spring Cloud AWS Secrets Manager)
-- Secrets 항목 정의 (/lian-date/dev/db, kakao, openai 등)
+- Secrets 항목 정의 (/lian-date/local/db, kakao, openai 등)
 - ECS Task Definition에서 Secrets 참조
 - 로컬 개발 환경 설정 (.env.example)
 
 **산출물**
-- backend/src/main/resources/application-dev.yml
+- backend/src/main/resources/application-local.yml
 - backend/src/main/resources/application-prod.yml
 - backend/.env.example
 - Terraform Secrets Manager 리소스
@@ -571,7 +571,7 @@ Docker 이미지 크기를 최적화하고 빌드 시간을 단축합니다.
 ### Phase 3: CI/CD 파이프라인 (Week 3-4)
 9. LAD-11: GitHub Actions 초기 설정
 10. LAD-12: CI 파이프라인
-11. LAD-13: CD Dev 환경
+11. LAD-13: CD Local 환경
 12. LAD-14: CD Prod 환경
 
 ### Phase 4: 최적화 및 운영 (Week 4)

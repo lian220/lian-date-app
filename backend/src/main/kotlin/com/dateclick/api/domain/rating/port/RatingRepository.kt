@@ -4,7 +4,7 @@ import com.dateclick.api.domain.course.vo.CourseId
 import com.dateclick.api.domain.rating.entity.Rating
 
 interface RatingRepository {
-    suspend fun save(rating: Rating): Rating
-    suspend fun findByCourseIdAndSessionId(courseId: CourseId, sessionId: String): Rating?
-    suspend fun existsByCourseIdAndSessionId(courseId: CourseId, sessionId: String): Boolean
+    fun save(rating: Rating): Rating
+    fun findByCourseIdAndSessionId(courseId: CourseId, sessionId: String): Rating?
+    fun existsByCourseIdAndSessionId(courseId: CourseId, sessionId: String): Boolean
 }

@@ -6,7 +6,7 @@ import com.dateclick.api.domain.place.entity.Place
 import com.dateclick.api.domain.region.entity.Region
 
 interface AiGenerationPort {
-    suspend fun generateCourseRecommendation(
+    fun generateCourseRecommendation(
         region: Region,
         dateType: DateType,
         budget: Budget,

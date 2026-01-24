@@ -30,7 +30,7 @@ data class CoursePlaceResponse(
     val recommendedTime: String?,
     val recommendReason: String,
     val imageUrl: String?,
-    val kakaoPlaceUrl: String
+    val kakaoPlaceUrl: String?
 )
 
 data class RouteResponse(

@@ -18,7 +18,9 @@ data class Course(
     val createdAt: Instant
 ) {
     val totalEstimatedCost: EstimatedCost
-        get() = places.map { it.estimatedCost }.reduce { acc, cost -> acc + cost }
+        get() = places
+            .map { it.estimatedCost }
+            .fold(EstimatedCost.ZERO) { acc, cost -> acc + cost }
 
     fun regenerate(newPlaces: List<CoursePlace>, newRoutes: List<Route>): Course =
         Course(

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*
 class CourseController {
 
     @PostMapping
-    suspend fun createCourse(
+    fun createCourse(
         @RequestHeader("X-Session-Id") sessionId: String,
         @Valid @RequestBody request: CreateCourseRequest
     ): ApiResponse<CourseResponse> {
@@ -18,7 +18,7 @@ class CourseController {
     }
 
     @GetMapping("/{courseId}")
-    suspend fun getCourse(
+    fun getCourse(
         @PathVariable courseId: String
     ): ApiResponse<CourseResponse> {
         // TODO: Implement with GetCourseUseCase
@@ -26,7 +26,7 @@ class CourseController {
     }
 
     @PostMapping("/{courseId}/regenerate")
-    suspend fun regenerateCourse(
+    fun regenerateCourse(
         @RequestHeader("X-Session-Id") sessionId: String,
         @PathVariable courseId: String,
         @RequestBody request: RegenerateCourseRequest?
@@ -36,7 +36,7 @@ class CourseController {
     }
 
     @PostMapping("/{courseId}/ratings")
-    suspend fun rateCourse(
+    fun rateCourse(
         @PathVariable courseId: String,
         @Valid @RequestBody request: RateCourseRequest
     ): ApiResponse<RatingResponse> {

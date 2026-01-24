@@ -1,23 +1,39 @@
 package com.dateclick.api.infrastructure.config
 
+import java.net.http.HttpClient
+import java.time.Duration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.http.client.JdkClientHttpRequestFactory
+import org.springframework.web.client.RestClient
 
 @Configuration
 class WebClientConfig {
 
     @Bean
-    fun webClientBuilder(): WebClient.Builder = WebClient.builder()
+    fun restClientBuilder(): RestClient.Builder {
+        val connectTimeout = Duration.ofSeconds(5)
+        val readTimeout = Duration.ofSeconds(10)
+
+        val httpClient = HttpClient.newBuilder()
+            .connectTimeout(connectTimeout)
+            .build()
+
+        val requestFactory = JdkClientHttpRequestFactory(httpClient)
+        requestFactory.setReadTimeout(readTimeout)
+
+        return RestClient.builder()
+            .requestFactory(requestFactory)
+    }
 
     @Bean
-    fun kakaoWebClient(builder: WebClient.Builder): WebClient =
+    fun kakaoRestClient(builder: RestClient.Builder): RestClient =
         builder
             .baseUrl("https://dapi.kakao.com")
             .build()
 
     @Bean
-    fun openAiWebClient(builder: WebClient.Builder): WebClient =
+    fun openAiRestClient(builder: RestClient.Builder): RestClient =
         builder
             .baseUrl("https://api.openai.com")
             .build()

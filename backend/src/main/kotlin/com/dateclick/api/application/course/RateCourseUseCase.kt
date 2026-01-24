@@ -4,7 +4,7 @@ import com.dateclick.api.domain.course.vo.CourseId
 import com.dateclick.api.domain.rating.entity.Rating
 
 interface RateCourseUseCase {
-    suspend fun execute(command: RateCourseCommand): Rating
+    fun execute(command: RateCourseCommand): Rating
 }
 
 data class RateCourseCommand(

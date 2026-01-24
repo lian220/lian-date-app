@@ -37,5 +37,8 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
+# 기본 Spring 프로파일 설정
+ENV SPRING_PROFILES_ACTIVE=local
+
 # 애플리케이션 실행
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-dev}", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

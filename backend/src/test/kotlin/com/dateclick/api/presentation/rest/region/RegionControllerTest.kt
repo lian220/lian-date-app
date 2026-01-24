@@ -21,7 +21,7 @@ class RegionControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.regions").isArray)
-            .andExpect(jsonPath("$.data.regions.length()").value(16))
+            .andExpect(jsonPath("$.data.regions.length()").value(30))
     }
 
     @Test

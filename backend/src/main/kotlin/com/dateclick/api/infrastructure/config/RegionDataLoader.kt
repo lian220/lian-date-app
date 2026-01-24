@@ -90,6 +90,114 @@ class RegionDataLoader(
                 centerLat = 37.5825,
                 centerLng = 126.9833
             ),
+            RegionEntity(
+                id = "mapo",
+                name = "마포/망원",
+                city = "seoul",
+                description = "망원시장과 한강공원이 어우러진 마포. 레트로 감성의 카페와 맛집이 가득한 데이트 핫플레이스입니다.",
+                keywords = listOf("레트로", "시장", "한강", "맛집", "감성"),
+                centerLat = 37.5560,
+                centerLng = 126.9099
+            ),
+            RegionEntity(
+                id = "garosu",
+                name = "가로수길/신사",
+                city = "seoul",
+                description = "플라타너스 가로수가 아름다운 가로수길. 개성 있는 부티크와 카페, 레스토랑이 즐비한 패션 데이트 명소입니다.",
+                keywords = listOf("패션", "부티크", "카페", "세련됨", "트렌디"),
+                centerLat = 37.5197,
+                centerLng = 127.0229
+            ),
+            RegionEntity(
+                id = "yeouido",
+                name = "여의도",
+                city = "seoul",
+                description = "한강공원과 벚꽃축제로 유명한 여의도. 넓은 공원과 한강뷰 레스토랑에서 여유로운 데이트를 즐길 수 있습니다.",
+                keywords = listOf("한강", "공원", "벚꽃", "자전거", "여유"),
+                centerLat = 37.5219,
+                centerLng = 126.9245
+            ),
+            RegionEntity(
+                id = "gwanghwamun",
+                name = "광화문/종로",
+                city = "seoul",
+                description = "역사와 문화의 중심 광화문. 고궁과 박물관, 전통찻집이 어우러진 문화 데이트 코스입니다.",
+                keywords = listOf("역사", "고궁", "문화", "박물관", "전통"),
+                centerLat = 37.5720,
+                centerLng = 126.9769
+            ),
+            RegionEntity(
+                id = "dongdaemun",
+                name = "동대문/DDP",
+                city = "seoul",
+                description = "24시간 쇼핑과 DDP 디자인공간이 공존하는 동대문. 쇼핑과 문화를 함께 즐기는 활기찬 데이트가 가능합니다.",
+                keywords = listOf("쇼핑", "디자인", "야경", "문화", "활기"),
+                centerLat = 37.5665,
+                centerLng = 127.0098
+            ),
+            RegionEntity(
+                id = "yongsan",
+                name = "용산",
+                city = "seoul",
+                description = "용산공원과 아이파크몰이 있는 용산. 한강뷰와 쇼핑, 문화공간이 어우러진 복합 데이트 지역입니다.",
+                keywords = listOf("공원", "쇼핑몰", "한강뷰", "복합문화", "현대적"),
+                centerLat = 37.5311,
+                centerLng = 126.9644
+            ),
+            RegionEntity(
+                id = "kondae",
+                name = "건대",
+                city = "seoul",
+                description = "대학가 특유의 활기와 젊음이 넘치는 건대. 저렴하고 다양한 맛집과 카페, 클럽이 모여있는 청춘 데이트 명소입니다.",
+                keywords = listOf("대학가", "젊음", "클럽", "저렴", "활기"),
+                centerLat = 37.5403,
+                centerLng = 127.0695
+            ),
+            RegionEntity(
+                id = "wangsimni",
+                name = "왕십리/성동",
+                city = "seoul",
+                description = "전통시장과 신개발이 공존하는 왕십리. 로컬 맛집과 새로운 카페가 조화를 이루는 데이트 지역입니다.",
+                keywords = listOf("로컬", "맛집", "전통시장", "신개발", "조화"),
+                centerLat = 37.5610,
+                centerLng = 127.0377
+            ),
+            RegionEntity(
+                id = "myeongdong",
+                name = "명동/을지로",
+                city = "seoul",
+                description = "쇼핑의 메카 명동과 레트로 감성의 을지로. 낮에는 쇼핑, 밤에는 루프탑 바에서 특별한 데이트를 즐길 수 있습니다.",
+                keywords = listOf("쇼핑", "루프탑", "레트로", "야경", "관광"),
+                centerLat = 37.5636,
+                centerLng = 126.9838
+            ),
+            RegionEntity(
+                id = "apgujeong",
+                name = "압구정/청담",
+                city = "seoul",
+                description = "럭셔리와 트렌디가 공존하는 압구정/청담. 고급 레스토랑과 갤러리, 편집샵이 즐비한 프리미엄 데이트 지역입니다.",
+                keywords = listOf("럭셔리", "고급", "갤러리", "편집샵", "트렌디"),
+                centerLat = 37.5274,
+                centerLng = 127.0280
+            ),
+            RegionEntity(
+                id = "sillim",
+                name = "신림",
+                city = "seoul",
+                description = "대학가 주변의 활기찬 신림. 저렴한 맛집과 카페가 많아 부담 없는 데이트를 즐길 수 있습니다.",
+                keywords = listOf("대학가", "저렴", "맛집", "편안함", "활기"),
+                centerLat = 37.4842,
+                centerLng = 126.9295
+            ),
+            RegionEntity(
+                id = "nowon",
+                name = "노원",
+                city = "seoul",
+                description = "불암산과 수락산이 가까운 노원. 자연 친화적인 데이트와 카페거리를 함께 즐길 수 있는 북부의 데이트 명소입니다.",
+                keywords = listOf("자연", "등산", "카페거리", "편안함", "힐링"),
+                centerLat = 37.6542,
+                centerLng = 127.0568
+            ),
 
             // 경기 권역
             RegionEntity(
@@ -154,6 +262,24 @@ class RegionDataLoader(
                 keywords = listOf("테마파크", "놀이공원", "문화체험", "즐거움", "활동적"),
                 centerLat = 37.2411,
                 centerLng = 127.1776
+            ),
+            RegionEntity(
+                id = "anyang",
+                name = "안양",
+                city = "gyeonggi",
+                description = "안양예술공원과 안양천이 있는 안양. 예술과 자연이 어우러진 문화 데이트를 즐길 수 있습니다.",
+                keywords = listOf("예술", "공원", "자연", "문화", "힐링"),
+                centerLat = 37.3943,
+                centerLng = 126.9568
+            ),
+            RegionEntity(
+                id = "goyang",
+                name = "고양/킨텍스",
+                city = "gyeonggi",
+                description = "킨텍스 전시장과 호수공원이 있는 고양. 전시/공연과 자연을 함께 즐기는 복합 데이트 지역입니다.",
+                keywords = listOf("전시", "공연", "호수", "쇼핑", "복합문화"),
+                centerLat = 37.6688,
+                centerLng = 126.7458
             )
         )
 

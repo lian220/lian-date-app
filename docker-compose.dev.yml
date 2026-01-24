@@ -1,0 +1,21 @@
+# 로컬 개발 환경 전용 Docker Compose 오버라이드
+
+services:
+  backend:
+    # 로컬 개발 환경에서는 소스 코드 변경 감지를 위한 설정
+    volumes:
+      # Gradle 캐시 공유
+      - ~/.gradle:/root/.gradle
+    environment:
+      # 로컬 개발 환경 전용 설정
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+      LOGGING_LEVEL_COM_DATECLICK: DEBUG
+
+  frontend:
+    # 개발 도구 활성화
+    environment:
+      # Next.js 개발 모드 최적화
+      NEXT_TELEMETRY_DISABLED: "1"

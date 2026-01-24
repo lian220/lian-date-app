@@ -1,17 +1,17 @@
-import { RegionType } from '@/types/region';
+import { AreaType } from '@/types/region';
 
 interface RegionTabsProps {
-  activeTab: RegionType;
-  onTabChange: (tab: RegionType) => void;
+  activeTab: AreaType;
+  onTabChange: (tab: AreaType) => void;
 }
 
 export default function RegionTabs({
   activeTab,
   onTabChange,
 }: RegionTabsProps) {
-  const tabs: { type: RegionType; label: string }[] = [
-    { type: 'seoul', label: '서울' },
-    { type: 'gyeonggi', label: '경기' },
+  const tabs: { type: AreaType; label: string }[] = [
+    { type: 'SEOUL', label: '서울' },
+    { type: 'GYEONGGI', label: '경기' },
   ];
 
   return (

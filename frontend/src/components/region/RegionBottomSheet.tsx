@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Region, RegionType } from '@/types/region';
-import { REGION_DATA } from '@/constants/regions';
+import { Region, AreaType } from '@/types/region';
+import { MOCK_REGIONS } from '@/constants/regions';
 import RegionTabs from './RegionTabs';
 import RegionCard from './RegionCard';
 
@@ -19,7 +19,7 @@ export default function RegionBottomSheet({
   onSelect,
   initialRegion,
 }: RegionBottomSheetProps) {
-  const [activeTab, setActiveTab] = useState<RegionType>('seoul');
+  const [activeTab, setActiveTab] = useState<AreaType>('SEOUL');
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(
     initialRegion || null
   );
@@ -46,8 +46,13 @@ export default function RegionBottomSheet({
     }
   };
 
-  const currentRegions =
-    REGION_DATA.find(category => category.type === activeTab)?.regions || [];
+  // 백엔드 API 응답 형식에 맞게 areaType으로 필터링
+  // TODO: LAD-13 완료 후 실제 API 연동
+  // const { data: regions } = useQuery(['regions'], fetchRegions);
+  // const currentRegions = regions?.regions.filter(region => region.areaType === activeTab) || [];
+  const currentRegions = MOCK_REGIONS.filter(
+    region => region.areaType === activeTab
+  );
 
   return (
     <>

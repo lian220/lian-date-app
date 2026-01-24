@@ -32,7 +32,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      # No profile specified - uses application.yml defaults (Flyway enabled)
+      # For local development in IDE, use 'local' profile (Flyway disabled, uses RegionDataLoader)
+      # For production, use 'prod' profile explicitly
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dateclick}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-dateclick}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-dateclick}

@@ -280,6 +280,15 @@ class RegionDataLoader(
                 keywords = listOf("전시", "공연", "호수", "쇼핑", "복합문화"),
                 centerLat = 37.6688,
                 centerLng = 126.7458
+            ),
+            RegionEntity(
+                id = "seongnam",
+                name = "성남",
+                city = "gyeonggi",
+                description = "분당과 판교를 포함한 성남. 신구도시가 공존하며 다양한 문화와 쇼핑을 즐길 수 있는 데이트 지역입니다.",
+                keywords = listOf("복합도시", "쇼핑", "문화", "카페", "편리함"),
+                centerLat = 37.4201,
+                centerLng = 127.1262
             )
         )
 

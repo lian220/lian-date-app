@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 
 @Configuration
 @EnableJpaAuditing
-@EnableJpaRepositories(basePackages = ["com.dateclick.api.infrastructure.persistence.repository"])
+@EnableJpaRepositories(basePackages = ["com.dateclick.api.infrastructure.persistence"])
 class JpaConfig

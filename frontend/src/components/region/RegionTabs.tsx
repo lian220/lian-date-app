@@ -18,6 +18,7 @@ export default function RegionTabs({
     <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
       {tabs.map(tab => (
         <button
+          type="button"
           key={tab.type}
           onClick={() => onTabChange(tab.type)}
           className={`

@@ -13,6 +13,7 @@ export default function BudgetCard({
 }: BudgetCardProps) {
   return (
     <button
+      type="button"
       onClick={() => onSelect(budget)}
       className={`
         flex flex-col gap-2 rounded-lg border p-4 transition-all duration-200

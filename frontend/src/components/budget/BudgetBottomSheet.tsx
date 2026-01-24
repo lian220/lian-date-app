@@ -22,6 +22,11 @@ export default function BudgetBottomSheet({
     initialBudget || null
   );
 
+  // Sync with parent prop changes
+  useEffect(() => {
+    setSelectedBudget(initialBudget || null);
+  }, [initialBudget]);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';

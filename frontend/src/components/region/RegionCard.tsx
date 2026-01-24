@@ -16,6 +16,7 @@ export default function RegionCard({
 }: RegionCardProps) {
   return (
     <button
+      type="button"
       onClick={() => onSelect(region)}
       className={`
         flex flex-col gap-2 rounded-lg border p-4 transition-all duration-200

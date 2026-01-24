@@ -2,6 +2,13 @@ import { Region } from '@/types/region';
 import React from 'react';
 
 /**
+ * 정규식 메타문자 이스케이프
+ */
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * 검색어로 권역 필터링
  * 권역명과 키워드 모두 검색 대상
  */
@@ -33,7 +40,8 @@ export function highlightText(text: string, searchQuery: string): string {
     return text;
   }
 
-  const regex = new RegExp(`(${searchQuery})`, 'gi');
+  const escapedQuery = escapeRegExp(searchQuery);
+  const regex = new RegExp(`(${escapedQuery})`, 'gi');
   return text.replace(regex, '<mark>$1</mark>');
 }
 
@@ -48,7 +56,8 @@ export function getHighlightedText(
     return [text];
   }
 
-  const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
+  const escapedQuery = escapeRegExp(searchQuery);
+  const parts = text.split(new RegExp(`(${escapedQuery})`, 'gi'));
 
   return parts.map((part, index) => {
     if (part.toLowerCase() === searchQuery.toLowerCase()) {

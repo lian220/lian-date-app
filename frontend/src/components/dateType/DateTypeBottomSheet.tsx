@@ -22,6 +22,11 @@ export default function DateTypeBottomSheet({
     initialDateType || null
   );
 
+  // Sync with parent prop changes
+  useEffect(() => {
+    setSelectedDateType(initialDateType || null);
+  }, [initialDateType]);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';

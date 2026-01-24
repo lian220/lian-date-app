@@ -26,6 +26,11 @@ export default function RegionBottomSheet({
   );
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Sync with parent prop changes
+  useEffect(() => {
+    setSelectedRegion(initialRegion || null);
+  }, [initialRegion]);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';

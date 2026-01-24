@@ -13,6 +13,7 @@ export default function DateTypeCard({
 }: DateTypeCardProps) {
   return (
     <button
+      type="button"
       onClick={() => onSelect(dateType)}
       className={`
         flex flex-col gap-3 rounded-lg border p-5 transition-all duration-200

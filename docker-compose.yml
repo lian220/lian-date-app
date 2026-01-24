@@ -1,0 +1,84 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: dateclick-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dateclick}
+      POSTGRES_USER: ${POSTGRES_USER:-dateclick}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dateclick}
+      TZ: Asia/Seoul
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - dateclick-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dateclick}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Service (Spring Boot)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dateclick-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dateclick}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-dateclick}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-dateclick}
+    networks:
+      - dateclick-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dateclick-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NODE_ENV: development
+      # Next.js 핫 리로딩을 위한 설정
+      WATCHPACK_POLLING: "true"
+    volumes:
+      # 소스 코드 핫 리로딩을 위한 볼륨 마운트
+      - ./frontend:/app
+      # node_modules는 컨테이너 내부 것 사용 (호스트와 충돌 방지)
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - dateclick-network
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  dateclick-network:
+    driver: bridge

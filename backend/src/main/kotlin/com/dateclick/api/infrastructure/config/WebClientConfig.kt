@@ -33,6 +33,12 @@ class WebClientConfig {
             .build()
 
     @Bean
+    fun kakaoNaviRestClient(builder: RestClient.Builder): RestClient =
+        builder
+            .baseUrl("https://apis-navi.kakaomobility.com")
+            .build()
+
+    @Bean
     fun openAiRestClient(builder: RestClient.Builder): RestClient =
         builder
             .baseUrl("https://api.openai.com")

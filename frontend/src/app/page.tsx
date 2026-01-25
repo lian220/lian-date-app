@@ -110,6 +110,11 @@ export default function Home() {
     handleCreateCourse();
   };
 
+  const handleEditCondition = () => {
+    setError(null);
+    setCurrentStep('region');
+  };
+
   const handleNewCourse = () => {
     setCourseResult(null);
     setError(null);
@@ -287,7 +292,11 @@ export default function Home() {
 
                 {/* 에러 상태 */}
                 {!isLoading && error && (
-                  <CourseErrorState error={error} onRetry={handleRetry} />
+                  <CourseErrorState
+                    error={error}
+                    onRetry={handleRetry}
+                    onEditCondition={handleEditCondition}
+                  />
                 )}
 
                 {/* 정상 상태 - 조건 요약 */}

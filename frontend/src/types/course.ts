@@ -29,14 +29,15 @@ export interface CourseCreateRequest {
  * 장소 정보
  */
 export interface Place {
-  id: string;
+  placeId: string;
   name: string;
   category: string;
   address: string;
-  lat: number;
-  lng: number;
-  estimatedCost?: number;
+  lat?: number;
+  lng?: number;
+  estimatedCost: number;
   estimatedTime?: number;
+  reason: string; // AI 추천 이유
 }
 
 /**

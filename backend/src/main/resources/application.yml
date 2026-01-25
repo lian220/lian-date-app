@@ -41,5 +41,7 @@ kakao:
     javascript-key: ${KAKAO_JAVASCRIPT_KEY}
 
 openai:
-  api:
-    key: ${OPENAI_API_KEY}
+  api-key: ${OPENAI_API_KEY}
+  model: gpt-4
+  max-tokens: 2000
+  temperature: 0.7

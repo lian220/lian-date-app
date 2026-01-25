@@ -176,16 +176,13 @@ export default function CourseTimeline({
                     <p className="text-sm text-blue-700 dark:text-blue-300">
                       {getTransportLabel(routes[index].transportType)}{' '}
                       {formatDuration(routes[index].duration)}
-                      {routes[index].distance >= 1000 && (
-                        <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">
-                          (약 {(routes[index].distance / 1000).toFixed(1)}km)
-                        </span>
-                      )}
-                      {routes[index].distance < 1000 && (
-                        <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">
-                          (약 {routes[index].distance}m)
-                        </span>
-                      )}
+                      <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">
+                        (약{' '}
+                        {routes[index].distance >= 1000
+                          ? `${(routes[index].distance / 1000).toFixed(1)}km`
+                          : `${routes[index].distance}m`}
+                        )
+                      </span>
                     </p>
                   </div>
                 </div>

@@ -69,14 +69,24 @@ export async function createCourse(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const error: CourseCreateError = {
-        message: `코스 생성에 실패했습니다: ${response.statusText}`,
-        code: response.status.toString(),
-      };
-      throw error;
+      try {
+        const body = await response.json();
+        const error: CourseCreateError = {
+          message: body.error?.message || body.message || `코스 생성에 실패했습니다: ${response.statusText}`,
+          code: body.error?.code || body.code || response.status.toString(),
+        };
+        throw error;
+      } catch (parseError) {
+        // JSON 파싱 실패 시 기본 에러
+        const error: CourseCreateError = {
+          message: `코스 생성에 실패했습니다: ${response.statusText}`,
+          code: response.status.toString(),
+        };
+        throw error;
+      }
     }
 
-    return response.json();
+    return await response.json();
   } catch (error) {
     clearTimeout(timeoutId);
 
@@ -130,14 +140,24 @@ export async function regenerateCourse(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const error: CourseCreateError = {
-        message: `코스 재생성에 실패했습니다: ${response.statusText}`,
-        code: response.status.toString(),
-      };
-      throw error;
+      try {
+        const body = await response.json();
+        const error: CourseCreateError = {
+          message: body.error?.message || body.message || `코스 재생성에 실패했습니다: ${response.statusText}`,
+          code: body.error?.code || body.code || response.status.toString(),
+        };
+        throw error;
+      } catch (parseError) {
+        // JSON 파싱 실패 시 기본 에러
+        const error: CourseCreateError = {
+          message: `코스 재생성에 실패했습니다: ${response.statusText}`,
+          code: response.status.toString(),
+        };
+        throw error;
+      }
     }
 
-    return response.json();
+    return await response.json();
   } catch (error) {
     clearTimeout(timeoutId);
 

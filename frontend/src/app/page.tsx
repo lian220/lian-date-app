@@ -6,10 +6,18 @@ import DateTypeBottomSheet from '@/components/dateType/DateTypeBottomSheet';
 import BudgetBottomSheet from '@/components/budget/BudgetBottomSheet';
 import SpecialRequestInput from '@/components/request/SpecialRequestInput';
 import ConditionSummary from '@/components/condition/ConditionSummary';
+import CourseLoadingState from '@/components/course/CourseLoadingState';
+import CourseErrorState from '@/components/course/CourseErrorState';
 import { Region } from '@/types/region';
 import { DateType } from '@/types/dateType';
 import { BudgetRange } from '@/types/budget';
 import { DateCondition } from '@/types/dateCondition';
+import {
+  CourseCreateError,
+  CourseCreateResponse,
+} from '@/types/course';
+import { createCourse } from '@/lib/api';
+import { mapDateTypeToApi, mapBudgetToApi } from '@/lib/courseMapper';
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState<
@@ -25,6 +33,12 @@ export default function Home() {
   const [isRegionSheetOpen, setIsRegionSheetOpen] = useState(false);
   const [isDateTypeSheetOpen, setIsDateTypeSheetOpen] = useState(false);
   const [isBudgetSheetOpen, setIsBudgetSheetOpen] = useState(false);
+
+  // 코스 생성 상태
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<CourseCreateError | null>(null);
+  const [courseResult, setCourseResult] =
+    useState<CourseCreateResponse | null>(null);
 
   const handleRegionSelect = (region: Region) => {
     setCondition(prev => ({ ...prev, region }));
@@ -60,6 +74,38 @@ export default function Home() {
     } else if (field === 'specialRequest') {
       setCurrentStep('request');
     }
+  };
+
+  const handleCreateCourse = async () => {
+    if (!condition.region || !condition.dateType || !condition.budget) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setCourseResult(null);
+
+    try {
+      const response = await createCourse({
+        regionId: condition.region.id,
+        dateType: mapDateTypeToApi(condition.dateType.id),
+        budget: mapBudgetToApi(condition.budget.id),
+        specialRequest: condition.specialRequest || undefined,
+      });
+
+      setCourseResult(response);
+      // TODO: 코스 상세 페이지로 이동 또는 결과 표시
+      console.log('코스 생성 성공:', response);
+    } catch (err) {
+      setError(err as CourseCreateError);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    handleCreateCourse();
   };
 
   return (
@@ -190,24 +236,42 @@ export default function Home() {
 
         {currentStep === 'summary' && (
           <div className="w-full max-w-md">
-            <ConditionSummary condition={condition} onEdit={handleEditField} />
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setCurrentStep('request')}
-                className="flex-1 rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-              >
-                이전
-              </button>
-              <button
-                onClick={() => alert('데이트 코스 생성 기능은 추후 구현 예정입니다.')}
-                disabled={
-                  !condition.region || !condition.dateType || !condition.budget
-                }
-                className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
-              >
-                데이트 코스 생성
-              </button>
-            </div>
+            {/* 로딩 상태 */}
+            {isLoading && <CourseLoadingState />}
+
+            {/* 에러 상태 */}
+            {!isLoading && error && (
+              <CourseErrorState error={error} onRetry={handleRetry} />
+            )}
+
+            {/* 정상 상태 - 조건 요약 */}
+            {!isLoading && !error && (
+              <>
+                <ConditionSummary
+                  condition={condition}
+                  onEdit={handleEditField}
+                />
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={() => setCurrentStep('request')}
+                    className="flex-1 rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                  >
+                    이전
+                  </button>
+                  <button
+                    onClick={handleCreateCourse}
+                    disabled={
+                      !condition.region ||
+                      !condition.dateType ||
+                      !condition.budget
+                    }
+                    className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400 dark:bg-blue-500 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
+                  >
+                    데이트 코스 생성
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </main>

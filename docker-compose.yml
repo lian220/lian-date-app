@@ -14,7 +14,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dateclick}
       TZ: Asia/Seoul
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
       # 초기 DB 생성 시에만 실행됨 (이미 볼륨이 있으면 무시됨)
       # - ./backend/init-scripts:/docker-entrypoint-initdb.d
     networks:
@@ -75,10 +75,6 @@ services:
       - backend
     stdin_open: true
     tty: true
-
-volumes:
-  postgres_data:
-    driver: local
 
 networks:
   dateclick-network:

@@ -16,3 +16,6 @@
 .DS_Store
 Thumbs.db
 backend/.serena/
+
+# Docker volumes (local data)
+data/

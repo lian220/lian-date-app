@@ -167,7 +167,7 @@ export default function CourseResult({
                 총 예상 비용 (1인 기준)
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {course.totalCost.toLocaleString()}원
+                {course.totalEstimatedCost.toLocaleString()}원
               </p>
             </div>
           </div>

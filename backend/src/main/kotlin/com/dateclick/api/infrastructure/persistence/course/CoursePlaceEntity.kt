@@ -49,7 +49,7 @@ class CoursePlaceEntity(
     @Column(name = "estimated_duration", nullable = false)
     val estimatedDuration: Int,
 
-    @Column(name = "recommended_time", length = 10)
+    @Column(name = "recommended_time", length = 20)
     val recommendedTime: String? = null,
 
     @Column(name = "recommend_reason", nullable = false, columnDefinition = "TEXT")
@@ -58,6 +58,6 @@ class CoursePlaceEntity(
     @Column(name = "image_url", columnDefinition = "TEXT")
     val imageUrl: String? = null,
 
-    @Column(name = "kakao_place_url", nullable = false, columnDefinition = "TEXT")
-    val kakaoPlaceUrl: String
+    @Column(name = "kakao_place_url", columnDefinition = "TEXT")
+    val kakaoPlaceUrl: String? = null
 )

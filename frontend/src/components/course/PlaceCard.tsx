@@ -87,7 +87,7 @@ export default function PlaceCard({ place, order }: PlaceCardProps) {
                 AI 추천 이유
               </p>
               <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                {place.reason}
+                {place.recommendReason}
               </p>
             </div>
           </div>

@@ -19,3 +19,8 @@ backend/.serena/
 
 # Docker volumes (local data)
 data/
+
+# Playwright
+.playwright-mcp/
+frontend/test-results/
+playwright-report/

@@ -1,19 +1,27 @@
+'use client';
+
+import { useState } from 'react';
 import { CourseCreateResponse } from '@/types/course';
 import PlaceCard from './PlaceCard';
+import CourseTimeline from './CourseTimeline';
 
 interface CourseResultProps {
   course: CourseCreateResponse;
   onNewCourse?: () => void;
 }
 
+type ViewMode = 'card' | 'timeline';
+
 /**
  * 코스 생성 결과 표시 컴포넌트
- * 3개 장소 카드 리스트와 총 예상 비용 표시
+ * 카드 뷰와 타임라인 뷰 전환 가능
  */
 export default function CourseResult({
   course,
   onNewCourse,
 }: CourseResultProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>('card');
+
   return (
     <div className="flex w-full max-w-2xl flex-col gap-6">
       {/* 헤더 */}
@@ -44,33 +52,87 @@ export default function CourseResult({
         </p>
       </div>
 
-      {/* 장소 카드 리스트 */}
-      <div className="space-y-4">
-        {course.places.map((place, index) => (
-          <div key={place.placeId} className="relative">
-            <PlaceCard place={place} order={index + 1} />
-
-            {/* 순서 화살표 (마지막 카드 제외) */}
-            {index < course.places.length - 1 && (
-              <div className="flex justify-center py-2">
-                <svg
-                  className="h-6 w-6 text-blue-400 dark:text-blue-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                  />
-                </svg>
-              </div>
-            )}
-          </div>
-        ))}
+      {/* 뷰 모드 전환 탭 */}
+      <div className="flex gap-2 rounded-lg border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-800">
+        <button
+          onClick={() => setViewMode('card')}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+            viewMode === 'card'
+              ? 'bg-blue-600 text-white dark:bg-blue-500'
+              : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+          }`}
+        >
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            />
+          </svg>
+          카드 뷰
+        </button>
+        <button
+          onClick={() => setViewMode('timeline')}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+            viewMode === 'timeline'
+              ? 'bg-blue-600 text-white dark:bg-blue-500'
+              : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+          }`}
+        >
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          타임라인
+        </button>
       </div>
+
+      {/* 컨텐츠: 카드 뷰 또는 타임라인 뷰 */}
+      {viewMode === 'card' ? (
+        <div className="space-y-4">
+          {course.places.map((place, index) => (
+            <div key={place.placeId} className="relative">
+              <PlaceCard place={place} order={index + 1} />
+
+              {/* 순서 화살표 (마지막 카드 제외) */}
+              {index < course.places.length - 1 && (
+                <div className="flex justify-center py-2">
+                  <svg
+                    className="h-6 w-6 text-blue-400 dark:text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <CourseTimeline places={course.places} routes={course.routes} />
+      )}
 
       {/* 총 예상 비용 */}
       <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-950">

@@ -26,6 +26,20 @@ export interface CourseCreateRequest {
 }
 
 /**
+ * 이동 수단 타입
+ */
+export type TransportType = 'WALK' | 'CAR' | 'PUBLIC_TRANSIT';
+
+/**
+ * 장소 간 이동 정보
+ */
+export interface Route {
+  transportType: TransportType;
+  distance: number; // 미터 단위
+  duration: number; // 분 단위
+}
+
+/**
  * 장소 정보
  */
 export interface Place {
@@ -36,7 +50,7 @@ export interface Place {
   lat?: number;
   lng?: number;
   estimatedCost: number;
-  estimatedTime?: number;
+  estimatedTime?: number; // 분 단위
   reason: string; // AI 추천 이유
 }
 
@@ -46,6 +60,7 @@ export interface Place {
 export interface CourseCreateResponse {
   courseId: string;
   places: Place[];
+  routes?: Route[]; // 장소 간 이동 정보 (places.length - 1 개)
   totalCost: number;
   estimatedTime: number;
 }

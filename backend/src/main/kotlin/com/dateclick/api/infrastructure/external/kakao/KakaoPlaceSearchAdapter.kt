@@ -21,6 +21,7 @@ import org.springframework.web.client.RestClient
 @Component
 class KakaoPlaceSearchAdapter(
     private val kakaoRestClient: RestClient,
+    private val kakaoNaviRestClient: RestClient,
     private val regionRepository: RegionRepository,
     @Value("\${kakao.api.rest-key}") private val restApiKey: String
 ) : PlaceSearchPort {
@@ -132,18 +133,149 @@ class KakaoPlaceSearchAdapter(
             to.lng
         )
 
-        // 간단한 거리 계산 (Haversine formula)
-        val distance = calculateDistance(from, to)
+        // Haversine formula로 직선 거리 계산
+        val straightDistance = calculateDistance(from, to)
+
+        // 거리 기반 교통수단 자동 선택
+        val transportType = determineTransportType(straightDistance)
+
+        logger.debug(
+            "Selected transport type: {}, straight distance: {}m",
+            transportType,
+            straightDistance.toInt()
+        )
+
+        // 교통수단별 경로 계산
+        val route = when (transportType) {
+            TransportType.CAR -> calculateCarRoute(from, to, straightDistance)
+            TransportType.WALK -> calculateWalkRoute(from, to, straightDistance)
+            TransportType.TRANSIT -> calculateTransitRoute(from, to, straightDistance)
+        }
+
+        // AC 2.4: 30분 이내 검증 (경고 로그)
+        if (route.exceedsTimeLimit()) {
+            logger.warn(
+                "Route duration exceeds time limit: {}min > {}min (distance: {}m, type: {})",
+                route.duration,
+                Route.MAX_DURATION_MINUTES,
+                route.distance,
+                route.transportType
+            )
+        }
+
+        return route
+    }
+
+    /**
+     * 거리 기반 교통수단 자동 결정
+     */
+    private fun determineTransportType(distance: Double): TransportType {
+        return when {
+            distance < 1000 -> TransportType.WALK      // 1km 미만: 도보
+            distance < 5000 -> TransportType.TRANSIT   // 5km 미만: 대중교통
+            else -> TransportType.CAR                  // 5km 이상: 자동차
+        }
+    }
+
+    /**
+     * 자동차 경로 계산 (Kakao Mobility Directions API 사용)
+     */
+    private fun calculateCarRoute(from: Location, to: Location, fallbackDistance: Double): Route {
+        return try {
+            val response = kakaoNaviRestClient.get()
+                .uri { builder ->
+                    builder.path("/v1/directions")
+                        .queryParam("origin", "${from.lng},${from.lat}")
+                        .queryParam("destination", "${to.lng},${to.lat}")
+                        .build()
+                }
+                .header(HttpHeaders.AUTHORIZATION, "KakaoAK $restApiKey")
+                .retrieve()
+                .body(KakaoDirectionsResponse::class.java)
+
+            response?.routes?.firstOrNull()?.summary?.let { summary ->
+                Route(
+                    from = 0, // 실제 order는 호출하는 쪽에서 설정
+                    to = 0,
+                    distance = summary.distance,
+                    duration = (summary.duration / 60.0).toInt(), // 초 -> 분 변환
+                    transportType = TransportType.CAR,
+                    description = "자동차 경로"
+                ).also {
+                    logger.info("Car route calculated: {}m, {}min", it.distance, it.duration)
+                }
+            } ?: createFallbackRoute(from, to, TransportType.CAR, fallbackDistance)
+        } catch (e: Exception) {
+            logger.warn("Failed to get car route from Kakao API, using fallback", e)
+            createFallbackRoute(from, to, TransportType.CAR, fallbackDistance)
+        }
+    }
+
+    /**
+     * 도보 경로 계산 (Haversine + 평균 보행 속도)
+     */
+    private fun calculateWalkRoute(from: Location, to: Location, distance: Double): Route {
+        // 도보: 평균 시속 4km (분당 67m)
+        // 실제 도로를 따라가므로 직선거리 * 1.3 보정
+        val actualDistance = (distance * 1.3).toInt()
+        val duration = (actualDistance / 67.0).toInt().coerceAtLeast(5) // 최소 5분
+
+        return Route(
+            from = 0,
+            to = 0,
+            distance = actualDistance,
+            duration = duration,
+            transportType = TransportType.WALK,
+            description = "도보 경로"
+        ).also {
+            logger.info("Walk route calculated: {}m, {}min", it.distance, it.duration)
+        }
+    }
+
+    /**
+     * 대중교통 경로 계산 (Haversine + 평균 대중교통 속도 + 대기시간)
+     */
+    private fun calculateTransitRoute(from: Location, to: Location, distance: Double): Route {
+        // 대중교통: 평균 시속 20km (분당 333m) + 환승 및 대기시간
+        // 실제 경로 보정 * 1.4 (우회 고려)
+        val actualDistance = (distance * 1.4).toInt()
+        val travelTime = (actualDistance / 333.0).toInt()
+        val waitingTime = 5 // 기본 대기시간 5분
+        val duration = (travelTime + waitingTime).coerceAtLeast(10) // 최소 10분
+
+        return Route(
+            from = 0,
+            to = 0,
+            distance = actualDistance,
+            duration = duration,
+            transportType = TransportType.TRANSIT,
+            description = "대중교통 경로"
+        ).also {
+            logger.info("Transit route calculated: {}m, {}min", it.distance, it.duration)
+        }
+    }
+
+    /**
+     * API 호출 실패 시 fallback 경로
+     */
+    private fun createFallbackRoute(
+        from: Location,
+        to: Location,
+        transportType: TransportType,
+        distance: Double
+    ): Route {
         val duration = estimateDuration(distance)
 
         return Route(
-            from = 0, // 실제 order는 호출하는 쪽에서 설정
+            from = 0,
             to = 0,
             distance = distance.toInt(),
             duration = duration,
-            transportType = if (distance < 1000) TransportType.WALK else TransportType.TRANSIT,
-            description = "이동 경로"
-        )
+            transportType = transportType,
+            description = "${transportType.code} 경로 (추정)"
+        ).also {
+            logger.info("Fallback route created: {}m, {}min", it.distance, it.duration)
+        }
     }
 
     /**
@@ -201,4 +333,37 @@ data class KakaoMeta(
     val total_count: Int,
     val pageable_count: Int,
     val is_end: Boolean
+)
+
+/**
+ * Kakao Mobility Directions API 응답 DTO
+ */
+data class KakaoDirectionsResponse(
+    val trans_id: String,
+    val routes: List<KakaoRoute>
+)
+
+data class KakaoRoute(
+    val result_code: Int,
+    val result_msg: String,
+    val summary: KakaoRouteSummary
+)
+
+data class KakaoRouteSummary(
+    val origin: KakaoRoutePoint,
+    val destination: KakaoRoutePoint,
+    val distance: Int,        // 거리 (미터)
+    val duration: Int,        // 소요 시간 (초)
+    val fare: KakaoFare? = null
+)
+
+data class KakaoRoutePoint(
+    val name: String? = null,
+    val x: Double,
+    val y: Double
+)
+
+data class KakaoFare(
+    val taxi: Int? = null,
+    val toll: Int? = null
 )

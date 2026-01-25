@@ -1,5 +1,6 @@
 package com.dateclick.api.presentation.advice
 
+import com.dateclick.api.infrastructure.ratelimit.RateLimitException
 import com.dateclick.api.presentation.rest.common.ApiResponse
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -34,6 +35,20 @@ class GlobalExceptionHandler {
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
             .body(ApiResponse.error("NOT_FOUND", ex.message ?: "리소스를 찾을 수 없습니다"))
+    }
+
+    @ExceptionHandler(RateLimitException::class)
+    fun handleRateLimitException(ex: RateLimitException): ResponseEntity<ApiResponse<Nothing>> {
+        logger.warn("Rate limit exceeded: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.TOO_MANY_REQUESTS)
+            .header("Retry-After", ex.retryAfterSeconds.toString())
+            .body(
+                ApiResponse.error(
+                    "RATE_LIMIT_EXCEEDED",
+                    "요청 횟수 제한을 초과했습니다. ${ex.retryAfterSeconds}초 후 다시 시도해주세요."
+                )
+            )
     }
 
     @ExceptionHandler(Exception::class)

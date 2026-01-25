@@ -15,7 +15,8 @@ data class Course(
     val budget: Budget,
     val places: List<CoursePlace>,
     val routes: List<Route>,
-    val createdAt: Instant
+    val createdAt: Instant,
+    val sessionId: String? = null
 ) {
     val totalEstimatedCost: EstimatedCost
         get() = places
@@ -31,7 +32,8 @@ data class Course(
             budget = this.budget,
             places = newPlaces,
             routes = newRoutes,
-            createdAt = Instant.now()
+            createdAt = Instant.now(),
+            sessionId = this.sessionId
         )
 
     companion object {
@@ -41,7 +43,8 @@ data class Course(
             dateType: DateType,
             budget: Budget,
             places: List<CoursePlace>,
-            routes: List<Route>
+            routes: List<Route>,
+            sessionId: String? = null
         ): Course = Course(
             id = CourseId.generate(),
             regionId = regionId,
@@ -50,7 +53,8 @@ data class Course(
             budget = budget,
             places = places,
             routes = routes,
-            createdAt = Instant.now()
+            createdAt = Instant.now(),
+            sessionId = sessionId
         )
     }
 }

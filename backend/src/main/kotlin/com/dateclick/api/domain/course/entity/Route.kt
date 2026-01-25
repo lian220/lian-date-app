@@ -12,5 +12,12 @@ data class Route(
 enum class TransportType(val code: String) {
     WALK("walk"),
     TRANSIT("transit"),
-    CAR("car")
+    CAR("car");
+
+    companion object {
+        fun fromCode(code: String): TransportType {
+            return values().find { it.code.equals(code, ignoreCase = true) }
+                ?: throw IllegalArgumentException("Unknown transport type code: $code")
+        }
+    }
 }

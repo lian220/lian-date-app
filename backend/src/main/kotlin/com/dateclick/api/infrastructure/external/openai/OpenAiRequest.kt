@@ -1,5 +1,6 @@
 package com.dateclick.api.infrastructure.external.openai
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
@@ -15,6 +16,7 @@ data class ChatCompletionRequest(
     val responseFormat: ResponseFormat? = null
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Message(
     val role: String,
     val content: String

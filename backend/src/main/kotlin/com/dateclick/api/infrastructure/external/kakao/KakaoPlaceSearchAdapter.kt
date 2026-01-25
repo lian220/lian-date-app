@@ -90,7 +90,11 @@ class KakaoPlaceSearchAdapter(
 
         return try {
             val response = kakaoRestClient.get()
-                .uri("/v2/local/search/keyword.json?query=${placeId.value}")
+                .uri { builder ->
+                    builder.path("/v2/local/search/keyword.json")
+                        .queryParam("query", placeId.value)
+                        .build()
+                }
                 .header(HttpHeaders.AUTHORIZATION, "KakaoAK $restApiKey")
                 .retrieve()
                 .body(KakaoPlaceSearchResponse::class.java)

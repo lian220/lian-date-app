@@ -31,18 +31,18 @@ export interface Place {
   placeId: string;
   name: string;
   category: string;
-  categoryDetail?: string;
+  categoryDetail?: string | null;
   address: string;
-  roadAddress?: string;
+  roadAddress?: string | null;
   lat: number;
   lng: number;
-  phone?: string;
+  phone?: string | null;
   estimatedCost: number;
   estimatedDuration: number; // 분 단위
-  recommendedTime?: string;
+  recommendedTime?: string | null;
   recommendReason: string; // AI 추천 이유
-  imageUrl?: string;
-  kakaoPlaceUrl?: string;
+  imageUrl?: string | null;
+  kakaoPlaceUrl?: string | null;
 }
 
 /**

@@ -22,7 +22,7 @@ const API_TIMEOUT = 30000; // 30초
 function generateSessionId(): string {
   if (typeof window !== 'undefined') {
     // 브라우저 환경에서는 sessionStorage 사용
-    let sessionId = sessionStorage.getItem('session-id');
+    let sessionId: string | null = sessionStorage.getItem('session-id');
     if (!sessionId) {
       sessionId = crypto.randomUUID();
       sessionStorage.setItem('session-id', sessionId);

@@ -31,12 +31,7 @@ class RateLimitInterceptor(
         val method = request.method
         val endpoint = request.requestURI
 
-        try {
-            rateLimitService.checkRateLimit(sessionId, method, endpoint)
-            return true
-        } catch (e: RateLimitException) {
-            // 예외는 GlobalExceptionHandler에서 처리
-            throw e
-        }
+        rateLimitService.checkRateLimit(sessionId, method, endpoint)
+        return true
     }
 }

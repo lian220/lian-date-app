@@ -2,6 +2,7 @@ package com.dateclick.api.infrastructure.ratelimit
 
 import com.dateclick.api.presentation.rest.course.CreateCourseRequest
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -31,12 +32,15 @@ class RateLimitInterceptorTest {
 
         // X-Session-Id 없이 11번 요청 (정상적으로는 10번 제한)
         repeat(11) {
-            mockMvc.perform(
+            val result = mockMvc.perform(
                 post("/v1/courses")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
             )
-            // Rate Limit이 적용되지 않으므로 모두 성공 (또는 다른 이유로 실패)
+                .andReturn()
+
+            // Rate Limit이 적용되지 않으므로 429가 아니어야 함
+            assertNotEquals(429, result.response.status, "Rate limit should not apply without X-Session-Id")
         }
     }
 
@@ -102,6 +106,6 @@ class RateLimitInterceptorTest {
             .andReturn()
 
         // 429가 아니어야 함
-        assert(result.response.status != 429)
+        assertNotEquals(429, result.response.status, "Session-2 should not be rate limited")
     }
 }

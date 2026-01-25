@@ -30,7 +30,7 @@ class RateLimitService {
     )
 
     private val rateLimitCache: Cache<String, RequestCounter> = Caffeine.newBuilder()
-        .expireAfterWrite(Duration.ofMinutes(1))
+        .expireAfterAccess(Duration.ofMinutes(2))
         .maximumSize(10000)
         .build()
 
@@ -46,7 +46,7 @@ class RateLimitService {
         val rule = findMatchingRule(method, normalizedEndpoint)
 
         val now = System.currentTimeMillis()
-        val counter = rateLimitCache.get(key) { RequestCounter(now) }!!
+        val counter = rateLimitCache.get(key) { RequestCounter(now) }
 
         synchronized(counter) {
             if (now - counter.windowStart >= rule.windowSeconds * 1000) {
@@ -54,7 +54,7 @@ class RateLimitService {
             }
 
             if (counter.count.get() >= rule.limit) {
-                val retryAfterSeconds = rule.windowSeconds - ((now - counter.windowStart) / 1000)
+                val retryAfterSeconds = (rule.windowSeconds - ((now - counter.windowStart) / 1000)).coerceAtLeast(1)
                 logger.warn(
                     "Rate limit exceeded: sessionId={}, endpoint={}, limit={}/{} seconds",
                     sessionId, "$method:$normalizedEndpoint", rule.limit, rule.windowSeconds

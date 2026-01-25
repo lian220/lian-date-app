@@ -8,6 +8,8 @@ import CourseTimeline from './CourseTimeline';
 interface CourseResultProps {
   course: CourseCreateResponse;
   onNewCourse?: () => void;
+  onRegenerateCourse?: () => void;
+  isRegenerating?: boolean;
 }
 
 type ViewMode = 'card' | 'timeline';
@@ -19,6 +21,8 @@ type ViewMode = 'card' | 'timeline';
 export default function CourseResult({
   course,
   onNewCourse,
+  onRegenerateCourse,
+  isRegenerating = false,
 }: CourseResultProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('card');
 
@@ -46,6 +50,11 @@ export default function CourseResult({
         </div>
         <h2 className="mt-3 text-2xl font-bold text-gray-900 dark:text-gray-100">
           AI가 추천하는 데이트 코스
+          {course.regenerationCount && course.regenerationCount > 1 && (
+            <span className="ml-2 text-lg text-blue-600 dark:text-blue-400">
+              ({course.regenerationCount}번째 추천)
+            </span>
+          )}
         </h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           각 장소는 선택하신 조건에 맞춰 최적화되었습니다
@@ -173,6 +182,40 @@ export default function CourseResult({
             className="flex-1 rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             다른 코스 추천받기
+          </button>
+        )}
+        {onRegenerateCourse && (
+          <button
+            onClick={onRegenerateCourse}
+            disabled={isRegenerating}
+            className="flex-1 rounded-lg border border-blue-600 px-6 py-3 font-semibold text-blue-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-950"
+          >
+            {isRegenerating ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg
+                  className="h-5 w-5 animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                재생성 중...
+              </span>
+            ) : (
+              '다른 코스 보기'
+            )}
           </button>
         )}
         <button

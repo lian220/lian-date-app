@@ -98,3 +98,64 @@ export async function createCourse(
     throw unknownError;
   }
 }
+
+/**
+ * 코스 재생성 API
+ * POST /v1/courses/{courseId}/regenerate
+ *
+ * @param courseId 기존 코스 ID
+ * @returns 재생성된 코스 정보
+ * @throws CourseCreateError API 호출 실패 또는 타임아웃 시 에러
+ *
+ * 의존성: [BE] 코스 재생성 API (LAD-22) 완료 필요
+ */
+export async function regenerateCourse(
+  courseId: string
+): Promise<CourseCreateResponse> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/v1/courses/${courseId}/regenerate`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error: CourseCreateError = {
+        message: `코스 재생성에 실패했습니다: ${response.statusText}`,
+        code: response.status.toString(),
+      };
+      throw error;
+    }
+
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error && error.name === 'AbortError') {
+      const timeoutError: CourseCreateError = {
+        message: '요청 시간이 초과되었습니다. 다시 시도해주세요.',
+        isTimeout: true,
+      };
+      throw timeoutError;
+    }
+
+    if ((error as CourseCreateError).message) {
+      throw error;
+    }
+
+    const unknownError: CourseCreateError = {
+      message: '알 수 없는 오류가 발생했습니다.',
+    };
+    throw unknownError;
+  }
+}

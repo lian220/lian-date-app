@@ -63,6 +63,7 @@ export interface CourseCreateResponse {
   routes?: Route[]; // 장소 간 이동 정보 (places.length - 1 개)
   totalCost: number;
   estimatedTime: number;
+  regenerationCount?: number; // 재생성 횟수 (1부터 시작)
 }
 
 /**

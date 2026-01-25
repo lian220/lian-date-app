@@ -17,7 +17,7 @@ import {
   CourseCreateError,
   CourseCreateResponse,
 } from '@/types/course';
-import { createCourse } from '@/lib/api';
+import { createCourse, regenerateCourse } from '@/lib/api';
 import { mapDateTypeToApi, mapBudgetToApi } from '@/lib/courseMapper';
 
 export default function Home() {
@@ -40,6 +40,7 @@ export default function Home() {
   const [error, setError] = useState<CourseCreateError | null>(null);
   const [courseResult, setCourseResult] =
     useState<CourseCreateResponse | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const handleRegionSelect = (region: Region) => {
     setCondition(prev => ({ ...prev, region }));
@@ -119,6 +120,25 @@ export default function Home() {
       budget: null,
       specialRequest: '',
     });
+  };
+
+  const handleRegenerateCourse = async () => {
+    if (!courseResult) {
+      return;
+    }
+
+    setIsRegenerating(true);
+    setError(null);
+
+    try {
+      const response = await regenerateCourse(courseResult.courseId);
+      setCourseResult(response);
+      console.log('코스 재생성 성공:', response);
+    } catch (err) {
+      setError(err as CourseCreateError);
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   return (
@@ -254,6 +274,8 @@ export default function Home() {
               <CourseResult
                 course={courseResult}
                 onNewCourse={handleNewCourse}
+                onRegenerateCourse={handleRegenerateCourse}
+                isRegenerating={isRegenerating}
               />
             )}
 

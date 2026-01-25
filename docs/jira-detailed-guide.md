@@ -331,6 +331,257 @@ Story Points 추정 → Sprint 배정
 - 병렬 작업 가능 여부 확인
 ```
 
+## ⚡ 병렬 처리 최적화 전략
+
+### 병렬 처리의 중요성
+
+**문제 상황**:
+```
+❌ 순차 처리 (비효율)
+Week 1: BE 개발 → FE 대기
+Week 2: FE 개발 → BE 대기
+총 소요: 2주
+
+✅ 병렬 처리 (효율)
+Week 1: BE + FE 동시 개발 (API 계약 기반)
+총 소요: 1주
+```
+
+**효과**:
+- 개발 속도 2배 향상
+- 팀원 유휴 시간 최소화
+- Sprint 목표 달성률 증가
+
+### 병렬 가능 여부 판단 프레임워크
+
+#### 1. API 계약 기반 병렬 (Contract-Driven Development)
+
+**조건**:
+- ✅ API 명세가 사전에 합의됨 (Request/Response DTO)
+- ✅ FE가 Mock 데이터로 개발 가능
+- ✅ BE가 인터페이스 먼저 정의 가능
+
+**프로세스**:
+```
+1. API 명세 작성 (0.5일)
+   └─ Request/Response DTO
+   └─ HTTP Status Code
+   └─ 에러 케이스
+
+2. FE/BE 병렬 개발 (3일)
+   ├─ [FE] Mock 데이터로 UI 구현
+   └─ [BE] 실제 로직 구현
+
+3. 통합 (0.5일)
+   └─ FE가 Mock → 실제 API 교체
+```
+
+**예시**:
+```markdown
+### Story: 상품 검색
+**Phase 1: API 계약** (0.5일)
+```typescript
+// API 명세 (공유 문서)
+GET /api/products/search?keyword={keyword}&page={page}
+
+Response:
+{
+  products: Product[],
+  totalCount: number,
+  currentPage: number
+}
+```
+
+**Phase 2: 병렬 개발** (3일)
+- [BE] 검색 로직 + DB 쿼리 최적화
+- [FE] 검색 UI + Mock 데이터로 개발
+  ```typescript
+  // mock.ts
+  const mockProducts = [...]
+  ```
+
+**Phase 3: 통합** (0.5일)
+- [FE] `fetch('/api/products/search')` 연결
+```
+
+#### 2. 도메인 독립성 기반 병렬
+
+**조건**:
+- ✅ 다른 도메인/기능 영역
+- ✅ 공유 코드/테이블 없음
+- ✅ 비즈니스 로직 독립적
+
+**판단 기준**:
+| 질문 | 병렬 가능 | 순차 필요 |
+|------|----------|----------|
+| 같은 DB 테이블 수정? | ❌ | ✅ |
+| 같은 서비스 클래스 수정? | ❌ | ✅ |
+| 같은 React 컴포넌트 수정? | ❌ | ✅ |
+| 독립된 기능 영역? | ✅ | ❌ |
+
+**예시**:
+```markdown
+Epic: [MVP] 사용자 기능
+
+✅ 병렬 가능 (독립 도메인)
+├─ Story 1: 회원가입 (User 도메인)
+└─ Story 2: 상품 즐겨찾기 (Product 도메인)
+
+⛔ 순차 필요 (공유 리소스)
+├─ Story 1: User Entity 추가
+└─ Story 2: User Entity 수정 ← Story 1 완료 후
+```
+
+#### 3. 레이어 기반 병렬
+
+**Hexagonal Architecture 예시**:
+```
+Phase 1: Domain Layer (우선, 1일)
+├─ Entity 정의
+├─ Value Object
+└─ Domain Service Interface
+
+Phase 2: 병렬 개발 (2일)
+├─ [BE] Infrastructure (DB, 외부 API 연동)
+├─ [BE] Application (Use Case)
+└─ [FE] Presentation (UI 컴포넌트)
+
+Phase 3: 통합 (1일)
+└─ E2E 테스트
+```
+
+### 의존성 그래프 작성법
+
+#### DAG (Directed Acyclic Graph) 활용
+
+```mermaid
+graph TD
+    A[API 명세 작성] --> B[BE: API 구현]
+    A --> C[FE: Mock UI 구현]
+    B --> D[FE: API 연동]
+    C --> D
+    D --> E[통합 테스트]
+```
+
+**Jira에서 표현**:
+```markdown
+LAD-100: [공통] API 명세 작성 (P0, 0.5SP)
+├─ Blocks: LAD-101, LAD-102
+└─ Labels: `blocker`, `p0`
+
+LAD-101: [BE] API 구현 (P0, 3SP)
+├─ Blocked by: LAD-100
+├─ Blocks: LAD-103
+└─ **병렬 가능**: LAD-102
+
+LAD-102: [FE] Mock UI 구현 (P0, 2SP)
+├─ Blocked by: LAD-100
+├─ Blocks: LAD-103
+└─ **병렬 가능**: LAD-101 ⚡
+
+LAD-103: [FE] API 연동 (P0, 0.5SP)
+└─ Blocked by: LAD-101, LAD-102
+```
+
+### Sprint 계획 시 병렬 배정 전략
+
+#### 전략 1: Critical Path 식별
+
+**정의**: 프로젝트 완료까지 가장 긴 경로
+
+```
+Critical Path (4일):
+API 명세 (0.5일) → BE 구현 (3일) → 통합 (0.5일)
+
+Parallel Path (2.5일):
+API 명세 (0.5일) → FE Mock (2일)
+```
+
+**Sprint 배정**:
+1. Critical Path 작업 우선 배정
+2. 유휴 리소스에 Parallel Path 배정
+
+#### 전략 2: 팀원별 역량 매칭
+
+```yaml
+Sprint 1 계획:
+  개발자_A (Backend 전문):
+    - LAD-101: [BE] 로그인 API (3일)
+    - LAD-104: [BE] 토큰 발급 (2일)
+
+  개발자_B (Frontend 전문):
+    - LAD-102: [FE] 로그인 UI + Mock (2일) ⚡ A와 병렬
+    - LAD-105: [FE] 소셜 로그인 버튼 (1일)
+    - LAD-103: [FE] API 연동 (0.5일) ← A 완료 후
+
+  개발자_C (Full-stack):
+    - LAD-106: [BE] 회원가입 API (3일) ⚡ A, B와 병렬
+    - LAD-107: [FE] 회원가입 UI (2일)
+```
+
+#### 전략 3: 단계별 Wave 배정
+
+```
+Wave 1 (선행 작업):
+├─ LAD-100: API 명세 작성
+└─ LAD-110: DB 스키마 설계
+
+Wave 2 (병렬 가능):
+├─ LAD-101: [BE] API 구현
+├─ LAD-102: [FE] Mock UI
+└─ LAD-120: [BE] 다른 API 구현 ⚡
+
+Wave 3 (통합):
+├─ LAD-103: [FE] API 연동
+└─ LAD-104: E2E 테스트
+```
+
+### 병렬 처리 안티패턴 (하지 말 것)
+
+#### ❌ 안티패턴 1: API 없이 FE 시작
+
+```markdown
+나쁜 예시:
+Week 1: FE가 임의로 API 구조 가정하고 개발
+Week 2: BE가 다른 구조로 API 개발
+Week 3: FE가 전체 수정 (리팩토링 2주)
+```
+
+**해결책**: API 계약 먼저 작성
+
+#### ❌ 안티패턴 2: 같은 파일 동시 수정
+
+```markdown
+나쁜 예시:
+개발자 A: UserService.kt 수정 (로그인)
+개발자 B: UserService.kt 수정 (회원가입)
+→ Merge Conflict 발생
+```
+
+**해결책**: 파일 단위로 작업 분리
+
+#### ❌ 안티패턴 3: 암묵적 의존성 무시
+
+```markdown
+나쁜 예시:
+Story 1: User Entity 수정 (팀원 A)
+Story 2: Order Entity 추가 (팀원 B, User 참조)
+→ Story 2가 Story 1 변경사항 모르고 개발
+→ 통합 시 에러 발생
+```
+
+**해결책**: Blocked by 명시
+
+### 병렬 처리 성공 체크리스트
+
+Sprint 계획 시 확인:
+- [ ] API 계약이 사전에 작성되었는가?
+- [ ] 의존성 그래프가 명확한가?
+- [ ] Critical Path를 식별했는가?
+- [ ] 팀원별 작업 배정이 겹치지 않는가?
+- [ ] Mock 데이터 전략이 있는가?
+- [ ] 통합 일정이 확보되었는가?
+
 ## 📊 티켓 생성 예시
 
 ### 예시 1: 이커머스 프로젝트

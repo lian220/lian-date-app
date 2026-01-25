@@ -36,11 +36,12 @@ export default function TestCurationPage() {
         <h1 className="text-3xl font-bold mb-8">장소 큐레이션 테스트</h1>
 
         <div className="bg-white p-6 rounded-lg shadow mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="place-id" className="block text-sm font-medium text-gray-700 mb-2">
             장소 ID (카카오 장소 ID)
           </label>
           <div className="flex gap-2">
             <input
+              id="place-id"
               type="text"
               value={placeId}
               onChange={(e) => setPlaceId(e.target.value)}

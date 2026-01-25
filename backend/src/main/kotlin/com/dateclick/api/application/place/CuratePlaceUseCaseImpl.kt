@@ -6,13 +6,11 @@ import com.dateclick.api.domain.place.vo.PlaceCurationInfo
 import com.dateclick.api.domain.place.vo.PlaceId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 /**
  * 장소 큐레이션 Use Case 구현체
  */
 @Service
-@Transactional(readOnly = true)
 class CuratePlaceUseCaseImpl(
     private val placeSearchPort: PlaceSearchPort,
     private val placeCurationPort: PlaceCurationPort

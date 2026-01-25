@@ -19,7 +19,7 @@ import org.springframework.test.context.TestPropertySource
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "openai.api-key=test-key-for-curation-test",
-        "openai.model=gpt-4",
+        "openai.model=gpt-4o-mini",
         "openai.max-tokens=2000",
         "openai.temperature=0.7"
     ]

@@ -18,6 +18,25 @@ test.describe('AI Place Curation E2E Test', () => {
   });
 
   test('should fetch and display curation data for valid place ID', async ({ page }) => {
+    // Mock API response for valid place ID
+    await page.route('**/api/v1/places/1/curation', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            dateScore: 8,
+            moodTags: ['#로맨틱', '#분위기좋은', '#데이트'],
+            priceRange: 50000,
+            bestTime: '저녁 6-9시',
+            recommendation: '연인과 함께하기 좋은 분위기 있는 장소입니다'
+          },
+          error: null
+        })
+      });
+    });
+
     await page.goto('http://localhost:3000/test-curation');
 
     // Enter valid place ID
@@ -51,6 +70,22 @@ test.describe('AI Place Curation E2E Test', () => {
   });
 
   test('should display error for invalid place ID', async ({ page }) => {
+    // Mock API response for invalid place ID
+    await page.route('**/api/v1/places/*/curation', async (route) => {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: false,
+          data: null,
+          error: {
+            code: 'PLACE_NOT_FOUND',
+            message: '장소를 찾을 수 없습니다: 999999999'
+          }
+        })
+      });
+    });
+
     await page.goto('http://localhost:3000/test-curation');
 
     // Enter invalid place ID

@@ -317,3 +317,22 @@ See `docs/prd.md` for detailed Product Requirements Document including:
 **Backend**:
 - Rebuild required: `docker-compose restart backend`
 - Or use `./gradlew bootRun` outside Docker for faster iteration
+
+## Git Commit Guidelines
+
+When creating commits for this project:
+
+- **NO Co-Authored-By tags**: Do not include `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>` in commit messages
+- **Format**: Use Conventional Commits format: `type(scope): subject`
+- **Types**: feat, fix, docs, style, refactor, test, chore
+- **Language**: Korean for commit messages
+- **Issue Reference**: Include `[ISSUE-ID]` at the end when applicable (e.g., `[LAD-42]`)
+
+**Example**:
+```
+feat(course): AI 기반 데이트 코스 생성 기능 추가 [LAD-42]
+
+- OpenAI API 통합
+- Kakao Maps API 연동
+- 예산 기반 필터링 로직 구현
+```

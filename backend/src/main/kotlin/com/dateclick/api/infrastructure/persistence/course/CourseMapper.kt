@@ -23,11 +23,12 @@ object CourseMapper {
             budget = Budget(entity.budgetMin..entity.budgetMax),
             places = entity.places.map { toCoursePlaceDomain(it) },
             routes = entity.routes.map { toRouteDomain(it) },
-            createdAt = entity.createdAt
+            createdAt = entity.createdAt,
+            sessionId = entity.sessionId
         )
     }
 
-    fun toEntity(domain: Course, sessionId: String? = null): CourseEntity {
+    fun toEntity(domain: Course): CourseEntity {
         val courseEntity = CourseEntity(
             id = domain.id.value,
             regionId = domain.regionId.value,
@@ -36,7 +37,7 @@ object CourseMapper {
             budgetMin = domain.budget.value.first,
             budgetMax = domain.budget.value.last,
             createdAt = domain.createdAt,
-            sessionId = sessionId
+            sessionId = domain.sessionId
         )
 
         // Set bidirectional relationships
@@ -97,7 +98,7 @@ object CourseMapper {
             to = entity.toOrder,
             distance = entity.distance,
             duration = entity.duration,
-            transportType = TransportType.valueOf(entity.transportType.uppercase()),
+            transportType = TransportType.fromCode(entity.transportType),
             description = entity.description
         )
     }

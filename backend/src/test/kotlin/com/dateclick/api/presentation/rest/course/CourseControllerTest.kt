@@ -99,11 +99,46 @@ class CourseControllerTest {
         }
     }
 
+    @Test
+    fun `POST courses regenerate - 코스 재생성 성공`() {
+        // Given
+        val courseId = "course-123"
+        val request = RegenerateCourseRequest(
+            excludePlaceIds = listOf("place-1")
+        )
+
+        val mockCourse = createMockCourse()
+        val mockResponse = createMockResponse()
+
+        every { courseMapper.toRegenerateCommand(any(), any(), any()) } returns createMockRegenerateCommand()
+        every { regenerateCourseUseCase.execute(any()) } returns mockCourse
+        every { courseMapper.toResponse(any()) } returns mockResponse
+
+        // When & Then
+        mockMvc.post("/v1/courses/$courseId/regenerate") {
+            header("X-Session-Id", "test-session-123")
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(request)
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.success") { value(true) }
+            jsonPath("$.data.courseId") { exists() }
+        }
+
+        verify(exactly = 1) { regenerateCourseUseCase.execute(any()) }
+    }
+
     private fun createMockCommand() = com.dateclick.api.application.course.CreateCourseCommand(
         regionId = RegionId("gangnam"),
         dateType = DateType.ROMANTIC,
         budget = Budget.from("30000-50000"),
         specialRequest = "조용한 곳으로",
+        sessionId = "test-session-123"
+    )
+
+    private fun createMockRegenerateCommand() = com.dateclick.api.application.course.RegenerateCourseCommand(
+        originalCourseId = CourseId("course_123"),
+        excludePlaceIds = listOf("place-1"),
         sessionId = "test-session-123"
     )
 
@@ -204,7 +239,8 @@ class CourseControllerTest {
             budget = Budget.from("30000-50000"),
             places = places,
             routes = routes,
-            createdAt = Instant.now()
+            createdAt = Instant.now(),
+            sessionId = "test-session-123"
         )
     }
 }

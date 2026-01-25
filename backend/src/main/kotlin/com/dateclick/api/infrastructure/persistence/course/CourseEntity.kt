@@ -29,8 +29,7 @@ class CourseEntity(
     @OneToMany(
         mappedBy = "course",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true,
-        fetch = FetchType.EAGER
+        orphanRemoval = true
     )
     @OrderBy("order ASC")
     val places: List<CoursePlaceEntity> = emptyList(),
@@ -38,8 +37,7 @@ class CourseEntity(
     @OneToMany(
         mappedBy = "course",
         cascade = [CascadeType.ALL],
-        orphanRemoval = true,
-        fetch = FetchType.EAGER
+        orphanRemoval = true
     )
     @OrderBy("fromOrder ASC")
     val routes: List<RouteEntity> = emptyList(),

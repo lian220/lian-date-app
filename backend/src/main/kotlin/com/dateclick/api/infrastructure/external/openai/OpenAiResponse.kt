@@ -32,6 +32,7 @@ data class Usage(
 
 /**
  * AI 코스 추천 응답 (GPT-4가 생성하는 JSON 형식)
+ * MVP: AI가 장소 정보를 포함한 전체 코스를 생성
  */
 data class AiCourseResponse(
     val places: List<AiPlaceRecommendation>,
@@ -39,9 +40,16 @@ data class AiCourseResponse(
 )
 
 data class AiPlaceRecommendation(
-    @JsonProperty("place_id")
-    val placeId: String,
     val order: Int,
+    val name: String,
+    val category: String,
+    @JsonProperty("category_detail")
+    val categoryDetail: String?,
+    val address: String,
+    @JsonProperty("road_address")
+    val roadAddress: String?,
+    val location: LocationDto,
+    val phone: String?,
     @JsonProperty("recommend_reason")
     val recommendReason: String,
     @JsonProperty("estimated_cost")
@@ -50,4 +58,9 @@ data class AiPlaceRecommendation(
     val estimatedDuration: Int,
     @JsonProperty("recommended_time")
     val recommendedTime: String?
+)
+
+data class LocationDto(
+    val lat: Double,
+    val lng: Double
 )

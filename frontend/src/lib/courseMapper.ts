@@ -1,32 +1,18 @@
 import { DateTypeId } from '@/types/dateType';
 import { BudgetRangeId } from '@/types/budget';
-import { ApiDateType, ApiBudget } from '@/types/course';
 
 /**
- * 프론트엔드 DateTypeId를 백엔드 ApiDateType으로 매핑
+ * 프론트엔드 DateTypeId를 백엔드가 기대하는 형식으로 그대로 반환
+ * (DateTypeId는 이미 백엔드 형식과 동일: "romantic", "activity" 등)
  */
-export function mapDateTypeToApi(dateTypeId: DateTypeId): ApiDateType {
-  const mapping: Record<DateTypeId, ApiDateType> = {
-    romantic: 'CAFE_TOUR',
-    activity: 'ACTIVITY',
-    food: 'FOOD_TOUR',
-    culture: 'CULTURE',
-    healing: 'HEALING',
-  };
-
-  return mapping[dateTypeId];
+export function mapDateTypeToApi(dateTypeId: DateTypeId): string {
+  return dateTypeId;
 }
 
 /**
- * 프론트엔드 BudgetRangeId를 백엔드 ApiBudget으로 매핑
+ * 프론트엔드 BudgetRangeId를 백엔드가 기대하는 형식으로 그대로 반환
+ * (BudgetRangeId는 이미 백엔드 형식과 동일: "0-30000", "30000-50000" 등)
  */
-export function mapBudgetToApi(budgetId: BudgetRangeId): ApiBudget {
-  const mapping: Record<BudgetRangeId, ApiBudget> = {
-    low: 'UNDER_30K',
-    medium: '30K_TO_50K',
-    high: '50K_TO_100K',
-    premium: 'OVER_100K',
-  };
-
-  return mapping[budgetId];
+export function mapBudgetToApi(budgetId: BudgetRangeId): string {
+  return budgetId;
 }

@@ -12,8 +12,8 @@ class WebClientConfig {
 
     @Bean
     fun restClientBuilder(): RestClient.Builder {
-        val connectTimeout = Duration.ofSeconds(5)
-        val readTimeout = Duration.ofSeconds(10)
+        val connectTimeout = Duration.ofSeconds(10)
+        val readTimeout = Duration.ofSeconds(60)
 
         val httpClient = HttpClient.newBuilder()
             .connectTimeout(connectTimeout)

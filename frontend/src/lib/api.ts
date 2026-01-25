@@ -17,6 +17,23 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const API_TIMEOUT = 30000; // 30초
 
 /**
+ * 세션 ID 생성 (UUID v4)
+ */
+function generateSessionId(): string {
+  if (typeof window !== 'undefined') {
+    // 브라우저 환경에서는 sessionStorage 사용
+    let sessionId = sessionStorage.getItem('session-id');
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      sessionStorage.setItem('session-id', sessionId);
+    }
+    return sessionId;
+  }
+  // 서버 사이드에서는 매번 새로운 ID 생성
+  return crypto.randomUUID();
+}
+
+/**
  * 권역 목록 조회 API
  * GET /v1/regions
  *
@@ -61,6 +78,7 @@ export async function createCourse(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Session-Id': generateSessionId(),
       },
       body: JSON.stringify(request),
       signal: controller.signal,
@@ -86,7 +104,8 @@ export async function createCourse(
       }
     }
 
-    return await response.json();
+    const body = await response.json();
+    return body.data;
   } catch (error) {
     clearTimeout(timeoutId);
 
@@ -132,6 +151,7 @@ export async function regenerateCourse(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Session-Id': generateSessionId(),
         },
         signal: controller.signal,
       }
@@ -157,7 +177,8 @@ export async function regenerateCourse(
       }
     }
 
-    return await response.json();
+    const body = await response.json();
+    return body.data;
   } catch (error) {
     clearTimeout(timeoutId);
 

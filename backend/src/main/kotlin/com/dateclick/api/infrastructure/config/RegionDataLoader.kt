@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component
  * @see db.migration.V2__insert_regions_data.sql for production-safe idempotent inserts with ON CONFLICT DO NOTHING
  */
 @Component
-@Profile("local")
 class RegionDataLoader(
     private val regionJpaRepository: RegionJpaRepository
 ) : ApplicationRunner {

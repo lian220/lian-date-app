@@ -5,7 +5,7 @@ import com.dateclick.api.domain.course.port.outbound.AiGenerationPort
 import com.dateclick.api.domain.course.port.outbound.AiRecommendedPlace
 import com.dateclick.api.domain.course.vo.Budget
 import com.dateclick.api.domain.course.vo.DateType
-import com.dateclick.api.domain.place.entity.Place
+import com.dateclick.api.domain.place.vo.Location
 import com.dateclick.api.domain.region.entity.Region
 import com.dateclick.api.infrastructure.config.OpenAiProperties
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -30,15 +30,13 @@ class OpenAiGenerationAdapter(
         region: Region,
         dateType: DateType,
         budget: Budget,
-        specialRequest: String?,
-        candidatePlaces: List<Place>
+        specialRequest: String?
     ): AiCourseRecommendation {
         logger.info(
-            "Generating AI course recommendation for region={}, dateType={}, budget={}, candidatePlaces={}",
+            "Generating AI course recommendation for region={}, dateType={}, budget={}",
             region.name,
             dateType,
-            budget.toDisplayName(),
-            candidatePlaces.size
+            budget.toDisplayName()
         )
 
         try {
@@ -47,8 +45,7 @@ class OpenAiGenerationAdapter(
                 region = region,
                 dateType = dateType,
                 budget = budget,
-                specialRequest = specialRequest,
-                candidatePlaces = candidatePlaces
+                specialRequest = specialRequest
             )
 
             // 2. OpenAI API 요청 생성
@@ -70,8 +67,14 @@ class OpenAiGenerationAdapter(
             val recommendation = AiCourseRecommendation(
                 places = aiCourseResponse.places.map { aiPlace ->
                     AiRecommendedPlace(
-                        placeId = aiPlace.placeId,
                         order = aiPlace.order,
+                        name = aiPlace.name,
+                        category = aiPlace.category,
+                        categoryDetail = aiPlace.categoryDetail,
+                        address = aiPlace.address,
+                        roadAddress = aiPlace.roadAddress,
+                        location = Location(lat = aiPlace.location.lat, lng = aiPlace.location.lng),
+                        phone = aiPlace.phone,
                         recommendReason = aiPlace.recommendReason,
                         estimatedCost = aiPlace.estimatedCost,
                         estimatedDuration = aiPlace.estimatedDuration,

@@ -135,7 +135,7 @@ export default function CourseTimeline({
                       </span>
                     </div>
 
-                    {place.estimatedTime && (
+                    {place.estimatedDuration && (
                       <div className="flex items-center gap-1.5">
                         <svg
                           className="h-4 w-4 text-gray-400"
@@ -151,7 +151,7 @@ export default function CourseTimeline({
                           />
                         </svg>
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          체류 {formatDuration(place.estimatedTime)}
+                          체류 {formatDuration(place.estimatedDuration)}
                         </span>
                       </div>
                     )}

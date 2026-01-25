@@ -33,3 +33,13 @@ logging:
   level:
     root: INFO
     com.dateclick.api: DEBUG
+
+# External API Configuration
+kakao:
+  api:
+    rest-key: ${KAKAO_REST_API_KEY}
+    javascript-key: ${KAKAO_JAVASCRIPT_KEY}
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY}

@@ -1,6 +1,7 @@
 package com.dateclick.api.presentation.rest.course
 
 import com.dateclick.api.application.course.CreateCourseUseCase
+import com.dateclick.api.application.course.RegenerateCourseUseCase
 import com.dateclick.api.domain.course.entity.Course
 import com.dateclick.api.domain.course.entity.CoursePlace
 import com.dateclick.api.domain.course.entity.Route
@@ -33,6 +34,9 @@ class CourseControllerTest {
 
     @MockkBean
     private lateinit var createCourseUseCase: CreateCourseUseCase
+
+    @MockkBean
+    private lateinit var regenerateCourseUseCase: RegenerateCourseUseCase
 
     @MockkBean
     private lateinit var courseMapper: CourseMapper

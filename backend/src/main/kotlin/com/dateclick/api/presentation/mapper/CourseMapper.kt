@@ -1,13 +1,16 @@
 package com.dateclick.api.presentation.mapper
 
 import com.dateclick.api.application.course.CreateCourseCommand
+import com.dateclick.api.application.course.RegenerateCourseCommand
 import com.dateclick.api.domain.course.entity.Course
 import com.dateclick.api.domain.course.vo.Budget
+import com.dateclick.api.domain.course.vo.CourseId
 import com.dateclick.api.domain.course.vo.DateType
 import com.dateclick.api.domain.region.vo.RegionId
 import com.dateclick.api.presentation.rest.course.CoursePlaceResponse
 import com.dateclick.api.presentation.rest.course.CourseResponse
 import com.dateclick.api.presentation.rest.course.CreateCourseRequest
+import com.dateclick.api.presentation.rest.course.RegenerateCourseRequest
 import com.dateclick.api.presentation.rest.course.RouteResponse
 import org.springframework.stereotype.Component
 
@@ -20,6 +23,18 @@ class CourseMapper {
             dateType = DateType.fromCode(request.dateType),
             budget = Budget.from(request.budget),
             specialRequest = request.specialRequest,
+            sessionId = sessionId
+        )
+    }
+
+    fun toRegenerateCommand(
+        courseId: String,
+        request: RegenerateCourseRequest?,
+        sessionId: String
+    ): RegenerateCourseCommand {
+        return RegenerateCourseCommand(
+            originalCourseId = CourseId(courseId),
+            excludePlaceIds = request?.excludePlaceIds ?: emptyList(),
             sessionId = sessionId
         )
     }

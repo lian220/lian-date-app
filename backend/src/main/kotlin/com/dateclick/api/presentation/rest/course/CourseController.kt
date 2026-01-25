@@ -1,6 +1,7 @@
 package com.dateclick.api.presentation.rest.course
 
 import com.dateclick.api.application.course.CreateCourseUseCase
+import com.dateclick.api.application.course.RegenerateCourseUseCase
 import com.dateclick.api.presentation.mapper.CourseMapper
 import com.dateclick.api.presentation.rest.common.ApiResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/v1/courses")
 class CourseController(
     private val createCourseUseCase: CreateCourseUseCase?,
+    private val regenerateCourseUseCase: RegenerateCourseUseCase,
     private val courseMapper: CourseMapper
 ) {
 
@@ -43,14 +45,17 @@ class CourseController(
         throw NotImplementedError("To be implemented")
     }
 
+    @Operation(summary = "코스 재생성", description = "기존 코스와 다른 새로운 코스 생성")
     @PostMapping("/{courseId}/regenerate")
     fun regenerateCourse(
         @RequestHeader("X-Session-Id") sessionId: String,
         @PathVariable courseId: String,
         @RequestBody request: RegenerateCourseRequest?
     ): ApiResponse<CourseResponse> {
-        // TODO: Implement with RegenerateCourseUseCase
-        throw NotImplementedError("To be implemented")
+        val command = courseMapper.toRegenerateCommand(courseId, request, sessionId)
+        val course = regenerateCourseUseCase.execute(command)
+        val response = courseMapper.toResponse(course)
+        return ApiResponse.success(response)
     }
 
     @PostMapping("/{courseId}/ratings")

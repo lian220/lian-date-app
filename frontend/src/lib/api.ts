@@ -4,6 +4,11 @@ import {
   CourseCreateResponse,
   CourseCreateError,
 } from '@/types/course';
+import {
+  PlaceCurationResponse,
+  PlaceCurationInfo,
+  PlaceCurationError,
+} from '@/types/place';
 
 /**
  * 백엔드 API 기본 URL
@@ -195,6 +200,67 @@ export async function regenerateCourse(
     }
 
     const unknownError: CourseCreateError = {
+      message: '알 수 없는 오류가 발생했습니다.',
+    };
+    throw unknownError;
+  }
+}
+
+/**
+ * 장소 큐레이션 조회 API
+ * GET /api/v1/places/{placeId}/curation
+ *
+ * @param placeId 장소 ID (카카오 장소 ID)
+ * @returns 장소 큐레이션 정보
+ * @throws PlaceCurationError API 호출 실패 시 에러
+ *
+ * 의존성: [BE] 장소 큐레이션 API (LAD-26) 완료
+ */
+export async function fetchPlaceCuration(
+  placeId: string
+): Promise<PlaceCurationInfo> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/places/${placeId}/curation`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      try {
+        const body: PlaceCurationResponse = await response.json();
+        const error: PlaceCurationError = {
+          message:
+            body.error?.message ||
+            `장소 큐레이션 조회에 실패했습니다: ${response.statusText}`,
+          code: body.error?.code || response.status.toString(),
+        };
+        throw error;
+      } catch (parseError) {
+        // JSON 파싱 실패 시 기본 에러
+        const error: PlaceCurationError = {
+          message: `장소 큐레이션 조회에 실패했습니다: ${response.statusText}`,
+          code: response.status.toString(),
+        };
+        throw error;
+      }
+    }
+
+    const body: PlaceCurationResponse = await response.json();
+    if (!body.data) {
+      throw new Error('큐레이션 데이터가 없습니다');
+    }
+    return body.data;
+  } catch (error) {
+    if ((error as PlaceCurationError).message) {
+      throw error;
+    }
+
+    const unknownError: PlaceCurationError = {
       message: '알 수 없는 오류가 발생했습니다.',
     };
     throw unknownError;

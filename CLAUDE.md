@@ -221,6 +221,21 @@ docker compose up -d backend frontend
 # docker compose -p lian-date-app-feature-x up -d backend
 ```
 
+**Port Conflict Prevention (Recommended for Testing)**:
+```bash
+# Before running tests, check for port conflicts
+./scripts/check-ports.sh
+
+# Run tests with automatic port conflict detection
+./scripts/run-tests.sh [frontend|backend|e2e|all]
+```
+
+The `check-ports.sh` script will:
+- ✅ Detect if ports 8080/3000 are already in use by another worktree
+- ✅ Offer to automatically assign different ports to avoid conflicts
+- ✅ Update `.env` file with available ports
+- ✅ Prevent test failures due to port conflicts
+
 **Benefits**:
 - ✅ Single shared PostgreSQL database across all worktrees
 - ✅ No data duplication or sync issues

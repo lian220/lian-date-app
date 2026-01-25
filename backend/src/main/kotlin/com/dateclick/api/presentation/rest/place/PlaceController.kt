@@ -34,15 +34,7 @@ class PlaceController(
             val curationInfo = curatePlaceUseCase.execute(PlaceId(placeId))
 
             ResponseEntity.ok(
-                ApiResponse.success(
-                    PlaceCurationResponse(
-                        dateScore = curationInfo.dateScore,
-                        moodTags = curationInfo.moodTags,
-                        priceRange = curationInfo.priceRange,
-                        bestTime = curationInfo.bestTime,
-                        recommendation = curationInfo.recommendation
-                    )
-                )
+                ApiResponse.success(PlaceCurationResponse.from(curationInfo))
             )
         } catch (ex: PlaceNotFoundException) {
             logger.warn("Place not found: {}", placeId)

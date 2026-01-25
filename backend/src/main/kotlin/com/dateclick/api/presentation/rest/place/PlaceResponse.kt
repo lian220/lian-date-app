@@ -1,5 +1,6 @@
 package com.dateclick.api.presentation.rest.place
 
+import com.dateclick.api.domain.place.vo.PlaceCurationInfo
 import io.swagger.v3.oas.annotations.media.Schema
 
 /**
@@ -21,4 +22,17 @@ data class PlaceCurationResponse(
 
     @Schema(description = "한 줄 추천 이유", example = "분위기 좋은 루프탑에서 야경을 즐기며 데이트하기 좋은 곳")
     val recommendation: String
-)
+) {
+    companion object {
+        /**
+         * Domain PlaceCurationInfo를 Response DTO로 변환
+         */
+        fun from(info: PlaceCurationInfo) = PlaceCurationResponse(
+            dateScore = info.dateScore,
+            moodTags = info.moodTags,
+            priceRange = info.priceRange,
+            bestTime = info.bestTime,
+            recommendation = info.recommendation
+        )
+    }
+}

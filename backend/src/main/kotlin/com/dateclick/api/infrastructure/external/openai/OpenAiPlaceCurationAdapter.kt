@@ -62,6 +62,9 @@ class OpenAiPlaceCurationAdapter(
 
             return curationInfo
 
+        } catch (ex: PlaceCurationException) {
+            // parseResponse()에서 발생한 PlaceCurationException은 그대로 전파
+            throw ex
         } catch (ex: OpenAiException) {
             logger.error("Failed to curate place due to OpenAI API error", ex)
             throw PlaceCurationException("장소 큐레이션 중 OpenAI API 오류가 발생했습니다: ${ex.message}", ex)

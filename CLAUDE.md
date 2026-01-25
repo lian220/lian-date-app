@@ -190,6 +190,48 @@ SPRING_PROFILES_ACTIVE=local
 - Database schemas are managed by JPA (`ddl-auto: validate`)
 - Initialization scripts: `backend/init-scripts/` (mounted to PostgreSQL container)
 
+### Git Worktree Environment
+
+The project supports multiple git worktrees with shared PostgreSQL database.
+
+**Setup (One-time)**:
+```bash
+# Create shared Docker network (required once)
+docker network create dateclick-shared-network
+```
+
+**Main Worktree (default ports)**:
+```bash
+# Start shared PostgreSQL
+docker compose --profile db up -d postgres
+
+# Start backend (port 8080) and frontend (port 3000)
+docker compose up -d backend frontend
+```
+
+**Additional Worktrees (different ports)**:
+```bash
+# In worktree directory, create .env with different ports
+echo "BACKEND_PORT=8081" >> .env
+echo "FRONTEND_PORT=3001" >> .env
+
+# Start only backend/frontend (shares main worktree's PostgreSQL)
+docker compose up -d backend frontend
+# Or use project name to avoid conflicts:
+# docker compose -p lian-date-app-feature-x up -d backend
+```
+
+**Benefits**:
+- ✅ Single shared PostgreSQL database across all worktrees
+- ✅ No data duplication or sync issues
+- ✅ Independent backend/frontend per worktree
+- ✅ Different ports avoid conflicts (8080, 8081, 8082, ...)
+
+**Network Architecture**:
+- All containers connect to `dateclick-shared-network` (external network)
+- PostgreSQL runs once with fixed name `dateclick-postgres`
+- Backend/frontend containers auto-named by project (no conflicts)
+
 ## Key Business Domains
 
 ### Course (데이트 코스)

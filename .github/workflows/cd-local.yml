@@ -1,0 +1,163 @@
+name: CD - Deploy to Local Environment
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/cd-local.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ENVIRONMENT: local
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-push-backend:
+    name: Build and Push Backend Image
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/lian-date-local-backend
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  build-and-push-frontend:
+    name: Build and Push Frontend Image
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/lian-date-local-frontend
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  deploy-to-ecs:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    needs: [build-and-push-backend, build-and-push-frontend]
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update Backend ECS service
+        run: |
+          aws ecs update-service \
+            --cluster lian-date-local-cluster \
+            --service lian-date-local-backend-service \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Update Frontend ECS service
+        run: |
+          aws ecs update-service \
+            --cluster lian-date-local-cluster \
+            --service lian-date-local-frontend-service \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for backend deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster lian-date-local-cluster \
+            --services lian-date-local-backend-service \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for frontend deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster lian-date-local-cluster \
+            --services lian-date-local-frontend-service \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Get deployment status
+        run: |
+          echo "Backend service status:"
+          aws ecs describe-services \
+            --cluster lian-date-local-cluster \
+            --services lian-date-local-backend-service \
+            --query 'services[0].deployments[0]' \
+            --region ${{ env.AWS_REGION }}
+
+          echo "Frontend service status:"
+          aws ecs describe-services \
+            --cluster lian-date-local-cluster \
+            --services lian-date-local-frontend-service \
+            --query 'services[0].deployments[0]' \
+            --region ${{ env.AWS_REGION }}

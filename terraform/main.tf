@@ -158,3 +158,14 @@ module "monitoring" {
 
   tags = var.common_tags
 }
+
+# GitHub OIDC Module (for CI/CD)
+module "github_oidc" {
+  source = "./modules/github-oidc"
+
+  name_prefix = local.name_prefix
+  github_org  = var.github_org
+  github_repo = var.github_repo
+
+  tags = var.common_tags
+}

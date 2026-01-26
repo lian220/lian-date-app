@@ -105,6 +105,19 @@ variable "alarm_email" {
   type        = string
 }
 
+# GitHub Configuration (for CI/CD)
+variable "github_org" {
+  description = "GitHub organization or username"
+  type        = string
+  default     = "your-github-org"
+}
+
+variable "github_repo" {
+  description = "GitHub repository name"
+  type        = string
+  default     = "lian-date-app"
+}
+
 # Tags
 variable "common_tags" {
   description = "Common tags for all resources"

@@ -67,3 +67,19 @@ output "frontend_repository_url" {
   description = "Frontend ECR repository URL"
   value       = module.ecr.frontend_repository_url
 }
+
+# RDS Outputs
+output "db_instance_endpoint" {
+  description = "RDS instance endpoint"
+  value       = module.rds.db_instance_endpoint
+}
+
+output "db_instance_address" {
+  description = "RDS instance address"
+  value       = module.rds.db_instance_address
+}
+
+output "db_name" {
+  description = "Database name"
+  value       = module.rds.db_name
+}

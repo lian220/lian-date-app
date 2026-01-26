@@ -64,3 +64,23 @@ module "ecr" {
 
   tags = var.common_tags
 }
+
+# RDS Module
+module "rds" {
+  source = "./modules/rds"
+
+  name_prefix       = local.name_prefix
+  vpc_id            = module.network.vpc_id
+  subnet_ids        = module.network.private_subnet_ids
+  security_group_id = module.security.rds_security_group_id
+
+  db_instance_class = var.db_instance_class
+  db_name           = var.db_name
+  db_username       = var.db_username
+  db_password       = var.db_password
+
+  multi_az              = var.environment == "prod" ? true : false
+  skip_final_snapshot   = var.environment == "local" ? true : false
+
+  tags = var.common_tags
+}

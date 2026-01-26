@@ -99,3 +99,29 @@ output "frontend_target_group_arn" {
   description = "Frontend target group ARN"
   value       = module.alb.frontend_target_group_arn
 }
+
+# ECS Outputs
+output "ecs_cluster_name" {
+  description = "ECS cluster name"
+  value       = module.ecs.cluster_name
+}
+
+output "backend_service_name" {
+  description = "Backend ECS service name"
+  value       = module.ecs.backend_service_name
+}
+
+output "frontend_service_name" {
+  description = "Frontend ECS service name"
+  value       = module.ecs.frontend_service_name
+}
+
+output "backend_log_group_name" {
+  description = "Backend CloudWatch log group name"
+  value       = module.ecs.backend_log_group_name
+}
+
+output "frontend_log_group_name" {
+  description = "Frontend CloudWatch log group name"
+  value       = module.ecs.frontend_log_group_name
+}

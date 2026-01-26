@@ -54,6 +54,31 @@ variable "frontend_memory" {
   default     = 512
 }
 
+# ECS Configuration
+variable "desired_count" {
+  description = "Desired number of ECS tasks"
+  type        = number
+  default     = 1
+}
+
+variable "min_capacity" {
+  description = "Minimum number of tasks for auto scaling"
+  type        = number
+  default     = 1
+}
+
+variable "max_capacity" {
+  description = "Maximum number of tasks for auto scaling"
+  type        = number
+  default     = 4
+}
+
+variable "spring_profiles_active" {
+  description = "Spring Boot active profiles"
+  type        = string
+  default     = "local"
+}
+
 # Database Configuration
 variable "db_instance_class" {
   description = "RDS instance class"

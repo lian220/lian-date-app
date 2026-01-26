@@ -90,7 +90,7 @@ resource "aws_db_instance" "postgres" {
   monitoring_role_arn             = aws_iam_role.rds_monitoring.arn
 
   # Performance Insights
-  performance_insights_enabled    = true
+  performance_insights_enabled          = true
   performance_insights_retention_period = 7
 
   # Deletion Protection

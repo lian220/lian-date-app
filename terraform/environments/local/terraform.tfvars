@@ -17,6 +17,12 @@ backend_memory = 512
 frontend_cpu    = 256
 frontend_memory = 512
 
+# ECS Configuration
+desired_count          = 1
+min_capacity           = 1
+max_capacity           = 2
+spring_profiles_active = "local"
+
 # Database Configuration
 db_instance_class = "db.t4g.micro"
 db_name           = "dateclick"

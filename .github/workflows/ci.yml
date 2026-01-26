@@ -125,17 +125,22 @@ jobs:
         working-directory: ./frontend
         run: npm run lint
 
-      - name: Run tests
+      - name: Build frontend
         working-directory: ./frontend
-        run: npm test -- --coverage
+        run: npm run build
 
-      - name: Upload test coverage
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: frontend/coverage/lcov.info
-          flags: frontend
-          fail_ci_if_error: false
+      # TODO: Add frontend tests when test framework is set up
+      # - name: Run tests
+      #   working-directory: ./frontend
+      #   run: npm test -- --coverage
+      #
+      # - name: Upload test coverage
+      #   uses: codecov/codecov-action@v4
+      #   if: always()
+      #   with:
+      #     files: frontend/coverage/lcov.info
+      #     flags: frontend
+      #     fail_ci_if_error: false
 
   lint-check:
     name: Code Quality

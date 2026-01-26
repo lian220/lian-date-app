@@ -44,3 +44,14 @@ module "network" {
 
   tags = var.common_tags
 }
+
+# Security Module
+module "security" {
+  source = "./modules/security"
+
+  name_prefix = local.name_prefix
+  vpc_id      = module.network.vpc_id
+  vpc_cidr    = module.network.vpc_cidr
+
+  tags = var.common_tags
+}

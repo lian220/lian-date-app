@@ -40,3 +40,19 @@ output "nat_gateway_eips" {
   description = "NAT Gateway public IPs"
   value       = module.network.nat_gateway_eips
 }
+
+# Security Group Outputs
+output "alb_security_group_id" {
+  description = "ALB security group ID"
+  value       = module.security.alb_security_group_id
+}
+
+output "ecs_security_group_id" {
+  description = "ECS security group ID"
+  value       = module.security.ecs_security_group_id
+}
+
+output "rds_security_group_id" {
+  description = "RDS security group ID"
+  value       = module.security.rds_security_group_id
+}

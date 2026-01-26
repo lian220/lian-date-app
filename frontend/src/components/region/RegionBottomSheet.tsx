@@ -21,15 +21,12 @@ export default function RegionBottomSheet({
   initialRegion,
 }: RegionBottomSheetProps) {
   const [activeTab, setActiveTab] = useState<AreaType>('SEOUL');
+  // Note: If you need to reset selectedRegion when initialRegion changes,
+  // pass a unique key prop to this component from parent to remount it
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(
     initialRegion || null
   );
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Sync with parent prop changes
-  useEffect(() => {
-    setSelectedRegion(initialRegion || null);
-  }, [initialRegion]);
 
   useEffect(() => {
     if (isOpen) {

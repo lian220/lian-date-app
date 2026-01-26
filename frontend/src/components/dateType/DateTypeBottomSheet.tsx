@@ -18,14 +18,11 @@ export default function DateTypeBottomSheet({
   onSelect,
   initialDateType,
 }: DateTypeBottomSheetProps) {
+  // Note: If you need to reset selectedDateType when initialDateType changes,
+  // pass a unique key prop to this component from parent to remount it
   const [selectedDateType, setSelectedDateType] = useState<DateType | null>(
     initialDateType || null
   );
-
-  // Sync with parent prop changes
-  useEffect(() => {
-    setSelectedDateType(initialDateType || null);
-  }, [initialDateType]);
 
   useEffect(() => {
     if (isOpen) {

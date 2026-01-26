@@ -99,7 +99,7 @@ export async function createCourse(
           code: body.error?.code || body.code || response.status.toString(),
         };
         throw error;
-      } catch (parseError) {
+      } catch {
         // JSON 파싱 실패 시 기본 에러
         const error: CourseCreateError = {
           message: `코스 생성에 실패했습니다: ${response.statusText}`,
@@ -172,7 +172,7 @@ export async function regenerateCourse(
           code: body.error?.code || body.code || response.status.toString(),
         };
         throw error;
-      } catch (parseError) {
+      } catch {
         // JSON 파싱 실패 시 기본 에러
         const error: CourseCreateError = {
           message: `코스 재생성에 실패했습니다: ${response.statusText}`,
@@ -240,7 +240,7 @@ export async function fetchPlaceCuration(
           code: body.error?.code || response.status.toString(),
         };
         throw error;
-      } catch (parseError) {
+      } catch {
         // JSON 파싱 실패 시 기본 에러
         const error: PlaceCurationError = {
           message: `장소 큐레이션 조회에 실패했습니다: ${response.statusText}`,

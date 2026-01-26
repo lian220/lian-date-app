@@ -23,8 +23,9 @@ export default function TestCurationPage() {
     try {
       const result = await fetchPlaceCuration(placeId.trim());
       setCuration(result);
-    } catch (err: any) {
-      setError(err.message || '큐레이션 조회에 실패했습니다');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '큐레이션 조회에 실패했습니다';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

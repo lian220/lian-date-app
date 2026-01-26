@@ -18,14 +18,11 @@ export default function BudgetBottomSheet({
   onSelect,
   initialBudget,
 }: BudgetBottomSheetProps) {
+  // Note: If you need to reset selectedBudget when initialBudget changes,
+  // pass a unique key prop to this component from parent to remount it
   const [selectedBudget, setSelectedBudget] = useState<BudgetRange | null>(
     initialBudget || null
   );
-
-  // Sync with parent prop changes
-  useEffect(() => {
-    setSelectedBudget(initialBudget || null);
-  }, [initialBudget]);
 
   useEffect(() => {
     if (isOpen) {

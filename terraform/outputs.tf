@@ -56,3 +56,14 @@ output "rds_security_group_id" {
   description = "RDS security group ID"
   value       = module.security.rds_security_group_id
 }
+
+# ECR Outputs
+output "backend_repository_url" {
+  description = "Backend ECR repository URL"
+  value       = module.ecr.backend_repository_url
+}
+
+output "frontend_repository_url" {
+  description = "Frontend ECR repository URL"
+  value       = module.ecr.frontend_repository_url
+}

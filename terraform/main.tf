@@ -55,3 +55,12 @@ module "security" {
 
   tags = var.common_tags
 }
+
+# ECR Module
+module "ecr" {
+  source = "./modules/ecr"
+
+  name_prefix = local.name_prefix
+
+  tags = var.common_tags
+}

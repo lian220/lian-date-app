@@ -20,7 +20,9 @@ frontend_memory = 512
 # Database Configuration
 db_instance_class = "db.t4g.micro"
 db_name           = "dateclick"
-# db_username and db_password should be provided via environment variables or secure parameter store
+db_username       = "dateclick"
+db_password       = "dateclick"
+# Note: For production, use AWS Secrets Manager or environment variables
 
 # Tags
 common_tags = {

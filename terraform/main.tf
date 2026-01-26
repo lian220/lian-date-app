@@ -84,3 +84,17 @@ module "rds" {
 
   tags = var.common_tags
 }
+
+# ALB Module
+module "alb" {
+  source = "./modules/alb"
+
+  name_prefix       = local.name_prefix
+  vpc_id            = module.network.vpc_id
+  subnet_ids        = module.network.public_subnet_ids
+  security_group_id = module.security.alb_security_group_id
+
+  enable_deletion_protection = var.environment == "prod" ? true : false
+
+  tags = var.common_tags
+}

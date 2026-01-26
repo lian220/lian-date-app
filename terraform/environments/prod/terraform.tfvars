@@ -1,0 +1,31 @@
+# Production Environment Configuration
+
+environment = "prod"
+aws_region  = "us-east-1"
+
+# Network Configuration
+vpc_cidr = "10.0.0.0/16"
+availability_zones = [
+  "us-east-1a",
+  "us-east-1b",
+  "us-east-1c"
+]
+
+# Application Configuration (increased resources for production)
+backend_cpu    = 512
+backend_memory = 1024
+
+frontend_cpu    = 512
+frontend_memory = 1024
+
+# Database Configuration
+db_instance_class = "db.t4g.small"
+db_name           = "dateclick"
+# db_username and db_password should be provided via environment variables or secure parameter store
+
+# Tags
+common_tags = {
+  Project     = "lian-date"
+  Environment = "prod"
+  ManagedBy   = "Terraform"
+}

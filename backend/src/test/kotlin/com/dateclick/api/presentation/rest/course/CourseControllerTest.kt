@@ -1,8 +1,10 @@
 package com.dateclick.api.presentation.rest.course
 
 import com.dateclick.api.application.course.CreateCourseUseCase
+import com.dateclick.api.application.course.GetCourseUseCase
 import com.dateclick.api.application.course.RegenerateCourseUseCase
 import com.dateclick.api.domain.course.entity.Course
+import com.dateclick.api.infrastructure.ratelimit.RateLimitService
 import com.dateclick.api.domain.course.entity.CoursePlace
 import com.dateclick.api.domain.course.entity.Route
 import com.dateclick.api.domain.course.entity.TransportType
@@ -23,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import java.time.Instant
 
@@ -36,10 +39,16 @@ class CourseControllerTest {
     private lateinit var createCourseUseCase: CreateCourseUseCase
 
     @MockkBean
+    private lateinit var getCourseUseCase: GetCourseUseCase
+
+    @MockkBean
     private lateinit var regenerateCourseUseCase: RegenerateCourseUseCase
 
     @MockkBean
     private lateinit var courseMapper: CourseMapper
+
+    @MockkBean
+    private lateinit var rateLimitService: RateLimitService
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
@@ -126,6 +135,49 @@ class CourseControllerTest {
         }
 
         verify(exactly = 1) { regenerateCourseUseCase.execute(any()) }
+    }
+
+    @Test
+    fun `GET courses - 코스 조회 성공`() {
+        // Given
+        val courseId = "course_123"
+        val mockCourse = createMockCourse()
+        val mockResponse = createMockResponse()
+
+        every { getCourseUseCase.execute(CourseId(courseId)) } returns mockCourse
+        every { courseMapper.toResponse(mockCourse) } returns mockResponse
+
+        // When & Then
+        mockMvc.get("/v1/courses/$courseId") {
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.success") { value(true) }
+            jsonPath("$.data.courseId") { value("course-123") }
+            jsonPath("$.data.regionName") { value("강남") }
+            jsonPath("$.data.places") { isArray() }
+            jsonPath("$.data.routes") { isArray() }
+            jsonPath("$.data.totalEstimatedCost") { value(50000) }
+        }
+
+        verify(exactly = 1) { getCourseUseCase.execute(CourseId(courseId)) }
+    }
+
+    @Test
+    fun `GET courses - 존재하지 않는 코스 조회 시 404 에러`() {
+        // Given
+        val courseId = "course_non_existent"
+
+        every { getCourseUseCase.execute(CourseId(courseId)) } returns null
+
+        // When & Then
+        mockMvc.get("/v1/courses/$courseId") {
+        }.andExpect {
+            status { isNotFound() }
+            jsonPath("$.success") { value(false) }
+            jsonPath("$.error.code") { value("NOT_FOUND") }
+        }
+
+        verify(exactly = 1) { getCourseUseCase.execute(CourseId(courseId)) }
     }
 
     private fun createMockCommand() = com.dateclick.api.application.course.CreateCourseCommand(

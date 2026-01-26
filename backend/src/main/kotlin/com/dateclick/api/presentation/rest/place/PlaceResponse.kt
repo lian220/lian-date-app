@@ -1,5 +1,7 @@
 package com.dateclick.api.presentation.rest.place
 
+import com.dateclick.api.domain.place.entity.Place
+import com.dateclick.api.domain.place.vo.BusinessHours
 import com.dateclick.api.domain.place.vo.PlaceCurationInfo
 import io.swagger.v3.oas.annotations.media.Schema
 
@@ -33,6 +35,99 @@ data class PlaceCurationResponse(
             priceRange = info.priceRange,
             bestTime = info.bestTime,
             recommendation = info.recommendation
+        )
+    }
+}
+
+/**
+ * 장소 상세 정보 응답 DTO
+ */
+@Schema(description = "장소 상세 정보")
+data class PlaceDetailResponse(
+    @Schema(description = "장소 ID", example = "12345")
+    val id: String,
+
+    @Schema(description = "장소명", example = "카페 온더문")
+    val name: String,
+
+    @Schema(description = "카테고리", example = "카페")
+    val category: String,
+
+    @Schema(description = "상세 카테고리", example = "카페 > 디저트카페")
+    val categoryDetail: String?,
+
+    @Schema(description = "위도", example = "37.5665")
+    val latitude: Double,
+
+    @Schema(description = "경도", example = "126.9780")
+    val longitude: Double,
+
+    @Schema(description = "주소", example = "서울 마포구 연남동 123-45")
+    val address: String,
+
+    @Schema(description = "도로명 주소", example = "서울 마포구 연남로 12길 34")
+    val roadAddress: String?,
+
+    @Schema(description = "전화번호", example = "02-1234-5678")
+    val phone: String?,
+
+    @Schema(description = "영업시간 정보")
+    val businessHours: List<BusinessHoursResponse>?,
+
+    @Schema(description = "장소 이미지 URL 목록")
+    val imageUrls: List<String>?,
+
+    @Schema(description = "카카오맵 URL", example = "https://place.map.kakao.com/12345")
+    val kakaoPlaceUrl: String?,
+
+    @Schema(description = "카카오맵 평점", example = "4.5")
+    val kakaoRating: Double?,
+
+    @Schema(description = "카카오맵 리뷰 수", example = "123")
+    val kakaoReviewCount: Int?
+) {
+    companion object {
+        /**
+         * Domain Place를 Response DTO로 변환
+         */
+        fun from(place: Place) = PlaceDetailResponse(
+            id = place.id.value,
+            name = place.name,
+            category = place.category,
+            categoryDetail = place.categoryDetail,
+            latitude = place.location.lat,
+            longitude = place.location.lng,
+            address = place.address,
+            roadAddress = place.roadAddress,
+            phone = place.phone,
+            businessHours = place.businessHours?.map { BusinessHoursResponse.from(it) },
+            imageUrls = place.imageUrls,
+            kakaoPlaceUrl = place.kakaoPlaceUrl,
+            kakaoRating = place.kakaoRating,
+            kakaoReviewCount = place.kakaoReviewCount
+        )
+    }
+}
+
+/**
+ * 영업시간 응답 DTO
+ */
+@Schema(description = "영업시간 정보")
+data class BusinessHoursResponse(
+    @Schema(description = "요일", example = "월요일")
+    val day: String,
+
+    @Schema(description = "오픈 시간", example = "10:00")
+    val open: String?,
+
+    @Schema(description = "마감 시간", example = "22:00")
+    val close: String?
+) {
+    companion object {
+        fun from(businessHours: BusinessHours) = BusinessHoursResponse(
+            day = businessHours.day,
+            open = businessHours.open,
+            close = businessHours.close
         )
     }
 }

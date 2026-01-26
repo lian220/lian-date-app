@@ -30,3 +30,17 @@ locals {
     length(var.availability_zones)
   )
 }
+
+# Network Module
+module "network" {
+  source = "./modules/network"
+
+  name_prefix        = local.name_prefix
+  vpc_cidr           = var.vpc_cidr
+  availability_zones = var.availability_zones
+
+  enable_nat_gateway = true
+  single_nat_gateway = var.environment == "local" ? true : false
+
+  tags = var.common_tags
+}

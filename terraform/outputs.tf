@@ -19,3 +19,24 @@ output "name_prefix" {
   description = "Common name prefix for resources"
   value       = local.name_prefix
 }
+
+# Network Outputs
+output "vpc_id" {
+  description = "VPC ID"
+  value       = module.network.vpc_id
+}
+
+output "public_subnet_ids" {
+  description = "List of public subnet IDs"
+  value       = module.network.public_subnet_ids
+}
+
+output "private_subnet_ids" {
+  description = "List of private subnet IDs"
+  value       = module.network.private_subnet_ids
+}
+
+output "nat_gateway_eips" {
+  description = "NAT Gateway public IPs"
+  value       = module.network.nat_gateway_eips
+}

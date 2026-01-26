@@ -57,6 +57,59 @@
           "iam:PassedToService": "ecs-tasks.amazonaws.com"
         }
       }
+    },
+    {
+      "Sid": "ApplicationAutoScalingPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "application-autoscaling:RegisterScalableTarget",
+        "application-autoscaling:DeregisterScalableTarget",
+        "application-autoscaling:DescribeScalableTargets",
+        "application-autoscaling:PutScalingPolicy",
+        "application-autoscaling:DeleteScalingPolicy",
+        "application-autoscaling:DescribeScalingPolicies",
+        "application-autoscaling:DescribeScheduledActions"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SNSPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "sns:CreateTopic",
+        "sns:DeleteTopic",
+        "sns:GetTopicAttributes",
+        "sns:SetTopicAttributes",
+        "sns:Subscribe",
+        "sns:Unsubscribe",
+        "sns:ListSubscriptionsByTopic",
+        "sns:Publish"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "TerraformFullPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:*",
+        "ecs:*",
+        "ecr:*",
+        "rds:*",
+        "elasticloadbalancing:*",
+        "logs:*",
+        "cloudwatch:*",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:GetRole",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:PassRole"
+      ],
+      "Resource": "*"
     }
   ]
 }

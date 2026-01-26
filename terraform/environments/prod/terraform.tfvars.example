@@ -1,7 +1,7 @@
 # Production Environment Configuration
+# Copy this file to terraform.tfvars and fill in the actual values
 
-environment = "prod"
-aws_region  = "us-east-1"
+aws_region = "us-east-1"
 
 # Network Configuration
 vpc_cidr = "10.0.0.0/16"
@@ -21,7 +21,12 @@ frontend_memory = 1024
 # Database Configuration
 db_instance_class = "db.t4g.small"
 db_name           = "dateclick"
-# db_username and db_password should be provided via environment variables or secure parameter store
+db_username       = "YOUR_DB_USERNAME"
+db_password       = "YOUR_DB_PASSWORD"
+# Note: For production, consider using AWS Secrets Manager for better security
+
+# Monitoring Configuration
+alarm_email = "your-email@example.com"
 
 # Tags
 common_tags = {

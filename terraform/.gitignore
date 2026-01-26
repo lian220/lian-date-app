@@ -1,13 +1,18 @@
 # Terraform files
 *.tfstate
 *.tfstate.*
+*.tfstate.backup
 .terraform/
-.terraform.lock.hcl
+# .terraform.lock.hcl - 주석 처리: 일반적으로 버전 관리에 포함해야 함 (provider 버전 고정)
 
-# Sensitive files
+# Provider plugins (downloaded providers)
+terraform.d/
+.terraform.d/
+
+# Sensitive files (may contain passwords, secrets, etc.)
 *.tfvars
-!environments/**/*.tfvars
 terraform.tfvars
+!*.tfvars.example
 
 # Crash log files
 crash.log
@@ -22,3 +27,11 @@ override.tf.json
 # CLI configuration files
 .terraformrc
 terraform.rc
+
+# Plan files (may contain sensitive data)
+*.tfplan
+*.tfplan.json
+
+# Temporary files
+*.tmp
+*.log

@@ -2,14 +2,14 @@ name: CI - Build and Test
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - 'backend/**'
       - 'frontend/**'
       - '.github/workflows/ci.yml'
       - '.github/actions/build-and-test/**'
   push:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - 'backend/**'
       - 'frontend/**'
@@ -18,11 +18,32 @@ permissions:
   contents: read
   pull-requests: write
   security-events: write
+  checks: write
 
 jobs:
   backend-test:
     name: Backend Tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: dateclick
+          POSTGRES_USER: dateclick
+          POSTGRES_PASSWORD: dateclick
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DATABASE_URL: jdbc:postgresql://localhost:5432/dateclick
+      DB_USERNAME: dateclick
+      DB_PASSWORD: dateclick
 
     steps:
       - name: Checkout code
@@ -38,6 +59,14 @@ jobs:
       - name: Grant execute permission for gradlew
         working-directory: ./backend
         run: chmod +x gradlew
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          until pg_isready -h localhost -p 5432 -U dateclick; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
 
       - name: Run backend tests with coverage
         working-directory: ./backend

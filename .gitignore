@@ -6,22 +6,97 @@
 .env
 .env.local
 .env.aws
+.env.*.local
+.env.*.secret
 !.env.example
 !.env.*.example
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 backend/.serena/
 
 # Docker volumes (local data)
 data/
+docker-compose.override.yml
+
+# Build outputs
+build/
+dist/
+out/
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Frontend build outputs (covered by frontend/.gitignore but adding for safety)
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.turbo/
+
+# Backend build outputs (covered by backend/.gitignore but adding for safety)
+backend/.gradle/
+backend/build/
+backend/out/
+backend/*.jar
+backend/*.war
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+.cache/
+.temp/
 
 # Playwright
 .playwright-mcp/
 frontend/test-results/
 playwright-report/
+playwright/.cache/
+
+# AWS credentials and secrets
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+.aws/
+aws-exports.js
+
+# Terraform (covered by terraform/.gitignore but adding for safety)
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Package manager locks (optional - some teams prefer to commit these)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

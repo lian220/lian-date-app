@@ -101,7 +101,7 @@ resource "aws_ecs_task_definition" "frontend" {
       environment = [
         {
           name  = "NEXT_PUBLIC_API_URL"
-          value = "http://localhost:8080"
+          value = "http://${var.alb_dns_name}/api"
         }
       ]
 

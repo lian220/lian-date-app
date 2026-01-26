@@ -6,7 +6,7 @@ provider "aws" {
     tags = merge(
       var.common_tags,
       {
-        Environment = var.environment
+        Environment = "prod"
       }
     )
   }
@@ -22,7 +22,7 @@ data "aws_availability_zones" "available" {
 # Local Variables
 locals {
   account_id  = data.aws_caller_identity.current.account_id
-  name_prefix = "${var.project_name}-${var.environment}"
+  name_prefix = "${var.project_name}-prod"
 
   az_names = slice(
     data.aws_availability_zones.available.names,
@@ -40,7 +40,7 @@ module "network" {
   availability_zones = var.availability_zones
 
   enable_nat_gateway = true
-  single_nat_gateway = var.environment == "local" ? true : false
+  single_nat_gateway = false
 
   tags = var.common_tags
 }
@@ -79,8 +79,8 @@ module "rds" {
   db_username       = var.db_username
   db_password       = var.db_password
 
-  multi_az            = var.environment == "prod" ? true : false
-  skip_final_snapshot = var.environment == "local" ? true : false
+  multi_az            = true
+  skip_final_snapshot = false
 
   tags = var.common_tags
 }
@@ -94,7 +94,7 @@ module "alb" {
   subnet_ids        = module.network.public_subnet_ids
   security_group_id = module.security.alb_security_group_id
 
-  enable_deletion_protection = var.environment == "prod" ? true : false
+  enable_deletion_protection = true
 
   tags = var.common_tags
 }
@@ -110,6 +110,8 @@ module "ecs" {
 
   backend_target_group_arn  = module.alb.backend_target_group_arn
   frontend_target_group_arn = module.alb.frontend_target_group_arn
+
+  alb_dns_name = module.alb.alb_dns_name
 
   backend_image  = "${module.ecr.backend_repository_url}:latest"
   frontend_image = "${module.ecr.frontend_repository_url}:latest"

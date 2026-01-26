@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# dateclick-shared-network 없으면 생성 (DB/백엔드/프론트 공용)
+ensure_network() {
+  if ! docker network inspect dateclick-shared-network &>/dev/null; then
+    echo "네트워크 dateclick-shared-network 생성 중..."
+    docker network create dateclick-shared-network
+  fi
+}
+
+# DB(postgres, chroma) 안 떠 있으면 띄우기
+ensure_db() {
+  if ! docker ps --filter "name=dateclick-postgres" --filter "status=running" -q | grep -q .; then
+    echo "DB가 실행 중이 아닙니다. DB(postgres, chroma) 실행 중..."
+    if [[ -n "${project_name}" ]]; then
+      docker compose -p "${project_name}" --profile db up -d postgres chroma
+    else
+      docker compose --profile db up -d postgres chroma
+    fi
+  fi
+}
+
 usage() {
   cat <<'EOF'
 사용법: ./start.sh [all|frontend|backend|db] [-p|--project 프로젝트명]
@@ -50,13 +70,8 @@ done
 
 case "${target}" in
   all)
-    # DB 먼저 실행 (profile db 포함)
-    echo "DB 실행 중..."
-    if [[ -n "${project_name}" ]]; then
-      docker compose -p "${project_name}" --profile db up -d postgres chroma
-    else
-      docker compose --profile db up -d postgres chroma
-    fi
+    ensure_network
+    ensure_db
 
     # Backend, Frontend 빌드 및 실행
     echo "Backend, Frontend 빌드 및 실행 중..."
@@ -70,15 +85,12 @@ case "${target}" in
     fi
     ;;
   db)
-    # DB만 실행
-    echo "DB 실행 중..."
-    if [[ -n "${project_name}" ]]; then
-      docker compose -p "${project_name}" --profile db up -d postgres chroma
-    else
-      docker compose --profile db up -d postgres chroma
-    fi
+    ensure_network
+    ensure_db
     ;;
   frontend)
+    ensure_network
+    ensure_db
     services=(frontend)
     if [[ -n "${project_name}" ]]; then
       docker compose -p "${project_name}" build --parallel "${services[@]}"
@@ -89,6 +101,8 @@ case "${target}" in
     fi
     ;;
   backend)
+    ensure_network
+    ensure_db
     services=(backend)
     if [[ -n "${project_name}" ]]; then
       docker compose -p "${project_name}" build --parallel "${services[@]}"

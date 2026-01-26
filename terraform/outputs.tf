@@ -11,7 +11,7 @@ output "region" {
 
 output "environment" {
   description = "Environment name"
-  value       = var.environment
+  value       = "prod"
 }
 
 # Resource Naming

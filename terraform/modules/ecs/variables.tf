@@ -114,6 +114,11 @@ variable "spring_profiles_active" {
   default     = "local"
 }
 
+variable "alb_dns_name" {
+  description = "ALB DNS name for frontend API URL"
+  type        = string
+}
+
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)

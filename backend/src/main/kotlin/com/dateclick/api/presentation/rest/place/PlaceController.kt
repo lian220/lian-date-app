@@ -1,6 +1,7 @@
 package com.dateclick.api.presentation.rest.place
 
 import com.dateclick.api.application.place.CuratePlaceUseCase
+import com.dateclick.api.application.place.GetPlaceDetailUseCase
 import com.dateclick.api.application.place.PlaceNotFoundException
 import com.dateclick.api.domain.place.vo.PlaceId
 import com.dateclick.api.infrastructure.external.openai.PlaceCurationException
@@ -18,10 +19,35 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/v1/places")
 class PlaceController(
-    private val curatePlaceUseCase: CuratePlaceUseCase
+    private val curatePlaceUseCase: CuratePlaceUseCase,
+    private val getPlaceDetailUseCase: GetPlaceDetailUseCase
 ) {
 
     private val logger = LoggerFactory.getLogger(javaClass)
+
+    @Operation(summary = "장소 상세 조회", description = "카카오맵 장소의 상세 정보를 조회합니다")
+    @GetMapping("/{placeId}")
+    fun getPlaceDetail(
+        @PathVariable placeId: String
+    ): ResponseEntity<ApiResponse<PlaceDetailResponse>> {
+        logger.info("GET /api/v1/places/{}", placeId)
+
+        return try {
+            val place = getPlaceDetailUseCase.execute(PlaceId(placeId))
+                ?: return ResponseEntity.status(404).body(
+                    ApiResponse.error("PLACE_NOT_FOUND", "장소를 찾을 수 없습니다: $placeId")
+                )
+
+            ResponseEntity.ok(
+                ApiResponse.success(PlaceDetailResponse.from(place))
+            )
+        } catch (ex: Exception) {
+            logger.error("Unexpected error while getting place detail", ex)
+            ResponseEntity.status(500).body(
+                ApiResponse.error("INTERNAL_ERROR", "서버 오류가 발생했습니다")
+            )
+        }
+    }
 
     @Operation(summary = "장소 큐레이션 조회", description = "AI 기반 장소 큐레이션 정보를 조회합니다")
     @GetMapping("/{placeId}/curation")

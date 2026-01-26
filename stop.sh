@@ -7,9 +7,9 @@ usage() {
 
 기본값: all
 설명:
-  all      - frontend, backend 중지
-  frontend - frontend만 중지
-  backend  - backend만 중지
+  all      - frontend, backend 중지 및 삭제
+  frontend - frontend만 중지 및 삭제
+  backend  - backend만 중지 및 삭제
 EOF
 }
 
@@ -36,4 +36,5 @@ case "${target}" in
     ;;
 esac
 
-docker compose stop "${services[@]}"
+echo "컨테이너 중지 및 삭제: ${services[*]}"
+docker compose rm -sf "${services[@]}"

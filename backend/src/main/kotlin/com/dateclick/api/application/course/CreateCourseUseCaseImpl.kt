@@ -20,9 +20,8 @@ import org.springframework.transaction.annotation.Transactional
 class CreateCourseUseCaseImpl(
     private val regionRepository: RegionRepository,
     private val aiGenerationPort: AiGenerationPort,
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
 ) : CreateCourseUseCase {
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Transactional
@@ -32,60 +31,64 @@ class CreateCourseUseCaseImpl(
             command.regionId.value,
             command.dateType,
             command.budget.toDisplayName(),
-            command.sessionId
+            command.sessionId,
         )
 
         // 1. 지역 정보 조회
-        val region = regionRepository.findById(command.regionId)
-            ?: throw IllegalArgumentException("Region not found: ${command.regionId.value}")
+        val region =
+            regionRepository.findById(command.regionId)
+                ?: throw IllegalArgumentException("Region not found: ${command.regionId.value}")
 
         logger.debug("Found region: {}", region.name)
 
         // 2. AI 코스 생성 (AI가 장소 정보를 포함한 전체 코스를 생성)
-        val aiRecommendation = aiGenerationPort.generateCourseRecommendation(
-            region = region,
-            dateType = command.dateType,
-            budget = command.budget,
-            specialRequest = command.specialRequest
-        )
+        val aiRecommendation =
+            aiGenerationPort.generateCourseRecommendation(
+                region = region,
+                dateType = command.dateType,
+                budget = command.budget,
+                specialRequest = command.specialRequest,
+            )
 
         logger.info("AI recommended {} places", aiRecommendation.places.size)
 
         // 3. AI 추천 결과를 CoursePlace로 변환
-        val coursePlaces = aiRecommendation.places.map { aiPlace ->
-            CoursePlace(
-                order = aiPlace.order,
-                placeId = PlaceId("ai-${command.sessionId}-${aiPlace.order}"),
-                name = aiPlace.name,
-                category = aiPlace.category,
-                categoryDetail = aiPlace.categoryDetail,
-                address = aiPlace.address,
-                roadAddress = aiPlace.roadAddress,
-                location = aiPlace.location,
-                phone = aiPlace.phone,
-                estimatedCost = EstimatedCost(aiPlace.estimatedCost),
-                estimatedDuration = aiPlace.estimatedDuration,
-                recommendedTime = aiPlace.recommendedTime,
-                recommendReason = aiPlace.recommendReason,
-                imageUrl = null,
-                kakaoPlaceUrl = ""
-            )
-        }
+        val coursePlaces =
+            aiRecommendation.places.map { aiPlace ->
+                CoursePlace(
+                    order = aiPlace.order,
+                    placeId = PlaceId("ai-${command.sessionId}-${aiPlace.order}"),
+                    name = aiPlace.name,
+                    category = aiPlace.category,
+                    categoryDetail = aiPlace.categoryDetail,
+                    address = aiPlace.address,
+                    roadAddress = aiPlace.roadAddress,
+                    location = aiPlace.location,
+                    phone = aiPlace.phone,
+                    estimatedCost = EstimatedCost(aiPlace.estimatedCost),
+                    estimatedDuration = aiPlace.estimatedDuration,
+                    recommendedTime = aiPlace.recommendedTime,
+                    recommendReason = aiPlace.recommendReason,
+                    imageUrl = null,
+                    kakaoPlaceUrl = "",
+                )
+            }
 
         // 4. 장소 간 경로 계산 (간단한 기본값 사용)
         val routes = calculateRoutes(coursePlaces)
         logger.debug("Calculated {} routes", routes.size)
 
         // 6. Course 엔티티 생성
-        val course = Course.create(
-            regionId = command.regionId,
-            regionName = region.name,
-            dateType = command.dateType,
-            budget = command.budget,
-            places = coursePlaces,
-            routes = routes,
-            sessionId = command.sessionId
-        )
+        val course =
+            Course.create(
+                regionId = command.regionId,
+                regionName = region.name,
+                dateType = command.dateType,
+                budget = command.budget,
+                places = coursePlaces,
+                routes = routes,
+                sessionId = command.sessionId,
+            )
 
         // 7. 저장
         val savedCourse = courseRepository.save(course)
@@ -94,7 +97,7 @@ class CreateCourseUseCaseImpl(
             "Course created successfully: id={}, totalCost={}, placeCount={}",
             savedCourse.id.value,
             savedCourse.totalEstimatedCost.value,
-            savedCourse.places.size
+            savedCourse.places.size,
         )
 
         return savedCourse
@@ -115,11 +118,13 @@ class CreateCourseUseCaseImpl(
                 to = to.order,
                 distance = distance.toInt(),
                 duration = estimateDuration(distance.toDouble()),
-                transportType = if (distance < 1000)
-                    com.dateclick.api.domain.course.entity.TransportType.WALK
-                else
-                    com.dateclick.api.domain.course.entity.TransportType.TRANSIT,
-                description = "${from.name}에서 ${to.name}까지"
+                transportType =
+                    if (distance < 1000) {
+                        com.dateclick.api.domain.course.entity.TransportType.WALK
+                    } else {
+                        com.dateclick.api.domain.course.entity.TransportType.TRANSIT
+                    },
+                description = "${from.name}에서 ${to.name}까지",
             )
         }
     }
@@ -127,12 +132,16 @@ class CreateCourseUseCaseImpl(
     /**
      * Haversine formula를 사용한 두 지점 간 거리 계산 (미터 단위)
      */
-    private fun calculateDistance(from: com.dateclick.api.domain.place.vo.Location, to: com.dateclick.api.domain.place.vo.Location): Double {
+    private fun calculateDistance(
+        from: com.dateclick.api.domain.place.vo.Location,
+        to: com.dateclick.api.domain.place.vo.Location,
+    ): Double {
         val earthRadius = 6371000.0 // 지구 반지름 (미터)
         val dLat = Math.toRadians(to.lat - from.lat)
         val dLon = Math.toRadians(to.lng - from.lng)
 
-        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        val a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                 Math.cos(Math.toRadians(from.lat)) * Math.cos(Math.toRadians(to.lat)) *
                 Math.sin(dLon / 2) * Math.sin(dLon / 2)
 

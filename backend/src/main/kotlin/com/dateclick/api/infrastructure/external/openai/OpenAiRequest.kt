@@ -13,21 +13,23 @@ data class ChatCompletionRequest(
     @JsonProperty("max_tokens")
     val maxTokens: Int = 2000,
     @JsonProperty("response_format")
-    val responseFormat: ResponseFormat? = null
+    val responseFormat: ResponseFormat? = null,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Message(
     val role: String,
-    val content: String
+    val content: String,
 ) {
     companion object {
         fun system(content: String) = Message("system", content)
+
         fun user(content: String) = Message("user", content)
+
         fun assistant(content: String) = Message("assistant", content)
     }
 }
 
 data class ResponseFormat(
-    val type: String = "json_object"
+    val type: String = "json_object",
 )

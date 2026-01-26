@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
-
     private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationException(ex: MethodArgumentNotValidException): ResponseEntity<ApiResponse<Nothing>> {
-        val message = ex.bindingResult.fieldErrors.firstOrNull()?.defaultMessage
-            ?: "잘못된 요청입니다"
+        val message =
+            ex.bindingResult.fieldErrors.firstOrNull()?.defaultMessage
+                ?: "잘못된 요청입니다"
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .body(ApiResponse.error("INVALID_REQUEST", message))
@@ -46,8 +46,8 @@ class GlobalExceptionHandler {
             .body(
                 ApiResponse.error(
                     "RATE_LIMIT_EXCEEDED",
-                    "요청 횟수 제한을 초과했습니다. ${ex.retryAfterSeconds}초 후 다시 시도해주세요."
-                )
+                    "요청 횟수 제한을 초과했습니다. ${ex.retryAfterSeconds}초 후 다시 시도해주세요.",
+                ),
             )
     }
 

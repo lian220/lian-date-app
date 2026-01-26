@@ -13,7 +13,6 @@ import com.dateclick.api.domain.place.vo.PlaceId
 import com.dateclick.api.domain.region.vo.RegionId
 
 object CourseMapper {
-
     fun toDomain(entity: CourseEntity): Course {
         return Course(
             id = CourseId(entity.id),
@@ -24,21 +23,22 @@ object CourseMapper {
             places = entity.places.map { toCoursePlaceDomain(it) },
             routes = entity.routes.map { toRouteDomain(it) },
             createdAt = entity.createdAt,
-            sessionId = entity.sessionId
+            sessionId = entity.sessionId,
         )
     }
 
     fun toEntity(domain: Course): CourseEntity {
-        val courseEntity = CourseEntity(
-            id = domain.id.value,
-            regionId = domain.regionId.value,
-            regionName = domain.regionName,
-            dateType = domain.dateType.code,
-            budgetMin = domain.budget.value.first,
-            budgetMax = domain.budget.value.last,
-            createdAt = domain.createdAt,
-            sessionId = domain.sessionId
-        )
+        val courseEntity =
+            CourseEntity(
+                id = domain.id.value,
+                regionId = domain.regionId.value,
+                regionName = domain.regionName,
+                dateType = domain.dateType.code,
+                budgetMin = domain.budget.value.first,
+                budgetMax = domain.budget.value.last,
+                createdAt = domain.createdAt,
+                sessionId = domain.sessionId,
+            )
 
         // Set bidirectional relationships
         val placeEntities = domain.places.map { toCoursePlaceEntity(it, courseEntity) }
@@ -66,11 +66,14 @@ object CourseMapper {
             recommendedTime = entity.recommendedTime,
             recommendReason = entity.recommendReason,
             imageUrl = entity.imageUrl,
-            kakaoPlaceUrl = entity.kakaoPlaceUrl
+            kakaoPlaceUrl = entity.kakaoPlaceUrl,
         )
     }
 
-    private fun toCoursePlaceEntity(domain: CoursePlace, course: CourseEntity): CoursePlaceEntity {
+    private fun toCoursePlaceEntity(
+        domain: CoursePlace,
+        course: CourseEntity,
+    ): CoursePlaceEntity {
         return CoursePlaceEntity(
             course = course,
             order = domain.order,
@@ -88,7 +91,7 @@ object CourseMapper {
             recommendedTime = domain.recommendedTime,
             recommendReason = domain.recommendReason,
             imageUrl = domain.imageUrl,
-            kakaoPlaceUrl = domain.kakaoPlaceUrl
+            kakaoPlaceUrl = domain.kakaoPlaceUrl,
         )
     }
 
@@ -99,11 +102,14 @@ object CourseMapper {
             distance = entity.distance,
             duration = entity.duration,
             transportType = TransportType.fromCode(entity.transportType),
-            description = entity.description
+            description = entity.description,
         )
     }
 
-    private fun toRouteEntity(domain: Route, course: CourseEntity): RouteEntity {
+    private fun toRouteEntity(
+        domain: Route,
+        course: CourseEntity,
+    ): RouteEntity {
         return RouteEntity(
             course = course,
             fromOrder = domain.from,
@@ -111,14 +117,14 @@ object CourseMapper {
             distance = domain.distance,
             duration = domain.duration,
             transportType = domain.transportType.code,
-            description = domain.description
+            description = domain.description,
         )
     }
 
     private fun setCourseRelations(
         course: CourseEntity,
         places: List<CoursePlaceEntity>,
-        routes: List<RouteEntity>
+        routes: List<RouteEntity>,
     ) {
         val placesField = CourseEntity::class.java.getDeclaredField("places")
         placesField.isAccessible = true

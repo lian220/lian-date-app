@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class OpenApiConfig {
-
     @Bean
     fun openApi(): OpenAPI {
         return OpenAPI()
@@ -15,7 +14,7 @@ class OpenApiConfig {
                 Info()
                     .title("DateClick API")
                     .description("DateClick MVP API documentation")
-                    .version("v1")
+                    .version("v1"),
             )
     }
 }

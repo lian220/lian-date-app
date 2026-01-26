@@ -6,7 +6,6 @@ import com.dateclick.api.domain.place.entity.Place
  * 장소 큐레이션용 GPT-4 프롬프트 빌더
  */
 object PlaceCurationPromptBuilder {
-
     /**
      * 시스템 프롬프트 생성
      * AI의 역할과 응답 형식을 정의
@@ -38,7 +37,7 @@ object PlaceCurationPromptBuilder {
             - 실제 데이터를 모르더라도 일반적인 패턴을 기반으로 합리적으로 추정하세요
             - mood_tags는 반드시 #으로 시작해야 합니다
             - 한국어로 작성하세요
-        """.trimIndent()
+            """.trimIndent()
     }
 
     /**
@@ -56,7 +55,7 @@ object PlaceCurationPromptBuilder {
             위치: 위도 ${place.location.lat}, 경도 ${place.location.lng}
 
             위 정보를 기반으로 이 장소의 데이트 적합도, 분위기 태그, 예상 가격대, 추천 시간대, 추천 이유를 JSON 형식으로 제공해주세요.
-        """.trimIndent()
+            """.trimIndent()
     }
 
     /**
@@ -65,7 +64,7 @@ object PlaceCurationPromptBuilder {
     fun buildMessages(place: Place): List<Message> {
         return listOf(
             Message.system(buildSystemPrompt()),
-            Message.user(buildUserPrompt(place))
+            Message.user(buildUserPrompt(place)),
         )
     }
 }

@@ -7,14 +7,14 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 class BusinessHoursTest {
-
     @Test
     fun `정상적인 영업시간 생성`() {
-        val businessHours = BusinessHours(
-            day = "월",
-            open = "09:00",
-            close = "18:00"
-        )
+        val businessHours =
+            BusinessHours(
+                day = "월",
+                open = "09:00",
+                close = "18:00",
+            )
 
         assertFalse(businessHours.isClosed)
         assertEquals("월", businessHours.day)
@@ -24,11 +24,12 @@ class BusinessHoursTest {
 
     @Test
     fun `휴무일 생성 - open과 close 모두 null`() {
-        val businessHours = BusinessHours(
-            day = "일",
-            open = null,
-            close = null
-        )
+        val businessHours =
+            BusinessHours(
+                day = "일",
+                open = null,
+                close = null,
+            )
 
         assertTrue(businessHours.isClosed)
     }
@@ -39,7 +40,7 @@ class BusinessHoursTest {
             BusinessHours(
                 day = "월",
                 open = null,
-                close = "18:00"
+                close = "18:00",
             )
         }
     }
@@ -50,18 +51,19 @@ class BusinessHoursTest {
             BusinessHours(
                 day = "월",
                 open = "09:00",
-                close = null
+                close = null,
             )
         }
     }
 
     @Test
     fun `현재 영업 중 판단 - 영업 시간 내`() {
-        val businessHours = BusinessHours(
-            day = "월",
-            open = "09:00",
-            close = "18:00"
-        )
+        val businessHours =
+            BusinessHours(
+                day = "월",
+                open = "09:00",
+                close = "18:00",
+            )
 
         // 오전 10시 - 영업 중
         assertTrue(businessHours.isOpenAt(LocalTime.of(10, 0)))
@@ -75,11 +77,12 @@ class BusinessHoursTest {
 
     @Test
     fun `현재 영업 중 판단 - 영업 시간 외`() {
-        val businessHours = BusinessHours(
-            day = "월",
-            open = "09:00",
-            close = "18:00"
-        )
+        val businessHours =
+            BusinessHours(
+                day = "월",
+                open = "09:00",
+                close = "18:00",
+            )
 
         // 오전 8시 - 영업 전
         assertFalse(businessHours.isOpenAt(LocalTime.of(8, 0)))
@@ -93,11 +96,12 @@ class BusinessHoursTest {
 
     @Test
     fun `휴무일은 항상 영업 안 함`() {
-        val businessHours = BusinessHours(
-            day = "일",
-            open = null,
-            close = null
-        )
+        val businessHours =
+            BusinessHours(
+                day = "일",
+                open = null,
+                close = null,
+            )
 
         assertFalse(businessHours.isOpenAt(LocalTime.of(12, 0)))
         assertFalse(businessHours.isOpenAt(LocalTime.of(15, 0)))
@@ -105,11 +109,12 @@ class BusinessHoursTest {
 
     @Test
     fun `자정 넘어가는 영업시간 - 심야 영업`() {
-        val businessHours = BusinessHours(
-            day = "금",
-            open = "18:00",
-            close = "02:00" // 다음날 새벽 2시
-        )
+        val businessHours =
+            BusinessHours(
+                day = "금",
+                open = "18:00",
+                close = "02:00", // 다음날 새벽 2시
+            )
 
         // 오후 10시 - 영업 중
         assertTrue(businessHours.isOpenAt(LocalTime.of(22, 0)))
@@ -129,11 +134,12 @@ class BusinessHoursTest {
 
     @Test
     fun `24시간 영업`() {
-        val businessHours = BusinessHours(
-            day = "월",
-            open = "00:00",
-            close = "24:00"
-        )
+        val businessHours =
+            BusinessHours(
+                day = "월",
+                open = "00:00",
+                close = "24:00",
+            )
 
         // 모든 시간에 영업 중
         assertTrue(businessHours.isOpenAt(LocalTime.of(0, 0)))
@@ -145,11 +151,12 @@ class BusinessHoursTest {
 
     @Test
     fun `경계값 테스트 - 오픈 시간 정확히`() {
-        val businessHours = BusinessHours(
-            day = "월",
-            open = "09:00",
-            close = "18:00"
-        )
+        val businessHours =
+            BusinessHours(
+                day = "월",
+                open = "09:00",
+                close = "18:00",
+            )
 
         // 오픈 시간 정확히 - 영업 중
         assertTrue(businessHours.isOpenAt(LocalTime.of(9, 0)))
@@ -157,11 +164,12 @@ class BusinessHoursTest {
 
     @Test
     fun `경계값 테스트 - 클로즈 시간 정확히`() {
-        val businessHours = BusinessHours(
-            day = "월",
-            open = "09:00",
-            close = "18:00"
-        )
+        val businessHours =
+            BusinessHours(
+                day = "월",
+                open = "09:00",
+                close = "18:00",
+            )
 
         // 클로즈 시간 정확히 - 영업 종료 (close 시간은 제외)
         assertFalse(businessHours.isOpenAt(LocalTime.of(18, 0)))

@@ -11,11 +11,10 @@ data class PlaceWithCuration(
      * 장소 기본 정보
      */
     val place: Place,
-
     /**
      * AI 큐레이션 정보
      */
-    val curation: PlaceCurationInfo
+    val curation: PlaceCurationInfo,
 ) {
     /**
      * Vector DB 저장을 위한 자연어 문서로 변환
@@ -75,7 +74,7 @@ data class PlaceWithCuration(
      */
     fun getSummary(): String {
         return "${place.name} (${curation.moodTags.joinToString(", ")}) - " +
-                "데이트 점수: ${curation.dateScore}/10, " +
-                "가격대: ${"%,d".format(curation.priceRange)}원"
+            "데이트 점수: ${curation.dateScore}/10, " +
+            "가격대: ${"%,d".format(curation.priceRange)}원"
     }
 }

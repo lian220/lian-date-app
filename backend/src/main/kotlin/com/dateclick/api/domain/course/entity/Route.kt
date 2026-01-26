@@ -6,7 +6,7 @@ data class Route(
     val distance: Int, // meters
     val duration: Int, // minutes
     val transportType: TransportType,
-    val description: String
+    val description: String,
 ) {
     companion object {
         const val MAX_DURATION_MINUTES = 30
@@ -35,7 +35,8 @@ data class Route(
 enum class TransportType(val code: String) {
     WALK("walk"),
     TRANSIT("transit"),
-    CAR("car");
+    CAR("car"),
+    ;
 
     companion object {
         fun fromCode(code: String): TransportType {

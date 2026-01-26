@@ -11,7 +11,7 @@ data class CourseResponse(
     val totalEstimatedCost: Int,
     val places: List<CoursePlaceResponse>,
     val routes: List<RouteResponse>,
-    val createdAt: Instant
+    val createdAt: Instant,
 )
 
 data class CoursePlaceResponse(
@@ -30,7 +30,7 @@ data class CoursePlaceResponse(
     val recommendedTime: String?,
     val recommendReason: String,
     val imageUrl: String?,
-    val kakaoPlaceUrl: String?
+    val kakaoPlaceUrl: String?,
 )
 
 data class RouteResponse(
@@ -39,12 +39,12 @@ data class RouteResponse(
     val distance: Int,
     val duration: Int,
     val transportType: String,
-    val description: String
+    val description: String,
 )
 
 data class RatingResponse(
     val ratingId: String,
     val courseId: String,
     val score: Int,
-    val createdAt: Instant
+    val createdAt: Instant,
 )

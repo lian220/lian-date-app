@@ -11,15 +11,14 @@ import org.springframework.web.servlet.HandlerInterceptor
  */
 @Component
 class RateLimitInterceptor(
-    private val rateLimitService: RateLimitService
+    private val rateLimitService: RateLimitService,
 ) : HandlerInterceptor {
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun preHandle(
         request: HttpServletRequest,
         response: HttpServletResponse,
-        handler: Any
+        handler: Any,
     ): Boolean {
         // X-Session-Id 헤더 확인
         val sessionId = request.getHeader("X-Session-Id")

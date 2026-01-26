@@ -10,7 +10,6 @@ import com.dateclick.api.domain.region.entity.Region
  * MVP: AI가 장소 정보를 포함한 전체 코스를 생성
  */
 object PromptBuilder {
-
     /**
      * 시스템 프롬프트 생성
      * AI의 역할과 응답 형식을 정의
@@ -52,7 +51,7 @@ object PromptBuilder {
             - estimated_duration은 해당 장소에서의 예상 소요 시간(분)입니다.
             - recommended_time은 방문 추천 시간대입니다.
             - 데이트 흐름(카페/브런치 → 메인 활동 → 식사/디저트)을 고려하여 순서를 정해주세요.
-        """.trimIndent()
+            """.trimIndent()
     }
 
     /**
@@ -63,20 +62,24 @@ object PromptBuilder {
         region: Region,
         dateType: DateType,
         budget: Budget,
-        specialRequest: String?
+        specialRequest: String?,
     ): String {
-        val dateTypeDescription = when (dateType) {
-            DateType.ROMANTIC -> "로맨틱한 데이트 (분위기 있고 특별한 경험)"
-            DateType.ACTIVITY -> "액티브한 데이트 (활동적이고 에너지 넘치는)"
-            DateType.FOOD -> "맛집 탐방 데이트 (미식 경험 중심)"
-            DateType.CULTURE -> "문화적인 데이트 (전시, 공연, 문화 체험)"
-            DateType.HEALING -> "힐링 데이트 (휴식과 재충전)"
-        }
+        val dateTypeDescription =
+            when (dateType) {
+                DateType.ROMANTIC -> "로맨틱한 데이트 (분위기 있고 특별한 경험)"
+                DateType.ACTIVITY -> "액티브한 데이트 (활동적이고 에너지 넘치는)"
+                DateType.FOOD -> "맛집 탐방 데이트 (미식 경험 중심)"
+                DateType.CULTURE -> "문화적인 데이트 (전시, 공연, 문화 체험)"
+                DateType.HEALING -> "힐링 데이트 (휴식과 재충전)"
+            }
 
         val budgetDescription = "총 예산: ${budget.toDisplayName()} (2인 기준)"
-        val regionKeywords = if (region.keywords.isNotEmpty()) {
-            "\n지역 키워드: ${region.keywords.joinToString(", ")}"
-        } else ""
+        val regionKeywords =
+            if (region.keywords.isNotEmpty()) {
+                "\n지역 키워드: ${region.keywords.joinToString(", ")}"
+            } else {
+                ""
+            }
 
         return """
             다음 조건으로 데이트 코스를 추천해주세요:
@@ -96,7 +99,7 @@ object PromptBuilder {
             위 조건을 고려하여 ${region.name} 지역에서 실제 존재하는 장소를 활용한 데이트 코스 3-4곳을 추천해주세요.
             일반적인 데이트 흐름(카페/브런치 → 메인 활동 → 식사/디저트)을 고려하여 순서를 정해주세요.
             각 장소의 정확한 주소, 위치 정보, 예상 비용을 포함해주세요.
-        """.trimIndent()
+            """.trimIndent()
     }
 
     /**
@@ -106,7 +109,7 @@ object PromptBuilder {
         region: Region,
         dateType: DateType,
         budget: Budget,
-        specialRequest: String?
+        specialRequest: String?,
     ): List<Message> {
         return listOf(
             Message.system(buildSystemPrompt()),
@@ -115,9 +118,9 @@ object PromptBuilder {
                     region = region,
                     dateType = dateType,
                     budget = budget,
-                    specialRequest = specialRequest
-                )
-            )
+                    specialRequest = specialRequest,
+                ),
+            ),
         )
     }
 }

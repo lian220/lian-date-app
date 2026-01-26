@@ -12,7 +12,7 @@ object RegionMapper {
             description = entity.description,
             keywords = entity.keywords,
             centerLat = entity.centerLat,
-            centerLng = entity.centerLng
+            centerLng = entity.centerLng,
         )
     }
 
@@ -24,7 +24,7 @@ object RegionMapper {
             description = domain.description,
             keywords = domain.keywords,
             centerLat = domain.centerLat,
-            centerLng = domain.centerLng
+            centerLng = domain.centerLng,
         )
     }
 }

@@ -13,17 +13,17 @@ import org.springframework.stereotype.Service
 @Service
 class CuratePlaceUseCaseImpl(
     private val placeSearchPort: PlaceSearchPort,
-    private val placeCurationPort: PlaceCurationPort
+    private val placeCurationPort: PlaceCurationPort,
 ) : CuratePlaceUseCase {
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun execute(placeId: PlaceId): PlaceCurationInfo {
         logger.info("Curating place: {}", placeId.value)
 
         // 1. 카카오 API로 장소 상세 정보 조회
-        val place = placeSearchPort.getPlaceDetail(placeId)
-            ?: throw PlaceNotFoundException("장소를 찾을 수 없습니다: ${placeId.value}")
+        val place =
+            placeSearchPort.getPlaceDetail(placeId)
+                ?: throw PlaceNotFoundException("장소를 찾을 수 없습니다: ${placeId.value}")
 
         // 2. OpenAI API로 큐레이션 수행
         val curationInfo = placeCurationPort.curatePlace(place)
@@ -31,7 +31,7 @@ class CuratePlaceUseCaseImpl(
         logger.info(
             "Place curation completed: name={}, dateScore={}",
             place.name,
-            curationInfo.dateScore
+            curationInfo.dateScore,
         )
 
         return curationInfo

@@ -21,11 +21,10 @@ import org.springframework.test.context.TestPropertySource
         "openai.api-key=test-key-for-curation-test",
         "openai.model=gpt-4o-mini",
         "openai.max-tokens=2000",
-        "openai.temperature=0.7"
-    ]
+        "openai.temperature=0.7",
+    ],
 )
 class PlaceCurationIntegrationTest {
-
     @Autowired
     private lateinit var applicationContext: ApplicationContext
 

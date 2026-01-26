@@ -16,14 +16,18 @@ data class Course(
     val places: List<CoursePlace>,
     val routes: List<Route>,
     val createdAt: Instant,
-    val sessionId: String? = null
+    val sessionId: String? = null,
 ) {
     val totalEstimatedCost: EstimatedCost
-        get() = places
-            .map { it.estimatedCost }
-            .fold(EstimatedCost.ZERO) { acc, cost -> acc + cost }
+        get() =
+            places
+                .map { it.estimatedCost }
+                .fold(EstimatedCost.ZERO) { acc, cost -> acc + cost }
 
-    fun regenerate(newPlaces: List<CoursePlace>, newRoutes: List<Route>): Course =
+    fun regenerate(
+        newPlaces: List<CoursePlace>,
+        newRoutes: List<Route>,
+    ): Course =
         Course(
             id = CourseId.generate(),
             regionId = this.regionId,
@@ -33,7 +37,7 @@ data class Course(
             places = newPlaces,
             routes = newRoutes,
             createdAt = Instant.now(),
-            sessionId = this.sessionId
+            sessionId = this.sessionId,
         )
 
     companion object {
@@ -44,17 +48,18 @@ data class Course(
             budget: Budget,
             places: List<CoursePlace>,
             routes: List<Route>,
-            sessionId: String? = null
-        ): Course = Course(
-            id = CourseId.generate(),
-            regionId = regionId,
-            regionName = regionName,
-            dateType = dateType,
-            budget = budget,
-            places = places,
-            routes = routes,
-            createdAt = Instant.now(),
-            sessionId = sessionId
-        )
+            sessionId: String? = null,
+        ): Course =
+            Course(
+                id = CourseId.generate(),
+                regionId = regionId,
+                regionName = regionName,
+                dateType = dateType,
+                budget = budget,
+                places = places,
+                routes = routes,
+                createdAt = Instant.now(),
+                sessionId = sessionId,
+            )
     }
 }

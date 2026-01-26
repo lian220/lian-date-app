@@ -12,9 +12,8 @@ import org.springframework.stereotype.Service
  */
 @Service
 class GetCourseUseCaseImpl(
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
 ) : GetCourseUseCase {
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     /**
@@ -37,7 +36,7 @@ class GetCourseUseCaseImpl(
             "Course found: id={}, regionName={}, placeCount={}",
             course.id.value,
             course.regionName,
-            course.places.size
+            course.places.size,
         )
 
         return course

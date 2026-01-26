@@ -11,7 +11,6 @@ import com.dateclick.api.infrastructure.config.OpenAiProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.mockk.every
-import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.verify
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(MockKExtension::class)
 class OpenAiGenerationAdapterTest {
-
     @MockK
     private lateinit var openAiClient: OpenAiClient
 
@@ -33,12 +31,13 @@ class OpenAiGenerationAdapterTest {
 
     @BeforeEach
     fun setUp() {
-        openAiProperties = OpenAiProperties(
-            apiKey = "test-api-key",
-            model = "gpt-4",
-            maxTokens = 2000,
-            temperature = 0.7
-        )
+        openAiProperties =
+            OpenAiProperties(
+                apiKey = "test-api-key",
+                model = "gpt-4",
+                maxTokens = 2000,
+                temperature = 0.7,
+            )
         objectMapper = jacksonObjectMapper()
         adapter = OpenAiGenerationAdapter(openAiClient, openAiProperties, objectMapper)
     }
@@ -54,12 +53,13 @@ class OpenAiGenerationAdapterTest {
         every { openAiClient.createChatCompletion(any()) } returns mockResponse
 
         // When
-        val result = adapter.generateCourseRecommendation(
-            region = region,
-            dateType = dateType,
-            budget = budget,
-            specialRequest = null
-        )
+        val result =
+            adapter.generateCourseRecommendation(
+                region = region,
+                dateType = dateType,
+                budget = budget,
+                specialRequest = null,
+            )
 
         // Then
         assertNotNull(result)
@@ -90,7 +90,7 @@ class OpenAiGenerationAdapterTest {
                 region = region,
                 dateType = dateType,
                 budget = budget,
-                specialRequest = null
+                specialRequest = null,
             )
         }
     }
@@ -111,7 +111,7 @@ class OpenAiGenerationAdapterTest {
                 region = region,
                 dateType = dateType,
                 budget = budget,
-                specialRequest = null
+                specialRequest = null,
             )
         }
     }
@@ -123,9 +123,10 @@ class OpenAiGenerationAdapterTest {
         val dateType = DateType.CULTURE
         val budget = Budget(30000..50000)
 
-        val invalidResponse = createMockChatCompletionResponse(
-            messageContent = "Invalid JSON content"
-        )
+        val invalidResponse =
+            createMockChatCompletionResponse(
+                messageContent = "Invalid JSON content",
+            )
         every { openAiClient.createChatCompletion(any()) } returns invalidResponse
 
         // When & Then
@@ -134,7 +135,7 @@ class OpenAiGenerationAdapterTest {
                 region = region,
                 dateType = dateType,
                 budget = budget,
-                specialRequest = null
+                specialRequest = null,
             )
         }
     }
@@ -147,7 +148,7 @@ class OpenAiGenerationAdapterTest {
             description = "서울 강남구",
             keywords = listOf("쇼핑", "맛집"),
             centerLat = 37.4979,
-            centerLng = 127.0276
+            centerLng = 127.0276,
         )
     }
 
@@ -164,7 +165,7 @@ class OpenAiGenerationAdapterTest {
                 phone = "02-1234-5678",
                 kakaoRating = 4.5,
                 kakaoReviewCount = 100,
-                kakaoPlaceUrl = "https://place.map.kakao.com/1"
+                kakaoPlaceUrl = "https://place.map.kakao.com/1",
             ),
             Place(
                 id = PlaceId("place-2"),
@@ -177,7 +178,7 @@ class OpenAiGenerationAdapterTest {
                 phone = "02-1234-5679",
                 kakaoRating = 4.8,
                 kakaoReviewCount = 200,
-                kakaoPlaceUrl = "https://place.map.kakao.com/2"
+                kakaoPlaceUrl = "https://place.map.kakao.com/2",
             ),
             Place(
                 id = PlaceId("place-3"),
@@ -190,32 +191,34 @@ class OpenAiGenerationAdapterTest {
                 phone = "02-1234-5680",
                 kakaoRating = 4.3,
                 kakaoReviewCount = 150,
-                kakaoPlaceUrl = "https://place.map.kakao.com/3"
-            )
+                kakaoPlaceUrl = "https://place.map.kakao.com/3",
+            ),
         )
     }
 
     private fun createMockChatCompletionResponse(
-        choices: List<Choice> = listOf(
-            Choice(
-                index = 0,
-                message = Message.assistant(createMockAiCourseResponseJson()),
-                finishReason = "stop"
-            )
-        ),
-        messageContent: String? = null
-    ): ChatCompletionResponse {
-        val actualChoices = if (messageContent != null) {
+        choices: List<Choice> =
             listOf(
                 Choice(
                     index = 0,
-                    message = Message.assistant(messageContent),
-                    finishReason = "stop"
+                    message = Message.assistant(createMockAiCourseResponseJson()),
+                    finishReason = "stop",
+                ),
+            ),
+        messageContent: String? = null,
+    ): ChatCompletionResponse {
+        val actualChoices =
+            if (messageContent != null) {
+                listOf(
+                    Choice(
+                        index = 0,
+                        message = Message.assistant(messageContent),
+                        finishReason = "stop",
+                    ),
                 )
-            )
-        } else {
-            choices
-        }
+            } else {
+                choices
+            }
 
         return ChatCompletionResponse(
             id = "chatcmpl-123",
@@ -223,11 +226,12 @@ class OpenAiGenerationAdapterTest {
             created = System.currentTimeMillis() / 1000,
             model = "gpt-4",
             choices = actualChoices,
-            usage = Usage(
-                promptTokens = 100,
-                completionTokens = 200,
-                totalTokens = 300
-            )
+            usage =
+                Usage(
+                    promptTokens = 100,
+                    completionTokens = 200,
+                    totalTokens = 300,
+                ),
         )
     }
 
@@ -289,6 +293,6 @@ class OpenAiGenerationAdapterTest {
                 ],
                 "summary": "로맨틱한 데이트 코스입니다"
             }
-        """.trimIndent()
+            """.trimIndent()
     }
 }

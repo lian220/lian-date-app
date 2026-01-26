@@ -20,7 +20,6 @@ import java.time.Instant
  * 코스 조회 유스케이스의 동작을 검증합니다.
  */
 class GetCourseUseCaseImplTest {
-
     private lateinit var courseRepository: CourseRepository
     private lateinit var getCourseUseCase: GetCourseUseCaseImpl
 
@@ -97,11 +96,12 @@ class GetCourseUseCaseImplTest {
      * @return 3개의 장소를 포함한 테스트 코스
      */
     private fun createTestCourse(courseId: CourseId): Course {
-        val places = listOf(
-            createTestPlace(1, "테스트 레스토랑", "음식점"),
-            createTestPlace(2, "테스트 카페", "카페"),
-            createTestPlace(3, "테스트 공원", "명소")
-        )
+        val places =
+            listOf(
+                createTestPlace(1, "테스트 레스토랑", "음식점"),
+                createTestPlace(2, "테스트 카페", "카페"),
+                createTestPlace(3, "테스트 공원", "명소"),
+            )
 
         return Course(
             id = courseId,
@@ -112,7 +112,7 @@ class GetCourseUseCaseImplTest {
             places = places,
             routes = emptyList(),
             createdAt = Instant.now(),
-            sessionId = "test-session-123"
+            sessionId = "test-session-123",
         )
     }
 
@@ -124,13 +124,17 @@ class GetCourseUseCaseImplTest {
      * @param category 카테고리
      * @return 테스트 장소 객체
      */
-    private fun createTestPlace(order: Int, name: String, category: String): CoursePlace {
+    private fun createTestPlace(
+        order: Int,
+        name: String,
+        category: String,
+    ): CoursePlace {
         return CoursePlace(
             order = order,
             placeId = PlaceId("place-test-$order"),
             name = name,
             category = category,
-            categoryDetail = "${category} 상세",
+            categoryDetail = "$category 상세",
             address = "서울시 강남구 테스트로 ${order}번길",
             roadAddress = "서울시 강남구 테스트대로 ${order * 10}",
             location = Location(lat = 37.5 + order * 0.01, lng = 127.0 + order * 0.01),
@@ -140,7 +144,7 @@ class GetCourseUseCaseImplTest {
             recommendedTime = "오후 ${order + 5}시",
             recommendReason = "${name}은 데이트하기 좋은 장소입니다.",
             imageUrl = "https://example.com/image-$order.jpg",
-            kakaoPlaceUrl = "https://place.map.kakao.com/$order"
+            kakaoPlaceUrl = "https://place.map.kakao.com/$order",
         )
     }
 }

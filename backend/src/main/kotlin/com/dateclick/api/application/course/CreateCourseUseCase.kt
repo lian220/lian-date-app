@@ -14,5 +14,5 @@ data class CreateCourseCommand(
     val dateType: DateType,
     val budget: Budget,
     val specialRequest: String?,
-    val sessionId: String
+    val sessionId: String,
 )

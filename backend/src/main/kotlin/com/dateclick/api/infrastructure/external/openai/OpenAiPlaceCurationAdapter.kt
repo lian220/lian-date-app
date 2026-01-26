@@ -18,9 +18,8 @@ import org.springframework.stereotype.Component
 class OpenAiPlaceCurationAdapter(
     private val openAiClient: OpenAiClient,
     private val openAiProperties: OpenAiProperties,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) : PlaceCurationPort {
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun curatePlace(place: Place): PlaceCurationInfo {
@@ -31,13 +30,14 @@ class OpenAiPlaceCurationAdapter(
             val messages = PlaceCurationPromptBuilder.buildMessages(place)
 
             // 2. OpenAI API 요청 생성
-            val request = ChatCompletionRequest(
-                model = openAiProperties.model,
-                messages = messages,
-                temperature = 0.7,
-                maxTokens = 500,
-                responseFormat = ResponseFormat(type = "json_object")
-            )
+            val request =
+                ChatCompletionRequest(
+                    model = openAiProperties.model,
+                    messages = messages,
+                    temperature = 0.7,
+                    maxTokens = 500,
+                    responseFormat = ResponseFormat(type = "json_object"),
+                )
 
             // 3. OpenAI API 호출
             val response = openAiClient.createChatCompletion(request)
@@ -46,22 +46,22 @@ class OpenAiPlaceCurationAdapter(
             val curationResponse = parseResponse(response)
 
             // 5. Domain 객체로 변환
-            val curationInfo = PlaceCurationInfo(
-                dateScore = curationResponse.dateScore,
-                moodTags = curationResponse.moodTags,
-                priceRange = curationResponse.priceRange,
-                bestTime = curationResponse.bestTime,
-                recommendation = curationResponse.recommendation
-            )
+            val curationInfo =
+                PlaceCurationInfo(
+                    dateScore = curationResponse.dateScore,
+                    moodTags = curationResponse.moodTags,
+                    priceRange = curationResponse.priceRange,
+                    bestTime = curationResponse.bestTime,
+                    recommendation = curationResponse.recommendation,
+                )
 
             logger.info(
                 "Successfully curated place: name={}, dateScore={}",
                 place.name,
-                curationInfo.dateScore
+                curationInfo.dateScore,
             )
 
             return curationInfo
-
         } catch (ex: PlaceCurationException) {
             // parseResponse()에서 발생한 PlaceCurationException은 그대로 전파
             throw ex
@@ -100,18 +100,14 @@ class OpenAiPlaceCurationAdapter(
 data class PlaceCurationResponse(
     @JsonProperty("date_score")
     val dateScore: Int,
-
     @JsonProperty("mood_tags")
     val moodTags: List<String>,
-
     @JsonProperty("price_range")
     val priceRange: Int,
-
     @JsonProperty("best_time")
     val bestTime: String,
-
     @JsonProperty("recommendation")
-    val recommendation: String
+    val recommendation: String,
 )
 
 /**
@@ -119,5 +115,5 @@ data class PlaceCurationResponse(
  */
 class PlaceCurationException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : RuntimeException(message, cause)

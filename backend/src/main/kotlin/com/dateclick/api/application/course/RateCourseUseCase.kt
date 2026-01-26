@@ -10,5 +10,5 @@ interface RateCourseUseCase {
 data class RateCourseCommand(
     val courseId: CourseId,
     val sessionId: String,
-    val score: Int
+    val score: Int,
 )

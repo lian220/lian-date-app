@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory
  * - "영업시간 정보 없음"
  */
 object BusinessHoursParser {
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     // 한글 요일 목록
@@ -88,7 +87,7 @@ object BusinessHoursParser {
             BusinessHours(
                 day = day,
                 open = timeRange.first,
-                close = timeRange.second
+                close = timeRange.second,
             )
         }
     }
@@ -127,7 +126,7 @@ object BusinessHoursParser {
             BusinessHours(
                 day = day,
                 open = timeRange.first,
-                close = timeRange.second
+                close = timeRange.second,
             )
         }
     }

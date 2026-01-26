@@ -13,7 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest
  */
 @SpringBootTest
 class RouteCalculationIntegrationTest {
-
     @Autowired
     private lateinit var kakaoPlaceSearchAdapter: KakaoPlaceSearchAdapter
 
@@ -72,18 +71,19 @@ class RouteCalculationIntegrationTest {
     @Test
     fun `should validate 30 minute time limit (AC 2-4)`() {
         // Given: Various distances
-        val testCases = listOf(
-            // Short distance (should pass)
-            Pair(
-                Location(37.4979, 127.0276),
-                Location(37.5010, 127.0296)
-            ),
-            // Medium distance (should pass)
-            Pair(
-                Location(37.4979, 127.0276),
-                Location(37.5007, 127.0363)
+        val testCases =
+            listOf(
+                // Short distance (should pass)
+                Pair(
+                    Location(37.4979, 127.0276),
+                    Location(37.5010, 127.0296),
+                ),
+                // Medium distance (should pass)
+                Pair(
+                    Location(37.4979, 127.0276),
+                    Location(37.5007, 127.0363),
+                ),
             )
-        )
 
         testCases.forEach { (from, to) ->
             // When
@@ -93,11 +93,11 @@ class RouteCalculationIntegrationTest {
             assertTrue(
                 route.isWithinTimeLimit(),
                 "Route from (${from.lat},${from.lng}) to (${to.lat},${to.lng}) " +
-                        "should be within 30 minutes, but was ${route.duration} minutes"
+                    "should be within 30 minutes, but was ${route.duration} minutes",
             )
             assertDoesNotThrow(
                 { route.validateTimeLimit() },
-                "Route validation should not throw exception"
+                "Route validation should not throw exception",
             )
         }
     }
@@ -115,11 +115,15 @@ class RouteCalculationIntegrationTest {
 
         // Then: Duration should be realistic
         // Walk: ~300m at 4km/h = ~5 minutes
-        assertTrue(walkRoute.duration >= 5 && walkRoute.duration <= 15,
-            "Walk duration should be realistic: ${walkRoute.duration} min")
+        assertTrue(
+            walkRoute.duration >= 5 && walkRoute.duration <= 15,
+            "Walk duration should be realistic: ${walkRoute.duration} min",
+        )
 
         // Transit: ~2km at 20km/h + wait time = ~10-20 minutes
-        assertTrue(transitRoute.duration >= 10 && transitRoute.duration <= 25,
-            "Transit duration should be realistic: ${transitRoute.duration} min")
+        assertTrue(
+            transitRoute.duration >= 10 && transitRoute.duration <= 25,
+            "Transit duration should be realistic: ${transitRoute.duration} min",
+        )
     }
 }

@@ -10,17 +10,25 @@ import java.util.Optional
 interface CourseJpaRepository : JpaRepository<CourseEntity, String> {
     fun findBySessionId(sessionId: String): List<CourseEntity>
 
-    @Query("""
+    @Query(
+        """
         SELECT DISTINCT c FROM CourseEntity c
         LEFT JOIN FETCH c.places
         WHERE c.id = :id
-    """)
-    fun findByIdWithPlaces(@Param("id") id: String): Optional<CourseEntity>
+    """,
+    )
+    fun findByIdWithPlaces(
+        @Param("id") id: String,
+    ): Optional<CourseEntity>
 
-    @Query("""
+    @Query(
+        """
         SELECT DISTINCT c FROM CourseEntity c
         LEFT JOIN FETCH c.routes
         WHERE c.id = :id
-    """)
-    fun findByIdWithRoutes(@Param("id") id: String): Optional<CourseEntity>
+    """,
+    )
+    fun findByIdWithRoutes(
+        @Param("id") id: String,
+    ): Optional<CourseEntity>
 }

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
 class RateLimitServiceTest {
-
     private lateinit var rateLimitService: RateLimitService
 
     @BeforeEach
@@ -24,9 +23,10 @@ class RateLimitServiceTest {
         }
 
         // 11회째는 실패
-        val exception = assertThrows<RateLimitException> {
-            rateLimitService.checkRateLimit(sessionId, "POST", "/v1/courses")
-        }
+        val exception =
+            assertThrows<RateLimitException> {
+                rateLimitService.checkRateLimit(sessionId, "POST", "/v1/courses")
+            }
 
         assertEquals("POST:/v1/courses", exception.endpoint)
         assertEquals(10, exception.limit)
@@ -43,9 +43,10 @@ class RateLimitServiceTest {
         }
 
         // 6회째는 실패
-        val exception = assertThrows<RateLimitException> {
-            rateLimitService.checkRateLimit(sessionId, "POST", "/v1/courses/abc-123/regenerate")
-        }
+        val exception =
+            assertThrows<RateLimitException> {
+                rateLimitService.checkRateLimit(sessionId, "POST", "/v1/courses/abc-123/regenerate")
+            }
 
         assertEquals("POST:/v1/courses/*/regenerate", exception.endpoint)
         assertEquals(5, exception.limit)
@@ -61,9 +62,10 @@ class RateLimitServiceTest {
         }
 
         // 101회째는 실패
-        val exception = assertThrows<RateLimitException> {
-            rateLimitService.checkRateLimit(sessionId, "GET", "/v1/places/search")
-        }
+        val exception =
+            assertThrows<RateLimitException> {
+                rateLimitService.checkRateLimit(sessionId, "GET", "/v1/places/search")
+            }
 
         assertEquals(100, exception.limit)
     }

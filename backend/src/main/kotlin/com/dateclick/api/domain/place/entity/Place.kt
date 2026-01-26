@@ -17,5 +17,5 @@ data class Place(
     val imageUrls: List<String>? = null,
     val kakaoPlaceUrl: String? = null,
     val kakaoRating: Double? = null,
-    val kakaoReviewCount: Int? = null
+    val kakaoReviewCount: Int? = null,
 )

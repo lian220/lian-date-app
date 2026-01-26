@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class BusinessHoursParserTest {
-
     @Test
     fun `null 또는 빈 문자열은 빈 리스트 반환`() {
         assertTrue(BusinessHoursParser.parse(null).isEmpty())
@@ -127,11 +126,12 @@ class BusinessHoursParserTest {
 
     @Test
     fun `여러 줄 파싱 - 요일별 다른 영업시간`() {
-        val input = """
+        val input =
+            """
             월~금 09:00~18:00
             토 10:00~15:00
             일 휴무
-        """.trimIndent()
+            """.trimIndent()
 
         val result = BusinessHoursParser.parseMultiLine(input)
 
@@ -159,10 +159,11 @@ class BusinessHoursParserTest {
 
     @Test
     fun `중복 요일은 마지막 것만 유지`() {
-        val input = """
+        val input =
+            """
             월 09:00~18:00
             월 10:00~20:00
-        """.trimIndent()
+            """.trimIndent()
 
         val result = BusinessHoursParser.parseMultiLine(input)
 
@@ -184,9 +185,10 @@ class BusinessHoursParserTest {
 
     @Test
     fun `실제 카카오 맵 형식 예시 - 2`() {
-        val input = """
+        val input =
+            """
             월~일 11:00 ~ 22:00
-        """.trimIndent()
+            """.trimIndent()
 
         val result = BusinessHoursParser.parse(input)
 

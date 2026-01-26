@@ -7,12 +7,11 @@ import com.dateclick.api.domain.place.port.outbound.PlaceMemoryPort
 import com.dateclick.api.domain.place.vo.*
 import io.mockk.*
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
 
 class PlaceMemoryServiceTest {
-
     private lateinit var placeSearchPort: PlaceSearchPort
     private lateinit var placeCurationPort: PlaceCurationPort
     private lateinit var placeMemoryPort: PlaceMemoryPort
@@ -23,11 +22,12 @@ class PlaceMemoryServiceTest {
         placeSearchPort = mockk()
         placeCurationPort = mockk()
         placeMemoryPort = mockk()
-        placeMemoryService = PlaceMemoryService(
-            placeSearchPort,
-            placeCurationPort,
-            placeMemoryPort
-        )
+        placeMemoryService =
+            PlaceMemoryService(
+                placeSearchPort,
+                placeCurationPort,
+                placeMemoryPort,
+            )
     }
 
     @AfterEach
@@ -147,27 +147,30 @@ class PlaceMemoryServiceTest {
         verify(exactly = 1) { placeMemoryPort.clearMemory() }
     }
 
-    private fun createTestPlace(placeId: PlaceId) = Place(
-        id = placeId,
-        name = "테스트 장소",
-        category = "음식점",
-        categoryDetail = "이탈리안",
-        address = "서울시 강남구",
-        roadAddress = null,
-        phone = null,
-        location = Location(lat = 37.5, lng = 127.0)
-    )
+    private fun createTestPlace(placeId: PlaceId) =
+        Place(
+            id = placeId,
+            name = "테스트 장소",
+            category = "음식점",
+            categoryDetail = "이탈리안",
+            address = "서울시 강남구",
+            roadAddress = null,
+            phone = null,
+            location = Location(lat = 37.5, lng = 127.0),
+        )
 
-    private fun createTestCuration() = PlaceCurationInfo(
-        dateScore = 9,
-        moodTags = listOf("#로맨틱", "#아늑한"),
-        priceRange = 50000,
-        bestTime = "저녁 7-9시",
-        recommendation = "데이트하기 좋은 곳"
-    )
+    private fun createTestCuration() =
+        PlaceCurationInfo(
+            dateScore = 9,
+            moodTags = listOf("#로맨틱", "#아늑한"),
+            priceRange = 50000,
+            bestTime = "저녁 7-9시",
+            recommendation = "데이트하기 좋은 곳",
+        )
 
-    private fun createTestPlaceWithCuration() = PlaceWithCuration(
-        place = createTestPlace(PlaceId("test-place")),
-        curation = createTestCuration()
-    )
+    private fun createTestPlaceWithCuration() =
+        PlaceWithCuration(
+            place = createTestPlace(PlaceId("test-place")),
+            curation = createTestCuration(),
+        )
 }

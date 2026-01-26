@@ -16,26 +16,28 @@ import org.springframework.stereotype.Component
 
 @Component
 class CourseMapper {
-
-    fun toCommand(request: CreateCourseRequest, sessionId: String): CreateCourseCommand {
+    fun toCommand(
+        request: CreateCourseRequest,
+        sessionId: String,
+    ): CreateCourseCommand {
         return CreateCourseCommand(
             regionId = RegionId(request.regionId),
             dateType = DateType.fromCode(request.dateType),
             budget = Budget.from(request.budget),
             specialRequest = request.specialRequest,
-            sessionId = sessionId
+            sessionId = sessionId,
         )
     }
 
     fun toRegenerateCommand(
         courseId: String,
         request: RegenerateCourseRequest?,
-        sessionId: String
+        sessionId: String,
     ): RegenerateCourseCommand {
         return RegenerateCourseCommand(
             originalCourseId = CourseId(courseId),
             excludePlaceIds = request?.excludePlaceIds ?: emptyList(),
-            sessionId = sessionId
+            sessionId = sessionId,
         )
     }
 
@@ -49,7 +51,7 @@ class CourseMapper {
             totalEstimatedCost = course.totalEstimatedCost.value,
             places = course.places.map { toCoursePlaceResponse(it) },
             routes = course.routes.map { toRouteResponse(it) },
-            createdAt = course.createdAt
+            createdAt = course.createdAt,
         )
     }
 
@@ -70,7 +72,7 @@ class CourseMapper {
             recommendedTime = place.recommendedTime,
             recommendReason = place.recommendReason,
             imageUrl = place.imageUrl,
-            kakaoPlaceUrl = place.kakaoPlaceUrl
+            kakaoPlaceUrl = place.kakaoPlaceUrl,
         )
     }
 
@@ -81,7 +83,7 @@ class CourseMapper {
             distance = route.distance,
             duration = route.duration,
             transportType = route.transportType.code,
-            description = route.description
+            description = route.description,
         )
     }
 }

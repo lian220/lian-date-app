@@ -11,9 +11,8 @@ import org.springframework.stereotype.Service
  */
 @Service
 class GetPlaceDetailUseCaseImpl(
-    private val placeSearchPort: PlaceSearchPort
+    private val placeSearchPort: PlaceSearchPort,
 ) : GetPlaceDetailUseCase {
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun execute(placeId: PlaceId): Place? {

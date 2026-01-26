@@ -193,6 +193,8 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx_errors" {
 
 # RDS CPU Utilization
 resource "aws_cloudwatch_metric_alarm" "rds_cpu_high" {
+  count = var.db_instance_id != "" ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-rds-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -218,6 +220,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu_high" {
 
 # RDS Free Storage Space
 resource "aws_cloudwatch_metric_alarm" "rds_storage_low" {
+  count = var.db_instance_id != "" ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-rds-storage-low"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
@@ -243,6 +247,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_storage_low" {
 
 # RDS Database Connections
 resource "aws_cloudwatch_metric_alarm" "rds_connections_high" {
+  count = var.db_instance_id != "" ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-rds-connections-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -268,6 +274,8 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections_high" {
 
 # RDS Read/Write Latency
 resource "aws_cloudwatch_metric_alarm" "rds_write_latency_high" {
+  count = var.db_instance_id != "" ? 1 : 0
+
   alarm_name          = "${var.name_prefix}-rds-write-latency-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2

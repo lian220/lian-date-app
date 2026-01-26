@@ -9,5 +9,5 @@ data class Region(
     val description: String,
     val keywords: List<String>,
     val centerLat: Double,
-    val centerLng: Double
+    val centerLng: Double,
 )

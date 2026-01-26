@@ -7,9 +7,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class RegionRepositoryImpl(
-    private val jpaRepository: RegionJpaRepository
+    private val jpaRepository: RegionJpaRepository,
 ) : RegionRepository {
-
     override fun findAll(): List<Region> {
         return jpaRepository.findAll()
             .map { RegionMapper.toDomain(it) }

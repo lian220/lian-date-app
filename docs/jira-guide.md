@@ -1,6 +1,208 @@
-# Jira 티켓 생성 상세 가이드
+# Jira 티켓 작성 가이드
 
-> 💡 **빠른 참고가 필요하신가요?** → [Jira 빠른 참고 가이드](./jira-quick-reference.md) (1페이지, 실무용)
+> 💡 **빠른 참고**가 필요하면 [빠른 참고 섹션](#빠른-참고-가이드)으로 이동하세요.
+
+## 목차
+
+- [빠른 참고 가이드](#빠른-참고-가이드) - 실무용 체크리스트 및 템플릿
+- [상세 가이드](#상세-가이드) - 방법론 및 베스트 프랙티스
+
+---
+
+# 빠른 참고 가이드
+
+## 🚀 3분 체크리스트
+
+### Epic 생성 시
+- [ ] 제목: `[MVP] {기능명}`
+- [ ] 비즈니스 목표 1-2줄
+- [ ] 성공 지표 1-2개
+
+### Story 생성 시
+- [ ] User Story: `"{역할}로서, {행동}하고 싶다. {이유} 때문이다."`
+- [ ] AC (Given-When-Then) 2-3개
+- [ ] 우선순위: P0/P1/P2
+
+### Sub-task 생성 시
+- [ ] 제목: `[FE/BE] {작업명}`
+- [ ] 체크리스트 3-5개
+- [ ] 완료 기준 명시
+
+## 📋 티켓 템플릿 (복붙용)
+
+### Story 템플릿
+
+```markdown
+## User Story
+"{역할}로서, {행동}하고 싶다. {이유} 때문이다."
+
+## Acceptance Criteria
+
+### AC 1: {기능명}
+- [ ] Given: {전제 조건}
+- [ ] When: {사용자 행동}
+- [ ] Then: {시스템 반응}
+
+### AC 2: {기능명}
+- [ ] Given: {전제 조건}
+- [ ] When: {사용자 행동}
+- [ ] Then: {시스템 반응}
+
+## 관련 문서
+- PRD:
+- Figma:
+
+## Labels
+`story`, `p0`, `frontend`, `backend`
+```
+
+### Frontend Sub-task 템플릿
+
+```markdown
+## 설명
+{UI/컴포넌트 설명 1-2줄}
+
+## 세부 작업
+- [ ] {컴포넌트/화면} 구현
+- [ ] {상태 관리} 처리
+- [ ] {API 연동}
+- [ ] {에러 처리}
+
+## 의존성
+- API: `METHOD /v1/endpoint`
+- 디자인: Figma 링크
+
+## 완료 기준
+- [ ] 로컬 동작 검증
+- [ ] 코드 리뷰 완료
+```
+
+### Backend Sub-task 템플릿
+
+```markdown
+## 설명
+{API/로직 설명 1-2줄}
+
+## 세부 작업
+- [ ] API 엔드포인트 구현
+- [ ] Request/Response DTO
+- [ ] 비즈니스 로직
+- [ ] 단위 테스트
+
+## 도메인 모델
+- Entity:
+- Repository:
+
+## 의존성
+- 외부 API:
+- 인프라:
+
+## 완료 기준
+- [ ] API 테스트 통과
+- [ ] 단위 테스트 커버리지 80%+
+- [ ] 코드 리뷰 완료
+```
+
+## 🔄 PRD → Jira 변환 플로우
+
+```
+1. PRD 읽기
+   ↓
+2. Epic 생성 (MVP 단위)
+   - 제목: [MVP] {제품/기능명}
+   - 목표: PRD 성공 지표
+   ↓
+3. Story 생성 (기능별)
+   - F1, F2, F3... → 각각 1개 Story
+   - User Story & AC 복사
+   ↓
+4. Sub-task 생성 (기술 분해)
+   - [FE] UI/화면별
+   - [BE] API/도메인별
+   ↓
+5. 우선순위 배정
+   - MVP 필수 → P0
+   - MVP 권장 → P1
+   - Nice to have → P2
+```
+
+## 💡 빠른 예시
+
+### 로그인 기능 티켓 구조
+
+```
+Epic: [MVP] 사용자 인증
+└─ Story: 로그인 기능
+    ├─ [FE] 로그인 폼 UI (P0, 2SP)
+    ├─ [FE] 소셜 로그인 버튼 (P0, 1SP)
+    ├─ [BE] 로그인 API (P0, 3SP)
+    ├─ [BE] 소셜 로그인 연동 (P0, 5SP)
+    └─ [BE] JWT 토큰 발급 (P0, 2SP)
+```
+
+## ⚡ 병렬 처리 전략
+
+### 병렬 vs 순차 판단 (3초 체크)
+
+| 체크 항목 | 병렬 가능 ✅ | 순차 필요 ⛔ |
+|----------|------------|------------|
+| **API 의존** | API 명세 합의됨 | API 구현 기다려야 함 |
+| **데이터** | 독립적 데이터 | 같은 테이블/스키마 수정 |
+| **리소스** | 다른 팀원 배정 가능 | 같은 사람만 가능 |
+| **도메인** | 다른 기능 영역 | 같은 코드 파일 수정 |
+
+### 병렬 처리 티켓 구조 예시
+
+#### FE/BE 병렬 (API 계약 기반)
+
+```
+Story: 상품 목록 조회
+├─ [BE] 상품 목록 API (우선, 1일) ← API 명세 먼저 작성
+│   └─ API 명세서 작성 → FE 개발 시작 가능
+├─ [FE] 상품 목록 UI (병렬, 2일) ← Mock 데이터로 개발
+└─ [FE] API 연동 (순차, 0.5일) ← BE 완료 후
+```
+
+**전략**:
+1. BE가 API 명세만 작성 (Request/Response DTO)
+2. FE는 Mock 데이터로 UI 병렬 개발
+3. BE API 완료되면 FE가 연동
+
+## ⚡ 우선순위 빠른 판단
+
+| 우선순위 | 질문 | 예시 |
+|---------|------|------|
+| **P0** | 이거 없으면 출시 못함? | 로그인, 결제 |
+| **P1** | UX 개선? 사용자 만족도? | 검색 필터, 알림 |
+| **P2** | 있으면 좋은데 없어도 됨? | 다크모드, 통계 |
+
+## 🚫 자주하는 실수
+
+❌ **나쁜 예시**
+- 제목: "로그인 수정"
+- AC: "로그인 되게 하기"
+- Sub-task: "코딩"
+
+✅ **좋은 예시**
+- 제목: "[FE] 로그인 폼 - 이메일 validation"
+- AC: "사용자가 잘못된 이메일 형식 입력 시 '유효한 이메일을 입력하세요' 빨간색 메시지 표시"
+- Sub-task: "이메일 정규식 검증, 에러 메시지 컴포넌트, 포커스 아웃 이벤트 처리"
+
+## 📏 적정 크기
+
+| 티켓 유형 | 기간 | Story Points |
+|----------|------|--------------|
+| Epic | 1-2개월 | - |
+| Story | 1-2주 | 3-8 SP |
+| Sub-task | 1-3일 | - |
+
+**너무 크면 쪼개세요:**
+- Story > 8SP → 분해
+- Sub-task > 3일 → 분해
+
+---
+
+# 상세 가이드
 
 ## 📋 개요
 
@@ -181,156 +383,6 @@ Epic (대규모 기능)
 - **범위**: 아이디어 수준, 검증 필요
 - **예시**: AI 추천, 소셜 기능 확장
 
-## 📝 티켓 작성 템플릿
-
-### Epic 템플릿
-
-```markdown
-# [Epic] {기능명}
-
-## 📌 Epic 개요
-> {한 문장 요약: 이 Epic이 제공하는 사용자 가치}
-
-## 🎯 비즈니스 목표
-- 목표 1: {구체적 목표와 측정 지표}
-- 목표 2: {구체적 목표와 측정 지표}
-
-## 📊 성공 지표
-| 지표 | 목표값 | 측정 방법 |
-|------|--------|-----------|
-| ... | ... | ... |
-
-## 🔗 관련 문서
-- PRD: [링크]
-- 디자인: [Figma 링크]
-- 기술 명세: [링크]
-
-## 📅 타임라인
-- 시작: {날짜}
-- 목표 완료: {날짜}
-- 릴리즈: {날짜}
-
-## 🏷️ Labels
-`mvp`, `core-feature`, `frontend`, `backend`
-```
-
-### Story 템플릿
-
-```markdown
-# {기능명}
-
-## 👤 User Story
-> "{역할}로서, {행동}하고 싶다. {이유} 때문이다."
-
-## ✅ Acceptance Criteria
-
-### AC 1: {세부 기능명}
-
-**Given** (전제 조건)
-- ...
-
-**When** (사용자 행동)
-- ...
-
-**Then** (시스템 반응)
-- [ ] ...
-- [ ] ...
-
-### AC 2: {세부 기능명}
-...
-
-## 🎨 UI/UX 참고
-- Figma: [링크]
-- 스크린샷: [첨부]
-
-## 🔗 관련 API
-- `METHOD /v1/resource` - 설명
-
-## 📋 Sub-tasks
-- [ ] [FE] UI 구현
-- [ ] [BE] API 구현
-- [ ] [QA] 테스트 케이스 작성
-
-## 🏷️ Labels
-`story`, `frontend`, `backend`, `p0`
-
-## 📊 Story Points
-{피보나치: 1, 2, 3, 5, 8, 13}
-```
-
-### Sub-task 템플릿
-
-```markdown
-# [FE/BE] {작업명}
-
-## 📝 설명
-{무엇을 구현하는지 1-2 문장}
-
-## ✅ 세부 작업
-- [ ] 작업 1
-- [ ] 작업 2
-- [ ] 작업 3
-
-## 🔗 의존성
-- API: `POST /v1/...`
-- 라이브러리: ...
-- 선행 작업: {티켓 번호}
-
-## 📋 완료 기준
-- [ ] 코드 리뷰 완료
-- [ ] 단위 테스트 작성 (커버리지 80% 이상)
-- [ ] 로컬 동작 검증
-
-## 🏷️ Labels
-`frontend` or `backend`, `p0`
-
-## ⏱️ 예상 시간
-{1일, 2일, 3일}
-```
-
-## 🔄 PRD → Jira 티켓 변환 프로세스
-
-### 1단계: Epic 생성
-```
-PRD의 "제품 목표" → Epic
-- Epic 제목: [MVP] {제품명}
-- Epic 설명: PRD의 배경 및 문제 정의 요약
-- 성공 지표: PRD의 HEART 프레임워크 → Epic 성공 지표
-```
-
-### 2단계: Story 생성 (기능별)
-```
-PRD의 "MVP 기능 명세" → Story
-- 각 기능 (F1, F2, F3...) → 1개 Story
-- Story 제목: {기능명}
-- User Story: PRD의 User Story 복사
-- AC: PRD의 Acceptance Criteria 복사
-```
-
-### 3단계: Sub-task 생성
-```
-Story → Frontend/Backend Sub-task
-- Frontend Sub-task: UI/UX 요구사항 → 화면/컴포넌트 단위
-- Backend Sub-task: API 명세 + 비즈니스 로직 → API/도메인 단위
-```
-
-### 4단계: 우선순위 배정
-```
-PRD의 "MVP 범위" 확인
-- MVP 필수 기능 → P0
-- MVP 권장 기능 → P1
-- Nice to have → P2
-- Out of Scope → 백로그 (우선순위 없음)
-```
-
-### 5단계: Sprint 배정
-```
-Story Points 추정 → Sprint 배정
-- Story Points 합산 (팀 Velocity 고려)
-- 의존성 고려 (선행 작업 먼저 배정)
-- 병렬 작업 가능 여부 확인
-```
-
 ## ⚡ 병렬 처리 최적화 전략
 
 ### 병렬 처리의 중요성
@@ -376,34 +428,6 @@ Week 1: BE + FE 동시 개발 (API 계약 기반)
    └─ FE가 Mock → 실제 API 교체
 ```
 
-**예시**:
-```markdown
-### Story: 상품 검색
-**Phase 1: API 계약** (0.5일)
-```typescript
-// API 명세 (공유 문서)
-GET /api/products/search?keyword={keyword}&page={page}
-
-Response:
-{
-  products: Product[],
-  totalCount: number,
-  currentPage: number
-}
-```
-
-**Phase 2: 병렬 개발** (3일)
-- [BE] 검색 로직 + DB 쿼리 최적화
-- [FE] 검색 UI + Mock 데이터로 개발
-  ```typescript
-  // mock.ts
-  const mockProducts = [...]
-  ```
-
-**Phase 3: 통합** (0.5일)
-- [FE] `fetch('/api/products/search')` 연결
-```
-
 #### 2. 도메인 독립성 기반 병렬
 
 **조건**:
@@ -419,49 +443,7 @@ Response:
 | 같은 React 컴포넌트 수정? | ❌ | ✅ |
 | 독립된 기능 영역? | ✅ | ❌ |
 
-**예시**:
-```markdown
-Epic: [MVP] 사용자 기능
-
-✅ 병렬 가능 (독립 도메인)
-├─ Story 1: 회원가입 (User 도메인)
-└─ Story 2: 상품 즐겨찾기 (Product 도메인)
-
-⛔ 순차 필요 (공유 리소스)
-├─ Story 1: User Entity 추가
-└─ Story 2: User Entity 수정 ← Story 1 완료 후
-```
-
-#### 3. 레이어 기반 병렬
-
-**Hexagonal Architecture 예시**:
-```
-Phase 1: Domain Layer (우선, 1일)
-├─ Entity 정의
-├─ Value Object
-└─ Domain Service Interface
-
-Phase 2: 병렬 개발 (2일)
-├─ [BE] Infrastructure (DB, 외부 API 연동)
-├─ [BE] Application (Use Case)
-└─ [FE] Presentation (UI 컴포넌트)
-
-Phase 3: 통합 (1일)
-└─ E2E 테스트
-```
-
 ### 의존성 그래프 작성법
-
-#### DAG (Directed Acyclic Graph) 활용
-
-```mermaid
-graph TD
-    A[API 명세 작성] --> B[BE: API 구현]
-    A --> C[FE: Mock UI 구현]
-    B --> D[FE: API 연동]
-    C --> D
-    D --> E[통합 테스트]
-```
 
 **Jira에서 표현**:
 ```markdown
@@ -481,59 +463,6 @@ LAD-102: [FE] Mock UI 구현 (P0, 2SP)
 
 LAD-103: [FE] API 연동 (P0, 0.5SP)
 └─ Blocked by: LAD-101, LAD-102
-```
-
-### Sprint 계획 시 병렬 배정 전략
-
-#### 전략 1: Critical Path 식별
-
-**정의**: 프로젝트 완료까지 가장 긴 경로
-
-```
-Critical Path (4일):
-API 명세 (0.5일) → BE 구현 (3일) → 통합 (0.5일)
-
-Parallel Path (2.5일):
-API 명세 (0.5일) → FE Mock (2일)
-```
-
-**Sprint 배정**:
-1. Critical Path 작업 우선 배정
-2. 유휴 리소스에 Parallel Path 배정
-
-#### 전략 2: 팀원별 역량 매칭
-
-```yaml
-Sprint 1 계획:
-  개발자_A (Backend 전문):
-    - LAD-101: [BE] 로그인 API (3일)
-    - LAD-104: [BE] 토큰 발급 (2일)
-
-  개발자_B (Frontend 전문):
-    - LAD-102: [FE] 로그인 UI + Mock (2일) ⚡ A와 병렬
-    - LAD-105: [FE] 소셜 로그인 버튼 (1일)
-    - LAD-103: [FE] API 연동 (0.5일) ← A 완료 후
-
-  개발자_C (Full-stack):
-    - LAD-106: [BE] 회원가입 API (3일) ⚡ A, B와 병렬
-    - LAD-107: [FE] 회원가입 UI (2일)
-```
-
-#### 전략 3: 단계별 Wave 배정
-
-```
-Wave 1 (선행 작업):
-├─ LAD-100: API 명세 작성
-└─ LAD-110: DB 스키마 설계
-
-Wave 2 (병렬 가능):
-├─ LAD-101: [BE] API 구현
-├─ LAD-102: [FE] Mock UI
-└─ LAD-120: [BE] 다른 API 구현 ⚡
-
-Wave 3 (통합):
-├─ LAD-103: [FE] API 연동
-└─ LAD-104: E2E 테스트
 ```
 
 ### 병렬 처리 안티패턴 (하지 말 것)
@@ -560,18 +489,6 @@ Week 3: FE가 전체 수정 (리팩토링 2주)
 
 **해결책**: 파일 단위로 작업 분리
 
-#### ❌ 안티패턴 3: 암묵적 의존성 무시
-
-```markdown
-나쁜 예시:
-Story 1: User Entity 수정 (팀원 A)
-Story 2: Order Entity 추가 (팀원 B, User 참조)
-→ Story 2가 Story 1 변경사항 모르고 개발
-→ 통합 시 에러 발생
-```
-
-**해결책**: Blocked by 명시
-
 ### 병렬 처리 성공 체크리스트
 
 Sprint 계획 시 확인:
@@ -581,51 +498,6 @@ Sprint 계획 시 확인:
 - [ ] 팀원별 작업 배정이 겹치지 않는가?
 - [ ] Mock 데이터 전략이 있는가?
 - [ ] 통합 일정이 확보되었는가?
-
-## 📊 티켓 생성 예시
-
-### 예시 1: 이커머스 프로젝트
-
-```markdown
-Epic: [MVP] 주문 및 결제 시스템
-├─ Story 1: 장바구니 관리
-│   ├─ [FE] 장바구니 목록 UI (P0, 2SP)
-│   ├─ [FE] 상품 수량 조절 (P0, 1SP)
-│   ├─ [BE] 장바구니 CRUD API (P0, 3SP)
-│   └─ [BE] 재고 검증 로직 (P0, 2SP)
-│
-├─ Story 2: 결제 프로세스
-│   ├─ [FE] 결제 정보 입력 폼 (P0, 3SP)
-│   ├─ [FE] 결제 수단 선택 (P0, 2SP)
-│   ├─ [BE] 결제 API 연동 (P0, 5SP)
-│   ├─ [BE] 주문 생성 로직 (P0, 3SP)
-│   └─ [BE] 결제 웹훅 처리 (P1, 3SP)
-│
-└─ Story 3: 주문 내역 조회
-    ├─ [FE] 주문 목록 화면 (P1, 2SP)
-    ├─ [FE] 주문 상세 화면 (P1, 2SP)
-    └─ [BE] 주문 조회 API (P1, 2SP)
-
-총합: 3 Stories, 12 Sub-tasks, 30 Story Points
-```
-
-### 예시 2: SaaS 대시보드
-
-```markdown
-Epic: [MVP] 분석 대시보드
-├─ Story 1: 데이터 시각화
-│   ├─ [FE] 차트 컴포넌트 구현 (P0, 5SP)
-│   ├─ [FE] 필터 옵션 UI (P0, 3SP)
-│   ├─ [BE] 통계 데이터 API (P0, 5SP)
-│   └─ [BE] 데이터 집계 배치 작업 (P1, 5SP)
-│
-└─ Story 2: 리포트 내보내기
-    ├─ [FE] PDF 내보내기 버튼 (P1, 2SP)
-    ├─ [BE] PDF 생성 API (P1, 3SP)
-    └─ [BE] 이메일 발송 (P2, 2SP)
-
-총합: 2 Stories, 7 Sub-tasks, 25 Story Points
-```
 
 ## 📈 티켓 관리 베스트 프랙티스
 
@@ -668,76 +540,6 @@ Epic: [MVP] 분석 대시보드
 5. **AC 누락**
    - 완료 기준이 없으면 "완료"를 판단할 수 없음
 
-## 🔧 도구 및 자동화
-
-### Jira Automation 활용
-```yaml
-# 예시: Story 완료 시 Epic 진행률 업데이트
-when: Story status → Done
-then: Update Epic progress percentage
-
-# 예시: Sub-task 모두 완료 시 Story 자동 완료
-when: All Sub-tasks → Done
-then: Move Story to Review
-```
-
-### Git 연동
-```bash
-# 커밋 메시지에 티켓 번호 포함
-git commit -m "PROJECT-123: feat(auth): 로그인 API 구현"
-
-# Jira 자동 업데이트
-- 작업 로그 추가
-- 상태 전환 (In Progress → In Review)
-```
-
-### Claude Code + Jira 연동
-```bash
-# .claude/commands/jira-commit.md 활용
-jira-commit PROJECT-123 "feat(feature): 기능 구현"
-
-# 자동화:
-- Conventional Commits 검증
-- Jira 작업 로그 추가
-- 상태 전환
-```
-
-## 📊 티켓 요약 템플릿
-
-프로젝트 완료 후 또는 Sprint 계획 시 사용:
-
-```markdown
-## 티켓 요약
-
-### 전체 현황
-| 구분 | 수량 |
-|------|------|
-| Epic | X |
-| Story | Y |
-| Frontend Sub-tasks | Z |
-| Backend Sub-tasks | W |
-| **총합** | **N개** |
-
-### 기능별 분포
-| 기능 | Story | FE Tasks | BE Tasks |
-|------|-------|----------|----------|
-| 기능 1 | 1 | 5 | 3 |
-| 기능 2 | 1 | 4 | 6 |
-
-### 우선순위 분포
-| 우선순위 | 설명 | 수량 |
-|----------|------|------|
-| **P0** | MVP 필수 | X |
-| **P1** | MVP 권장 | Y |
-| **P2** | Nice to have | Z |
-
-### Story Points 분포
-| Sprint | Story Points | Stories | 완료율 |
-|--------|--------------|---------|--------|
-| Sprint 1 | 40 | 5 | 80% |
-| Sprint 2 | 35 | 4 | 60% |
-```
-
 ## ❓ FAQ
 
 ### Q1: Story와 Task의 차이는?
@@ -776,17 +578,15 @@ Story는 "왜, 무엇"에 집중하고, Task는 "어떻게"에 집중합니다.
 
 ---
 
-## 📝 변경 이력
+## 📝 문서 관리
 
-| 버전 | 날짜 | 작성자 | 변경 내용 |
-|------|------|--------|-----------|
-| v1.0 | 2026-01-24 | Claude | 초안 작성 |
-| v1.1 | 2026-01-25 | Claude | 문서 분리 (Quick Reference 추가) |
+**관련 문서**:
+- PRD 작성 가이드: [how-to-write-prd.md](./how-to-write-prd.md)
+- Jira 스킬 명령어: `.claude/commands/jira/`
 
----
-
-**문서 관리**
-- 위치: `docs/jira-detailed-guide.md` (상세 가이드)
-- Quick Reference: `docs/jira-quick-reference.md` (빠른 참고용)
-- 관련 문서: `docs/how-to-write-prd.md`, `.claude/commands/jira-commit.md`
-- 다음 리뷰: 프로젝트 Jira 티켓 생성 시
+**변경 이력**:
+| 버전 | 날짜 | 변경 내용 |
+|------|------|-----------|
+| v1.0 | 2026-01-24 | 초안 작성 |
+| v1.1 | 2026-01-25 | 문서 분리 (Quick Reference 추가) |
+| v2.0 | 2026-01-27 | 문서 통합 (jira-guide.md 단일 파일로 통합) |

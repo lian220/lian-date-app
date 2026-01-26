@@ -14,7 +14,7 @@ import org.springframework.web.client.RestClient
 @Component
 class OpenAiClient(
     private val openAiRestClient: RestClient,
-    private val openAiProperties: OpenAiProperties
+    private val openAiProperties: OpenAiProperties,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -29,25 +29,26 @@ class OpenAiClient(
         logger.debug("Calling OpenAI Chat Completion API with model: {}", request.model)
 
         return try {
-            val response = openAiRestClient.post()
-                .uri("/v1/chat/completions")
-                .header("Authorization", "Bearer ${openAiProperties.apiKey}")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError) { _, response ->
-                    val errorBody = response.body?.let { String(it.readAllBytes()) }
-                    logger.error("OpenAI API error: status={}, body={}", response.statusCode, errorBody)
-                    throw OpenAiException("OpenAI API call failed: ${response.statusCode}", errorBody)
-                }
-                .body(ChatCompletionResponse::class.java)
-                ?: throw OpenAiException("Empty response from OpenAI API")
+            val response =
+                openAiRestClient.post()
+                    .uri("/v1/chat/completions")
+                    .header("Authorization", "Bearer ${openAiProperties.apiKey}")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(request)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError) { _, response ->
+                        val errorBody = response.body?.let { String(it.readAllBytes()) }
+                        logger.error("OpenAI API error: status={}, body={}", response.statusCode, errorBody)
+                        throw OpenAiException("OpenAI API call failed: ${response.statusCode}", errorBody)
+                    }
+                    .body(ChatCompletionResponse::class.java)
+                    ?: throw OpenAiException("Empty response from OpenAI API")
 
             logger.info(
                 "OpenAI API call successful. tokens used: {} (prompt: {}, completion: {})",
                 response.usage.totalTokens,
                 response.usage.promptTokens,
-                response.usage.completionTokens
+                response.usage.completionTokens,
             )
 
             response
@@ -66,5 +67,5 @@ class OpenAiClient(
 class OpenAiException(
     message: String,
     val errorBody: String? = null,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : RuntimeException(message, cause)

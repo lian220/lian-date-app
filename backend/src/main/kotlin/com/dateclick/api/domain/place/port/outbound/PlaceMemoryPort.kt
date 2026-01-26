@@ -28,7 +28,10 @@ interface PlaceMemoryPort {
      * @param limit 검색 결과 최대 개수
      * @return 유사도 순으로 정렬된 장소 리스트
      */
-    fun searchSimilar(query: String, limit: Int = 10): List<PlaceWithCuration>
+    fun searchSimilar(
+        query: String,
+        limit: Int = 10,
+    ): List<PlaceWithCuration>
 
     /**
      * 메모리 초기화 (모든 장소 삭제)

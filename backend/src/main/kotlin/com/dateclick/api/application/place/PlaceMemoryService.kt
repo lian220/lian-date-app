@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service
 class PlaceMemoryService(
     private val placeSearchPort: PlaceSearchPort,
     private val placeCurationPort: PlaceCurationPort,
-    private val placeMemoryPort: PlaceMemoryPort
+    private val placeMemoryPort: PlaceMemoryPort,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -61,7 +61,6 @@ class PlaceMemoryService(
 
             logger.info("Successfully built place memory for {} places", curatedPlaces.size)
             return curatedPlaces.size
-
         } catch (ex: Exception) {
             logger.error("Failed to build place memory", ex)
             throw PlaceMemoryException("장소 메모리 구축 실패: ${ex.message}", ex)
@@ -71,16 +70,17 @@ class PlaceMemoryService(
     /**
      * 장소 정보 수집 (카카오 API)
      */
-    private fun collectPlaces(placeIds: List<PlaceId>) = placeIds.mapNotNull { placeId ->
-        try {
-            placeSearchPort.getPlaceDetail(placeId)?.also {
-                logger.debug("Collected place: {}", it.name)
+    private fun collectPlaces(placeIds: List<PlaceId>) =
+        placeIds.mapNotNull { placeId ->
+            try {
+                placeSearchPort.getPlaceDetail(placeId)?.also {
+                    logger.debug("Collected place: {}", it.name)
+                }
+            } catch (ex: Exception) {
+                logger.warn("Failed to collect place: {}", placeId.value, ex)
+                null
             }
-        } catch (ex: Exception) {
-            logger.warn("Failed to collect place: {}", placeId.value, ex)
-            null
         }
-    }
 
     /**
      * AI 큐레이션 수행
@@ -90,8 +90,11 @@ class PlaceMemoryService(
             try {
                 val curation = placeCurationPort.curatePlace(place)
                 PlaceWithCuration(place, curation).also {
-                    logger.debug("Curated place: {} (score: {}/10)",
-                        place.name, curation.dateScore)
+                    logger.debug(
+                        "Curated place: {} (score: {}/10)",
+                        place.name,
+                        curation.dateScore,
+                    )
                 }
             } catch (ex: Exception) {
                 logger.warn("Failed to curate place: {}", place.name, ex)
@@ -104,17 +107,19 @@ class PlaceMemoryService(
      * 10개씩 끊어서 저장하며 진행 상황 로깅
      */
     private fun saveToBatchMemory(curatedPlaces: List<PlaceWithCuration>) {
-        val totalBatches = (curatedPlaces.size + 9) / 10  // 올림 계산
+        val totalBatches = (curatedPlaces.size + 9) / 10 // 올림 계산
 
-        logger.info("Saving {} places in {} batches (10 places per batch)",
-            curatedPlaces.size, totalBatches)
+        logger.info(
+            "Saving {} places in {} batches (10 places per batch)",
+            curatedPlaces.size,
+            totalBatches,
+        )
 
         try {
             placeMemoryPort.addBatchToMemory(curatedPlaces)
 
             val totalCount = placeMemoryPort.count()
             logger.info("Memory save completed. Total places in memory: {}", totalCount)
-
         } catch (ex: Exception) {
             logger.error("Failed to save places to memory", ex)
             throw PlaceMemoryException("Vector DB 저장 실패: ${ex.message}", ex)
@@ -128,7 +133,10 @@ class PlaceMemoryService(
      * @param limit 검색 결과 최대 개수
      * @return 유사도 순으로 정렬된 장소 리스트
      */
-    fun searchPlaces(query: String, limit: Int = 10): List<PlaceWithCuration> {
+    fun searchPlaces(
+        query: String,
+        limit: Int = 10,
+    ): List<PlaceWithCuration> {
         logger.info("Searching places with query: '{}' (limit: {})", query, limit)
 
         return try {
@@ -162,5 +170,5 @@ class PlaceMemoryService(
  */
 class PlaceMemoryException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : RuntimeException(message, cause)

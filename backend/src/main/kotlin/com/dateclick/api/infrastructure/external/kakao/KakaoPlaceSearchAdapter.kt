@@ -23,42 +23,43 @@ class KakaoPlaceSearchAdapter(
     private val kakaoRestClient: RestClient,
     private val kakaoNaviRestClient: RestClient,
     private val regionRepository: RegionRepository,
-    @Value("\${kakao.api.rest-key}") private val restApiKey: String
+    @Value("\${kakao.api.rest-key}") private val restApiKey: String,
 ) : PlaceSearchPort {
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun searchPlaces(
         regionId: RegionId,
         category: PlaceCategory,
-        limit: Int
+        limit: Int,
     ): List<Place> {
-        val region = regionRepository.findById(regionId)
-            ?: throw IllegalArgumentException("Region not found: ${regionId.value}")
+        val region =
+            regionRepository.findById(regionId)
+                ?: throw IllegalArgumentException("Region not found: ${regionId.value}")
 
         logger.debug(
             "Searching places: region={}, category={}, limit={}",
             region.name,
             category,
-            limit
+            limit,
         )
 
         return try {
-            val response = kakaoRestClient.get()
-                .uri { builder ->
-                    builder.path("/v2/local/search/keyword.json")
-                        .queryParam("query", "${region.name} ${category.toKakaoQuery()}")
-                        .queryParam("x", region.centerLng)
-                        .queryParam("y", region.centerLat)
-                        .queryParam("radius", 5000)
-                        .queryParam("size", limit.coerceAtMost(15))
-                        .queryParam("sort", "accuracy")
-                        .build()
-                }
-                .header(HttpHeaders.AUTHORIZATION, "KakaoAK $restApiKey")
-                .retrieve()
-                .body(KakaoPlaceSearchResponse::class.java)
-                ?: throw RuntimeException("Empty response from Kakao API")
+            val response =
+                kakaoRestClient.get()
+                    .uri { builder ->
+                        builder.path("/v2/local/search/keyword.json")
+                            .queryParam("query", "${region.name} ${category.toKakaoQuery()}")
+                            .queryParam("x", region.centerLng)
+                            .queryParam("y", region.centerLat)
+                            .queryParam("radius", 5000)
+                            .queryParam("size", limit.coerceAtMost(15))
+                            .queryParam("sort", "accuracy")
+                            .build()
+                    }
+                    .header(HttpHeaders.AUTHORIZATION, "KakaoAK $restApiKey")
+                    .retrieve()
+                    .body(KakaoPlaceSearchResponse::class.java)
+                    ?: throw RuntimeException("Empty response from Kakao API")
 
             response.documents.map { doc ->
                 Place(
@@ -66,16 +67,17 @@ class KakaoPlaceSearchAdapter(
                     name = doc.place_name,
                     category = doc.category_group_name ?: category.toKakaoQuery(),
                     categoryDetail = doc.category_name,
-                    location = Location(
-                        lat = doc.y.toDouble(),
-                        lng = doc.x.toDouble()
-                    ),
+                    location =
+                        Location(
+                            lat = doc.y.toDouble(),
+                            lng = doc.x.toDouble(),
+                        ),
                     address = doc.address_name,
                     roadAddress = doc.road_address_name,
                     phone = doc.phone,
                     kakaoPlaceUrl = doc.place_url,
                     kakaoRating = null,
-                    kakaoReviewCount = null
+                    kakaoReviewCount = null,
                 )
             }.also {
                 logger.info("Found {} places for {}", it.size, category)
@@ -90,15 +92,16 @@ class KakaoPlaceSearchAdapter(
         logger.debug("Getting place detail: {}", placeId.value)
 
         return try {
-            val response = kakaoRestClient.get()
-                .uri { builder ->
-                    builder.path("/v2/local/search/keyword.json")
-                        .queryParam("query", placeId.value)
-                        .build()
-                }
-                .header(HttpHeaders.AUTHORIZATION, "KakaoAK $restApiKey")
-                .retrieve()
-                .body(KakaoPlaceSearchResponse::class.java)
+            val response =
+                kakaoRestClient.get()
+                    .uri { builder ->
+                        builder.path("/v2/local/search/keyword.json")
+                            .queryParam("query", placeId.value)
+                            .build()
+                    }
+                    .header(HttpHeaders.AUTHORIZATION, "KakaoAK $restApiKey")
+                    .retrieve()
+                    .body(KakaoPlaceSearchResponse::class.java)
 
             response?.documents?.firstOrNull()?.let { doc ->
                 Place(
@@ -106,16 +109,17 @@ class KakaoPlaceSearchAdapter(
                     name = doc.place_name,
                     category = doc.category_group_name ?: "기타",
                     categoryDetail = doc.category_name,
-                    location = Location(
-                        lat = doc.y.toDouble(),
-                        lng = doc.x.toDouble()
-                    ),
+                    location =
+                        Location(
+                            lat = doc.y.toDouble(),
+                            lng = doc.x.toDouble(),
+                        ),
                     address = doc.address_name,
                     roadAddress = doc.road_address_name,
                     phone = doc.phone,
                     kakaoPlaceUrl = doc.place_url,
                     kakaoRating = null,
-                    kakaoReviewCount = null
+                    kakaoReviewCount = null,
                 )
             }
         } catch (e: Exception) {
@@ -124,13 +128,16 @@ class KakaoPlaceSearchAdapter(
         }
     }
 
-    override fun calculateRoute(from: Location, to: Location): Route {
+    override fun calculateRoute(
+        from: Location,
+        to: Location,
+    ): Route {
         logger.debug(
             "Calculating route: from=({}, {}), to=({}, {})",
             from.lat,
             from.lng,
             to.lat,
-            to.lng
+            to.lng,
         )
 
         // Haversine formula로 직선 거리 계산
@@ -142,15 +149,16 @@ class KakaoPlaceSearchAdapter(
         logger.debug(
             "Selected transport type: {}, straight distance: {}m",
             transportType,
-            straightDistance.toInt()
+            straightDistance.toInt(),
         )
 
         // 교통수단별 경로 계산
-        val route = when (transportType) {
-            TransportType.CAR -> calculateCarRoute(from, to, straightDistance)
-            TransportType.WALK -> calculateWalkRoute(from, to, straightDistance)
-            TransportType.TRANSIT -> calculateTransitRoute(from, to, straightDistance)
-        }
+        val route =
+            when (transportType) {
+                TransportType.CAR -> calculateCarRoute(from, to, straightDistance)
+                TransportType.WALK -> calculateWalkRoute(from, to, straightDistance)
+                TransportType.TRANSIT -> calculateTransitRoute(from, to, straightDistance)
+            }
 
         // AC 2.4: 30분 이내 검증 (경고 로그)
         if (route.exceedsTimeLimit()) {
@@ -159,7 +167,7 @@ class KakaoPlaceSearchAdapter(
                 route.duration,
                 Route.MAX_DURATION_MINUTES,
                 route.distance,
-                route.transportType
+                route.transportType,
             )
         }
 
@@ -171,27 +179,32 @@ class KakaoPlaceSearchAdapter(
      */
     private fun determineTransportType(distance: Double): TransportType {
         return when {
-            distance < 1000 -> TransportType.WALK      // 1km 미만: 도보
-            distance < 5000 -> TransportType.TRANSIT   // 5km 미만: 대중교통
-            else -> TransportType.CAR                  // 5km 이상: 자동차
+            distance < 1000 -> TransportType.WALK // 1km 미만: 도보
+            distance < 5000 -> TransportType.TRANSIT // 5km 미만: 대중교통
+            else -> TransportType.CAR // 5km 이상: 자동차
         }
     }
 
     /**
      * 자동차 경로 계산 (Kakao Mobility Directions API 사용)
      */
-    private fun calculateCarRoute(from: Location, to: Location, fallbackDistance: Double): Route {
+    private fun calculateCarRoute(
+        from: Location,
+        to: Location,
+        fallbackDistance: Double,
+    ): Route {
         return try {
-            val response = kakaoNaviRestClient.get()
-                .uri { builder ->
-                    builder.path("/v1/directions")
-                        .queryParam("origin", "${from.lng},${from.lat}")
-                        .queryParam("destination", "${to.lng},${to.lat}")
-                        .build()
-                }
-                .header(HttpHeaders.AUTHORIZATION, "KakaoAK $restApiKey")
-                .retrieve()
-                .body(KakaoDirectionsResponse::class.java)
+            val response =
+                kakaoNaviRestClient.get()
+                    .uri { builder ->
+                        builder.path("/v1/directions")
+                            .queryParam("origin", "${from.lng},${from.lat}")
+                            .queryParam("destination", "${to.lng},${to.lat}")
+                            .build()
+                    }
+                    .header(HttpHeaders.AUTHORIZATION, "KakaoAK $restApiKey")
+                    .retrieve()
+                    .body(KakaoDirectionsResponse::class.java)
 
             response?.routes?.firstOrNull()?.summary?.let { summary ->
                 Route(
@@ -200,7 +213,7 @@ class KakaoPlaceSearchAdapter(
                     distance = summary.distance,
                     duration = (summary.duration / 60.0).toInt(), // 초 -> 분 변환
                     transportType = TransportType.CAR,
-                    description = "자동차 경로"
+                    description = "자동차 경로",
                 ).also {
                     logger.info("Car route calculated: {}m, {}min", it.distance, it.duration)
                 }
@@ -214,7 +227,11 @@ class KakaoPlaceSearchAdapter(
     /**
      * 도보 경로 계산 (Haversine + 평균 보행 속도)
      */
-    private fun calculateWalkRoute(from: Location, to: Location, distance: Double): Route {
+    private fun calculateWalkRoute(
+        from: Location,
+        to: Location,
+        distance: Double,
+    ): Route {
         // 도보: 평균 시속 4km (분당 67m)
         // 실제 도로를 따라가므로 직선거리 * 1.3 보정
         val actualDistance = (distance * 1.3).toInt()
@@ -226,7 +243,7 @@ class KakaoPlaceSearchAdapter(
             distance = actualDistance,
             duration = duration,
             transportType = TransportType.WALK,
-            description = "도보 경로"
+            description = "도보 경로",
         ).also {
             logger.info("Walk route calculated: {}m, {}min", it.distance, it.duration)
         }
@@ -235,7 +252,11 @@ class KakaoPlaceSearchAdapter(
     /**
      * 대중교통 경로 계산 (Haversine + 평균 대중교통 속도 + 대기시간)
      */
-    private fun calculateTransitRoute(from: Location, to: Location, distance: Double): Route {
+    private fun calculateTransitRoute(
+        from: Location,
+        to: Location,
+        distance: Double,
+    ): Route {
         // 대중교통: 평균 시속 20km (분당 333m) + 환승 및 대기시간
         // 실제 경로 보정 * 1.4 (우회 고려)
         val actualDistance = (distance * 1.4).toInt()
@@ -249,7 +270,7 @@ class KakaoPlaceSearchAdapter(
             distance = actualDistance,
             duration = duration,
             transportType = TransportType.TRANSIT,
-            description = "대중교통 경로"
+            description = "대중교통 경로",
         ).also {
             logger.info("Transit route calculated: {}m, {}min", it.distance, it.duration)
         }
@@ -262,7 +283,7 @@ class KakaoPlaceSearchAdapter(
         from: Location,
         to: Location,
         transportType: TransportType,
-        distance: Double
+        distance: Double,
     ): Route {
         val duration = estimateDuration(distance)
 
@@ -272,7 +293,7 @@ class KakaoPlaceSearchAdapter(
             distance = distance.toInt(),
             duration = duration,
             transportType = transportType,
-            description = "${transportType.code} 경로 (추정)"
+            description = "${transportType.code} 경로 (추정)",
         ).also {
             logger.info("Fallback route created: {}m, {}min", it.distance, it.duration)
         }
@@ -281,12 +302,16 @@ class KakaoPlaceSearchAdapter(
     /**
      * Haversine formula를 사용한 두 지점 간 거리 계산 (미터 단위)
      */
-    private fun calculateDistance(from: Location, to: Location): Double {
+    private fun calculateDistance(
+        from: Location,
+        to: Location,
+    ): Double {
         val earthRadius = 6371000.0 // 지구 반지름 (미터)
         val dLat = Math.toRadians(to.lat - from.lat)
         val dLon = Math.toRadians(to.lng - from.lng)
 
-        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        val a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                 Math.cos(Math.toRadians(from.lat)) * Math.cos(Math.toRadians(to.lat)) *
                 Math.sin(dLon / 2) * Math.sin(dLon / 2)
 
@@ -313,7 +338,7 @@ class KakaoPlaceSearchAdapter(
  */
 data class KakaoPlaceSearchResponse(
     val documents: List<KakaoPlaceDocument>,
-    val meta: KakaoMeta
+    val meta: KakaoMeta,
 )
 
 data class KakaoPlaceDocument(
@@ -326,13 +351,13 @@ data class KakaoPlaceDocument(
     val road_address_name: String?,
     val x: String, // longitude
     val y: String, // latitude
-    val place_url: String
+    val place_url: String,
 )
 
 data class KakaoMeta(
     val total_count: Int,
     val pageable_count: Int,
-    val is_end: Boolean
+    val is_end: Boolean,
 )
 
 /**
@@ -340,30 +365,30 @@ data class KakaoMeta(
  */
 data class KakaoDirectionsResponse(
     val trans_id: String,
-    val routes: List<KakaoRoute>
+    val routes: List<KakaoRoute>,
 )
 
 data class KakaoRoute(
     val result_code: Int,
     val result_msg: String,
-    val summary: KakaoRouteSummary
+    val summary: KakaoRouteSummary,
 )
 
 data class KakaoRouteSummary(
     val origin: KakaoRoutePoint,
     val destination: KakaoRoutePoint,
-    val distance: Int,        // 거리 (미터)
-    val duration: Int,        // 소요 시간 (초)
-    val fare: KakaoFare? = null
+    val distance: Int, // 거리 (미터)
+    val duration: Int, // 소요 시간 (초)
+    val fare: KakaoFare? = null,
 )
 
 data class KakaoRoutePoint(
     val name: String? = null,
     val x: Double,
-    val y: Double
+    val y: Double,
 )
 
 data class KakaoFare(
     val taxi: Int? = null,
-    val toll: Int? = null
+    val toll: Int? = null,
 )

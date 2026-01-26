@@ -8,13 +8,13 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional
 class RegenerateCourseUseCaseImpl(
-    private val courseRepository: CourseRepository
+    private val courseRepository: CourseRepository,
 ) : RegenerateCourseUseCase {
-
     override fun execute(command: RegenerateCourseCommand): Course {
         // 1. 원본 코스 조회
-        val originalCourse = courseRepository.findById(command.originalCourseId)
-            ?: throw IllegalArgumentException("Course not found: ${command.originalCourseId.value}")
+        val originalCourse =
+            courseRepository.findById(command.originalCourseId)
+                ?: throw IllegalArgumentException("Course not found: ${command.originalCourseId.value}")
 
         // TODO: LAD-26 (Kakao API) 완료 후 실제 구현
         // 2. 제외할 장소 목록 필터링
@@ -23,10 +23,11 @@ class RegenerateCourseUseCaseImpl(
         // 5. 새 코스 생성
 
         // Stub: 원본 코스 정보로 새 코스 생성 (임시)
-        val newCourse = originalCourse.regenerate(
-            newPlaces = originalCourse.places, // TODO: 실제로는 새로운 장소로 교체
-            newRoutes = originalCourse.routes  // TODO: 실제로는 새로운 경로 계산
-        )
+        val newCourse =
+            originalCourse.regenerate(
+                newPlaces = originalCourse.places, // TODO: 실제로는 새로운 장소로 교체
+                newRoutes = originalCourse.routes, // TODO: 실제로는 새로운 경로 계산
+            )
 
         return courseRepository.save(newCourse)
     }

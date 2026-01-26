@@ -8,8 +8,12 @@
 .env.aws
 .env.*.local
 .env.*.secret
+.env.prod
+.env.prod.local
+.env.prod.*.secret
 !.env.example
 !.env.*.example
+!.env.prod.example
 
 # IDE
 .vscode/
@@ -90,6 +94,14 @@ aws-exports.js
 *.tfstate.*
 .terraform/
 terraform.tfvars
+# macOS Finder 복사본 등으로 생기는 중복 파일명 방지 (예: "terraform 2.tfvars")
+terraform/* [0-9].tfvars
+terraform/* [0-9].tf
+# terraform plan 산출물
+terraform/tfplan*
+
+# macOS Finder 복사본 등(예: "resources 2/") 방지
+backend/src/test/resources [0-9]/
 
 # Test coverage
 coverage/

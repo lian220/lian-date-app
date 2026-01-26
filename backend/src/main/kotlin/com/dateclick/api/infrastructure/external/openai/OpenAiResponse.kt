@@ -13,7 +13,7 @@ data class ChatCompletionResponse(
     val created: Long,
     val model: String,
     val choices: List<Choice>,
-    val usage: Usage
+    val usage: Usage,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -21,7 +21,7 @@ data class Choice(
     val index: Int,
     val message: Message,
     @JsonProperty("finish_reason")
-    val finishReason: String
+    val finishReason: String,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -31,7 +31,7 @@ data class Usage(
     @JsonProperty("completion_tokens")
     val completionTokens: Int,
     @JsonProperty("total_tokens")
-    val totalTokens: Int
+    val totalTokens: Int,
 )
 
 /**
@@ -41,7 +41,7 @@ data class Usage(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AiCourseResponse(
     val places: List<AiPlaceRecommendation>,
-    val summary: String?
+    val summary: String?,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -63,10 +63,10 @@ data class AiPlaceRecommendation(
     @JsonProperty("estimated_duration")
     val estimatedDuration: Int,
     @JsonProperty("recommended_time")
-    val recommendedTime: String?
+    val recommendedTime: String?,
 )
 
 data class LocationDto(
     val lat: Double,
-    val lng: Double
+    val lng: Double,
 )

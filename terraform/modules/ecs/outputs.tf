@@ -1,69 +1,57 @@
-# ECS Cluster
+# ECS Cluster Outputs
 output "cluster_id" {
-  description = "ECS cluster ID"
+  description = "The ID of the ECS cluster"
   value       = aws_ecs_cluster.main.id
 }
 
 output "cluster_name" {
-  description = "ECS cluster name"
+  description = "The name of the ECS cluster"
   value       = aws_ecs_cluster.main.name
 }
 
 output "cluster_arn" {
-  description = "ECS cluster ARN"
+  description = "The ARN of the ECS cluster"
   value       = aws_ecs_cluster.main.arn
 }
 
-# Backend Service
+# Backend Service Outputs
 output "backend_service_id" {
-  description = "Backend ECS service ID"
+  description = "The ID of the backend ECS service"
   value       = aws_ecs_service.backend.id
 }
 
 output "backend_service_name" {
-  description = "Backend ECS service name"
+  description = "The name of the backend ECS service"
   value       = aws_ecs_service.backend.name
 }
 
 output "backend_task_definition_arn" {
-  description = "Backend task definition ARN"
+  description = "The ARN of the backend task definition"
   value       = aws_ecs_task_definition.backend.arn
 }
 
-# Frontend Service
+output "backend_log_group_name" {
+  description = "The name of the backend CloudWatch log group"
+  value       = aws_cloudwatch_log_group.backend.name
+}
+
+# Frontend Service Outputs
 output "frontend_service_id" {
-  description = "Frontend ECS service ID"
+  description = "The ID of the frontend ECS service"
   value       = aws_ecs_service.frontend.id
 }
 
 output "frontend_service_name" {
-  description = "Frontend ECS service name"
+  description = "The name of the frontend ECS service"
   value       = aws_ecs_service.frontend.name
 }
 
 output "frontend_task_definition_arn" {
-  description = "Frontend task definition ARN"
+  description = "The ARN of the frontend task definition"
   value       = aws_ecs_task_definition.frontend.arn
 }
 
-# IAM Roles
-output "task_execution_role_arn" {
-  description = "Task execution role ARN"
-  value       = aws_iam_role.task_execution.arn
-}
-
-output "task_role_arn" {
-  description = "Task role ARN"
-  value       = aws_iam_role.task.arn
-}
-
-# CloudWatch Log Groups
-output "backend_log_group_name" {
-  description = "Backend CloudWatch log group name"
-  value       = aws_cloudwatch_log_group.backend.name
-}
-
 output "frontend_log_group_name" {
-  description = "Frontend CloudWatch log group name"
+  description = "The name of the frontend CloudWatch log group"
   value       = aws_cloudwatch_log_group.frontend.name
 }

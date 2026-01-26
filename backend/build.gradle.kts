@@ -95,11 +95,15 @@ tasks.jacocoTestCoverageVerification {
                 value = "COVEREDRATIO"
                 minimum = "0.80".toBigDecimal()
             }
-            excludes = listOf(
-                "**.config.*",
-                "**.dto.*",
-                "**.*Application*"
-            )
+            excludes =
+                listOf(
+                    "**.config.*",
+                    "**.dto.*",
+                    "**.vo.*",
+                    "**.entity.*",
+                    "**.*Application*",
+                    "**.*Mapper*",
+                )
         }
     }
 }

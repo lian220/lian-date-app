@@ -71,14 +71,41 @@ variable "max_capacity" {
 variable "spring_profiles_active" {
   description = "Spring Boot active profiles"
   type        = string
-  default     = "local"
+  default     = "prod"
 }
 
-# Database Configuration
-variable "db_instance_class" {
-  description = "RDS instance class"
+#
+# Optional: Chroma(Vector DB) configuration
+#
+variable "chroma_enabled" {
+  description = "Enable Chroma integration (vector DB) in backend"
+  type        = bool
+  default     = false
+}
+
+variable "chroma_db_url" {
+  description = "Chroma base URL for backend (only used when chroma_enabled=true)"
   type        = string
-  default     = "db.t4g.micro"
+  default     = ""
+}
+
+variable "chroma_collection_name" {
+  description = "Chroma collection name for place memory"
+  type        = string
+  default     = "date_places"
+}
+
+# Database Configuration (Supabase)
+variable "db_host" {
+  description = "Database host (e.g., Supabase pooler URL)"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_port" {
+  description = "Database port"
+  type        = number
+  default     = 6543
 }
 
 variable "db_name" {
@@ -88,16 +115,23 @@ variable "db_name" {
 }
 
 variable "db_username" {
-  description = "Database master username"
+  description = "Database username"
   type        = string
   sensitive   = true
 }
 
 variable "db_password" {
-  description = "Database master password"
+  description = "Database password"
   type        = string
   sensitive   = true
 }
+
+# RDS Configuration - Disabled (keeping for reference)
+# variable "db_instance_class" {
+#   description = "RDS instance class"
+#   type        = string
+#   default     = "db.t4g.micro"
+# }
 
 # Monitoring Configuration
 variable "alarm_email" {
@@ -116,6 +150,47 @@ variable "github_repo" {
   description = "GitHub repository name"
   type        = string
   default     = "lian-date-app"
+}
+
+# HTTPS Configuration
+variable "enable_https" {
+  description = "Enable HTTPS listener on ALB"
+  type        = bool
+  default     = false
+}
+
+variable "ssl_certificate_arn" {
+  description = "ARN of SSL certificate for HTTPS (required if enable_https is true)"
+  type        = string
+  default     = ""
+}
+
+# Secrets Manager Configuration
+variable "use_secrets_manager" {
+  description = "Use AWS Secrets Manager for sensitive credentials"
+  type        = bool
+  default     = false
+}
+
+variable "kakao_rest_api_key" {
+  description = "Kakao REST API key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "kakao_javascript_key" {
+  description = "Kakao JavaScript key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "openai_api_key" {
+  description = "OpenAI API key"
+  type        = string
+  sensitive   = true
+  default     = ""
 }
 
 # Tags

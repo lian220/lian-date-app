@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/v1/place-memory")
 class PlaceMemoryController(
-    private val placeMemoryService: PlaceMemoryService
+    private val placeMemoryService: PlaceMemoryService,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -27,7 +27,7 @@ class PlaceMemoryController(
     @Operation(summary = "장소 메모리 구축", description = "장소 리스트를 AI 큐레이션하여 Vector DB에 저장")
     @PostMapping("/build")
     fun buildMemory(
-        @RequestBody request: BuildMemoryRequest
+        @RequestBody request: BuildMemoryRequest,
     ): ResponseEntity<BuildMemoryResponse> {
         logger.info("Building place memory for {} places", request.placeIds.size)
 
@@ -37,8 +37,8 @@ class PlaceMemoryController(
         return ResponseEntity.ok(
             BuildMemoryResponse(
                 savedCount = savedCount,
-                totalPlaces = placeMemoryService.getMemoryCount()
-            )
+                totalPlaces = placeMemoryService.getMemoryCount(),
+            ),
         )
     }
 
@@ -49,7 +49,7 @@ class PlaceMemoryController(
     @GetMapping("/search")
     fun searchPlaces(
         @RequestParam query: String,
-        @RequestParam(defaultValue = "10") limit: Int
+        @RequestParam(defaultValue = "10") limit: Int,
     ): ResponseEntity<SearchPlacesResponse> {
         logger.info("Searching places with query: '{}'", query)
 
@@ -59,8 +59,8 @@ class PlaceMemoryController(
             SearchPlacesResponse(
                 query = query,
                 count = results.size,
-                places = results.map { PlaceMemoryDto.from(it) }
-            )
+                places = results.map { PlaceMemoryDto.from(it) },
+            ),
         )
     }
 
@@ -73,7 +73,7 @@ class PlaceMemoryController(
         val count = placeMemoryService.getMemoryCount()
 
         return ResponseEntity.ok(
-            MemoryStatsResponse(totalPlaces = count)
+            MemoryStatsResponse(totalPlaces = count),
         )
     }
 
@@ -88,34 +88,34 @@ class PlaceMemoryController(
         placeMemoryService.clearMemory()
 
         return ResponseEntity.ok(
-            ClearMemoryResponse(message = "Place memory cleared successfully")
+            ClearMemoryResponse(message = "Place memory cleared successfully"),
         )
     }
 }
 
 // Request DTOs
 data class BuildMemoryRequest(
-    val placeIds: List<String>
+    val placeIds: List<String>,
 )
 
 // Response DTOs
 data class BuildMemoryResponse(
     val savedCount: Int,
-    val totalPlaces: Long
+    val totalPlaces: Long,
 )
 
 data class SearchPlacesResponse(
     val query: String,
     val count: Int,
-    val places: List<PlaceMemoryDto>
+    val places: List<PlaceMemoryDto>,
 )
 
 data class MemoryStatsResponse(
-    val totalPlaces: Long
+    val totalPlaces: Long,
 )
 
 data class ClearMemoryResponse(
-    val message: String
+    val message: String,
 )
 
 data class PlaceMemoryDto(
@@ -131,7 +131,7 @@ data class PlaceMemoryDto(
     val bestTime: String,
     val recommendation: String,
     val kakaoRating: Double?,
-    val kakaoReviewCount: Int?
+    val kakaoReviewCount: Int?,
 ) {
     companion object {
         fun from(placeWithCuration: com.dateclick.api.domain.place.vo.PlaceWithCuration): PlaceMemoryDto {
@@ -151,7 +151,7 @@ data class PlaceMemoryDto(
                 bestTime = curation.bestTime,
                 recommendation = curation.recommendation,
                 kakaoRating = place.kakaoRating,
-                kakaoReviewCount = place.kakaoReviewCount
+                kakaoReviewCount = place.kakaoReviewCount,
             )
         }
     }

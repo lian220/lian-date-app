@@ -9,9 +9,8 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 @Transactional(readOnly = true)
 class CourseRepositoryImpl(
-    private val jpaRepository: CourseJpaRepository
+    private val jpaRepository: CourseJpaRepository,
 ) : CourseRepository {
-
     @Transactional
     override fun save(course: Course): Course {
         val entity = CourseMapper.toEntity(course)

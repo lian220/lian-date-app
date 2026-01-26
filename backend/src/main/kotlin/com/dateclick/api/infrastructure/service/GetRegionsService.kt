@@ -7,9 +7,8 @@ import org.springframework.stereotype.Service
 
 @Service
 class GetRegionsService(
-    private val regionRepository: RegionRepository
+    private val regionRepository: RegionRepository,
 ) : GetRegionsUseCase {
-
     override fun execute(city: String?): List<Region> {
         return if (city.isNullOrBlank()) {
             regionRepository.findAll()

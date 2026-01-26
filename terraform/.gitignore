@@ -29,6 +29,7 @@ override.tf.json
 terraform.rc
 
 # Plan files (may contain sensitive data)
+tfplan
 *.tfplan
 *.tfplan.json
 

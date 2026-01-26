@@ -15,7 +15,7 @@ import java.time.ZonedDateTime
 data class BusinessHours(
     val day: String,
     val open: String?,
-    val close: String?
+    val close: String?,
 ) {
     init {
         require(isClosed || (open != null && close != null)) {
@@ -71,15 +71,16 @@ data class BusinessHours(
     companion object {
         private val KOREA_ZONE_ID = ZoneId.of("Asia/Seoul")
 
-        private val DAY_MAP = mapOf(
-            "월" to DayOfWeek.MONDAY,
-            "화" to DayOfWeek.TUESDAY,
-            "수" to DayOfWeek.WEDNESDAY,
-            "목" to DayOfWeek.THURSDAY,
-            "금" to DayOfWeek.FRIDAY,
-            "토" to DayOfWeek.SATURDAY,
-            "일" to DayOfWeek.SUNDAY
-        )
+        private val DAY_MAP =
+            mapOf(
+                "월" to DayOfWeek.MONDAY,
+                "화" to DayOfWeek.TUESDAY,
+                "수" to DayOfWeek.WEDNESDAY,
+                "목" to DayOfWeek.THURSDAY,
+                "금" to DayOfWeek.FRIDAY,
+                "토" to DayOfWeek.SATURDAY,
+                "일" to DayOfWeek.SUNDAY,
+            )
 
         private val DAY_REVERSE_MAP = DAY_MAP.entries.associate { (k, v) -> v to k }
 

@@ -18,17 +18,16 @@ class CourseController(
     private val createCourseUseCase: CreateCourseUseCase?,
     private val getCourseUseCase: GetCourseUseCase,
     private val regenerateCourseUseCase: RegenerateCourseUseCase,
-    private val courseMapper: CourseMapper
+    private val courseMapper: CourseMapper,
 ) {
-
     @Operation(summary = "코스 생성", description = "조건 기반 AI 데이트 코스 생성")
     @PostMapping
     fun createCourse(
-        @RequestHeader("X-Session-Id") sessionId: String,
-        @Valid @RequestBody request: CreateCourseRequest
+        @RequestHeader("X-Session-Id", required = false) sessionId: String?,
+        @Valid @RequestBody request: CreateCourseRequest,
     ): ApiResponse<CourseResponse> {
         // Use case implementation will be added in future ticket
-        val command = courseMapper.toCommand(request, sessionId)
+        val command = courseMapper.toCommand(request, sessionId ?: "anonymous")
 
         if (createCourseUseCase != null) {
             val course = createCourseUseCase.execute(command)
@@ -50,10 +49,11 @@ class CourseController(
     @Operation(summary = "코스 상세 조회", description = "코스 ID로 코스 정보 조회")
     @GetMapping("/{courseId}")
     fun getCourse(
-        @PathVariable courseId: String
+        @PathVariable courseId: String,
     ): ApiResponse<CourseResponse> {
-        val course = getCourseUseCase.execute(CourseId(courseId))
-            ?: throw IllegalArgumentException("Course not found: $courseId")
+        val course =
+            getCourseUseCase.execute(CourseId(courseId))
+                ?: throw IllegalArgumentException("Course not found: $courseId")
 
         val response = courseMapper.toResponse(course)
         return ApiResponse.success(response)
@@ -62,11 +62,11 @@ class CourseController(
     @Operation(summary = "코스 재생성", description = "기존 코스와 다른 새로운 코스 생성")
     @PostMapping("/{courseId}/regenerate")
     fun regenerateCourse(
-        @RequestHeader("X-Session-Id") sessionId: String,
+        @RequestHeader("X-Session-Id", required = false) sessionId: String?,
         @PathVariable courseId: String,
-        @RequestBody request: RegenerateCourseRequest?
+        @RequestBody request: RegenerateCourseRequest?,
     ): ApiResponse<CourseResponse> {
-        val command = courseMapper.toRegenerateCommand(courseId, request, sessionId)
+        val command = courseMapper.toRegenerateCommand(courseId, request, sessionId ?: "anonymous")
         val course = regenerateCourseUseCase.execute(command)
         val response = courseMapper.toResponse(course)
         return ApiResponse.success(response)
@@ -75,7 +75,7 @@ class CourseController(
     @PostMapping("/{courseId}/ratings")
     fun rateCourse(
         @PathVariable courseId: String,
-        @Valid @RequestBody request: RateCourseRequest
+        @Valid @RequestBody request: RateCourseRequest,
     ): ApiResponse<RatingResponse> {
         // TODO: Implement with RateCourseUseCase
         throw NotImplementedError("To be implemented")

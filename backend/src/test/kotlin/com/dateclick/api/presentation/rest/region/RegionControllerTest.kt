@@ -11,7 +11,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 @SpringBootTest
 @AutoConfigureMockMvc
 class RegionControllerTest {
-
     @Autowired
     private lateinit var mockMvc: MockMvc
 

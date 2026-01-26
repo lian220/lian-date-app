@@ -13,7 +13,6 @@ import org.springframework.web.client.RestClient
 
 @ExtendWith(MockKExtension::class)
 class KakaoPlaceSearchAdapterTest {
-
     @MockK
     private lateinit var kakaoRestClient: RestClient
 
@@ -28,12 +27,13 @@ class KakaoPlaceSearchAdapterTest {
 
     @BeforeEach
     fun setUp() {
-        adapter = KakaoPlaceSearchAdapter(
-            kakaoRestClient = kakaoRestClient,
-            kakaoNaviRestClient = kakaoNaviRestClient,
-            regionRepository = regionRepository,
-            restApiKey = restApiKey
-        )
+        adapter =
+            KakaoPlaceSearchAdapter(
+                kakaoRestClient = kakaoRestClient,
+                kakaoNaviRestClient = kakaoNaviRestClient,
+                regionRepository = regionRepository,
+                restApiKey = restApiKey,
+            )
     }
 
     @Test

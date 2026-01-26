@@ -49,20 +49,20 @@ output "alb_5xx_alarm_arn" {
 # RDS Alarms
 output "rds_cpu_alarm_arn" {
   description = "RDS CPU alarm ARN"
-  value       = aws_cloudwatch_metric_alarm.rds_cpu_high.arn
+  value       = try(aws_cloudwatch_metric_alarm.rds_cpu_high[0].arn, null)
 }
 
 output "rds_storage_alarm_arn" {
   description = "RDS storage alarm ARN"
-  value       = aws_cloudwatch_metric_alarm.rds_storage_low.arn
+  value       = try(aws_cloudwatch_metric_alarm.rds_storage_low[0].arn, null)
 }
 
 output "rds_connections_alarm_arn" {
   description = "RDS connections alarm ARN"
-  value       = aws_cloudwatch_metric_alarm.rds_connections_high.arn
+  value       = try(aws_cloudwatch_metric_alarm.rds_connections_high[0].arn, null)
 }
 
 output "rds_write_latency_alarm_arn" {
   description = "RDS write latency alarm ARN"
-  value       = aws_cloudwatch_metric_alarm.rds_write_latency_high.arn
+  value       = try(aws_cloudwatch_metric_alarm.rds_write_latency_high[0].arn, null)
 }

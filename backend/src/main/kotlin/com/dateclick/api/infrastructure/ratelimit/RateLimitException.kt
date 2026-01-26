@@ -7,5 +7,5 @@ class RateLimitException(
     val endpoint: String,
     val limit: Int,
     val windowSeconds: Int,
-    val retryAfterSeconds: Long
+    val retryAfterSeconds: Long,
 ) : RuntimeException("Rate limit exceeded for $endpoint: $limit requests per ${windowSeconds}s")

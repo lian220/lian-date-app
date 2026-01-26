@@ -114,13 +114,137 @@ variable "spring_profiles_active" {
   default     = "local"
 }
 
+variable "chroma_enabled" {
+  description = "Whether to enable Chroma integration in backend"
+  type        = bool
+  default     = false
+}
+
+variable "chroma_db_url" {
+  description = "Chroma base URL (e.g., http://chroma:8000 or https://...)"
+  type        = string
+  default     = ""
+}
+
+variable "chroma_collection_name" {
+  description = "Chroma collection name for place memory"
+  type        = string
+  default     = "date_places"
+}
+
 variable "alb_dns_name" {
   description = "ALB DNS name for frontend API URL"
   type        = string
+}
+
+variable "db_password_secret_arn" {
+  description = "ARN of the database password secret in Secrets Manager"
+  type        = string
+  default     = ""
+}
+
+variable "kakao_keys_secret_arn" {
+  description = "ARN of the Kakao API keys secret in Secrets Manager"
+  type        = string
+  default     = ""
+}
+
+variable "openai_key_secret_arn" {
+  description = "ARN of the OpenAI API key secret in Secrets Manager"
+  type        = string
+  default     = ""
+}
+
+variable "use_secrets_manager" {
+  description = "Whether to use Secrets Manager for sensitive values"
+  type        = bool
+  default     = false
+}
+
+variable "use_ssm_parameters" {
+  description = "Whether to use SSM Parameter Store for sensitive values"
+  type        = bool
+  default     = false
+}
+
+# SSM Parameter ARNs
+variable "ssm_db_host_arn" {
+  description = "ARN of the DB host SSM parameter"
+  type        = string
+  default     = ""
+}
+
+variable "ssm_db_port_arn" {
+  description = "ARN of the DB port SSM parameter"
+  type        = string
+  default     = ""
+}
+
+variable "ssm_db_name_arn" {
+  description = "ARN of the DB name SSM parameter"
+  type        = string
+  default     = ""
+}
+
+variable "ssm_db_username_arn" {
+  description = "ARN of the DB username SSM parameter"
+  type        = string
+  default     = ""
+}
+
+variable "ssm_db_password_arn" {
+  description = "ARN of the DB password SSM parameter"
+  type        = string
+  default     = ""
+}
+
+variable "ssm_openai_api_key_arn" {
+  description = "ARN of the OpenAI API key SSM parameter"
+  type        = string
+  default     = ""
+}
+
+variable "ssm_kakao_rest_api_key_arn" {
+  description = "ARN of the Kakao REST API key SSM parameter"
+  type        = string
+  default     = ""
+}
+
+variable "ssm_kakao_javascript_key_arn" {
+  description = "ARN of the Kakao JavaScript key SSM parameter"
+  type        = string
+  default     = ""
+}
+
+variable "ssm_parameter_arns" {
+  description = "List of all SSM parameter ARNs for IAM policy"
+  type        = list(string)
+  default     = []
 }
 
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)
   default     = {}
+}
+
+variable "openai_api_key" {
+  description = "OpenAI API key (used when use_secrets_manager=false)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "kakao_rest_api_key" {
+  description = "Kakao REST API key (used when use_secrets_manager=false)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "kakao_javascript_key" {
+  description = "Kakao JavaScript key (used when use_secrets_manager=false)"
+  type        = string
+  sensitive   = true
+  default     = ""
 }

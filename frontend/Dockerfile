@@ -1,21 +1,47 @@
-# 개발용 Next.js Dockerfile with Hot Reloading
+# Multi-stage build for Next.js Production
 
-FROM node:20-alpine
-
-# 작업 디렉토리 설정
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
 WORKDIR /app
 
-# 의존성 파일 복사 (캐싱 최적화)
+# Install dependencies based on the preferred package manager
 COPY package*.json ./
-
-# 의존성 설치
 RUN npm ci
 
-# 소스 코드는 볼륨 마운트로 제공됨
-# COPY . .
+# Stage 2: Builder
+FROM node:20-alpine AS builder
+WORKDIR /app
 
-# 포트 노출
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Build Next.js application
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+# Stage 3: Runner (Production)
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy necessary files from builder
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+USER nextjs
+
 EXPOSE 3000
 
-# 개발 서버 실행 (핫 리로딩 활성화)
-CMD ["npm", "run", "dev"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Start Next.js production server
+CMD ["node", "server.js"]

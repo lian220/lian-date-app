@@ -10,5 +10,5 @@ interface RegenerateCourseUseCase {
 data class RegenerateCourseCommand(
     val originalCourseId: CourseId,
     val excludePlaceIds: List<String>,
-    val sessionId: String
+    val sessionId: String,
 )

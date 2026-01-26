@@ -21,41 +21,42 @@ import org.springframework.stereotype.Component
 class OpenAiGenerationAdapter(
     private val openAiClient: OpenAiClient,
     private val openAiProperties: OpenAiProperties,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
 ) : AiGenerationPort {
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun generateCourseRecommendation(
         region: Region,
         dateType: DateType,
         budget: Budget,
-        specialRequest: String?
+        specialRequest: String?,
     ): AiCourseRecommendation {
         logger.info(
             "Generating AI course recommendation for region={}, dateType={}, budget={}",
             region.name,
             dateType,
-            budget.toDisplayName()
+            budget.toDisplayName(),
         )
 
         try {
             // 1. 프롬프트 생성
-            val messages = PromptBuilder.buildMessages(
-                region = region,
-                dateType = dateType,
-                budget = budget,
-                specialRequest = specialRequest
-            )
+            val messages =
+                PromptBuilder.buildMessages(
+                    region = region,
+                    dateType = dateType,
+                    budget = budget,
+                    specialRequest = specialRequest,
+                )
 
             // 2. OpenAI API 요청 생성
-            val request = ChatCompletionRequest(
-                model = openAiProperties.model,
-                messages = messages,
-                temperature = openAiProperties.temperature,
-                maxTokens = openAiProperties.maxTokens,
-                responseFormat = ResponseFormat(type = "json_object")
-            )
+            val request =
+                ChatCompletionRequest(
+                    model = openAiProperties.model,
+                    messages = messages,
+                    temperature = openAiProperties.temperature,
+                    maxTokens = openAiProperties.maxTokens,
+                    responseFormat = ResponseFormat(type = "json_object"),
+                )
 
             // 3. OpenAI API 호출
             val response = openAiClient.createChatCompletion(request)
@@ -64,29 +65,30 @@ class OpenAiGenerationAdapter(
             val aiCourseResponse = parseAiResponse(response)
 
             // 5. Domain 객체로 변환
-            val recommendation = AiCourseRecommendation(
-                places = aiCourseResponse.places.map { aiPlace ->
-                    AiRecommendedPlace(
-                        order = aiPlace.order,
-                        name = aiPlace.name,
-                        category = aiPlace.category,
-                        categoryDetail = aiPlace.categoryDetail,
-                        address = aiPlace.address,
-                        roadAddress = aiPlace.roadAddress,
-                        location = Location(lat = aiPlace.location.lat, lng = aiPlace.location.lng),
-                        phone = aiPlace.phone,
-                        recommendReason = aiPlace.recommendReason,
-                        estimatedCost = aiPlace.estimatedCost,
-                        estimatedDuration = aiPlace.estimatedDuration,
-                        recommendedTime = aiPlace.recommendedTime
-                    )
-                },
-                summary = aiCourseResponse.summary
-            )
+            val recommendation =
+                AiCourseRecommendation(
+                    places =
+                        aiCourseResponse.places.map { aiPlace ->
+                            AiRecommendedPlace(
+                                order = aiPlace.order,
+                                name = aiPlace.name,
+                                category = aiPlace.category,
+                                categoryDetail = aiPlace.categoryDetail,
+                                address = aiPlace.address,
+                                roadAddress = aiPlace.roadAddress,
+                                location = Location(lat = aiPlace.location.lat, lng = aiPlace.location.lng),
+                                phone = aiPlace.phone,
+                                recommendReason = aiPlace.recommendReason,
+                                estimatedCost = aiPlace.estimatedCost,
+                                estimatedDuration = aiPlace.estimatedDuration,
+                                recommendedTime = aiPlace.recommendedTime,
+                            )
+                        },
+                    summary = aiCourseResponse.summary,
+                )
 
             logger.info("Successfully generated course recommendation with {} places", recommendation.places.size)
             return recommendation
-
         } catch (ex: OpenAiException) {
             logger.error("Failed to generate course recommendation due to OpenAI API error", ex)
             throw AiGenerationException("AI 코스 생성 중 OpenAI API 오류가 발생했습니다: ${ex.message}", ex)
@@ -121,5 +123,5 @@ class OpenAiGenerationAdapter(
  */
 class AiGenerationException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : RuntimeException(message, cause)

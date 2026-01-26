@@ -8,19 +8,18 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/health")
 class HealthCheckController {
-
     @GetMapping
     fun healthCheck(): ResponseEntity<HealthResponse> {
         return ResponseEntity.ok(
             HealthResponse(
                 status = "UP",
-                service = "date-click-api"
-            )
+                service = "date-click-api",
+            ),
         )
     }
 }
 
 data class HealthResponse(
     val status: String,
-    val service: String
+    val service: String,
 )

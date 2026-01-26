@@ -14,13 +14,13 @@ interface AiGenerationPort {
         region: Region,
         dateType: DateType,
         budget: Budget,
-        specialRequest: String?
+        specialRequest: String?,
     ): AiCourseRecommendation
 }
 
 data class AiCourseRecommendation(
     val places: List<AiRecommendedPlace>,
-    val summary: String?
+    val summary: String?,
 )
 
 data class AiRecommendedPlace(
@@ -35,5 +35,5 @@ data class AiRecommendedPlace(
     val recommendReason: String,
     val estimatedCost: Int,
     val estimatedDuration: Int,
-    val recommendedTime: String?
+    val recommendedTime: String?,
 )

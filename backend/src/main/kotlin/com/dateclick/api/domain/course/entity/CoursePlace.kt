@@ -19,5 +19,5 @@ data class CoursePlace(
     val recommendedTime: String?, // HH:mm format
     val recommendReason: String,
     val imageUrl: String?,
-    val kakaoPlaceUrl: String?
+    val kakaoPlaceUrl: String?,
 )

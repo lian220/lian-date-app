@@ -1,7 +1,7 @@
 package com.dateclick.api.presentation.rest.region
 
 data class RegionListResponse(
-    val regions: List<RegionResponse>
+    val regions: List<RegionResponse>,
 )
 
 data class RegionResponse(
@@ -11,5 +11,5 @@ data class RegionResponse(
     val description: String,
     val keywords: List<String>,
     val centerLat: Double,
-    val centerLng: Double
+    val centerLng: Double,
 )

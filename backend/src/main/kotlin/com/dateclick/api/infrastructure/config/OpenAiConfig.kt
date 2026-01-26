@@ -13,5 +13,5 @@ data class OpenAiProperties(
     val apiKey: String = "",
     val model: String = "gpt-4",
     val maxTokens: Int = 2000,
-    val temperature: Double = 0.7
+    val temperature: Double = 0.7,
 )

@@ -1,8 +1,16 @@
 spring:
   datasource:
-    url: ${DATABASE_URL}
+    # Supabase PostgreSQL connection (PgBouncer transaction mode)
+    # prepareThreshold=0: Disable prepared statements for PgBouncer compatibility
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:6543}/${DB_NAME}?prepareThreshold=0
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # PgBouncer compatibility settings
+      auto-commit: false
+      connection-timeout: 30000
+      maximum-pool-size: 10
   jpa:
     hibernate:
       ddl-auto: validate
@@ -11,7 +19,7 @@ spring:
       hibernate:
         format_sql: false
   flyway:
-    enabled: true  # Use Flyway migrations for production-safe idempotent inserts
+    enabled: false  # Disabled for Supabase PgBouncer compatibility
     baseline-on-migrate: true
 
 logging:

@@ -5,7 +5,8 @@ enum class DateType(val code: String, val displayName: String) {
     ACTIVITY("activity", "액티비티"),
     FOOD("food", "맛집 탐방"),
     CULTURE("culture", "문화/예술"),
-    HEALING("healing", "힐링");
+    HEALING("healing", "힐링"),
+    ;
 
     companion object {
         fun fromCode(code: String): DateType =

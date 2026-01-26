@@ -1,0 +1,52 @@
+# AWS Configuration
+aws_region   = "us-east-1"
+project_name = "lian-date"
+
+# GitHub Configuration
+github_org  = "your-github-username"  # 실제 GitHub 사용자명으로 변경
+github_repo = "lian-date-app"         # 실제 리포지토리 이름으로 변경
+
+# Monitoring Configuration
+alarm_email = "your-email@example.com"  # 알림 받을 이메일
+
+# ====================================
+# Database Configuration - Supabase
+# ====================================
+# 주의: 아래 값들은 terraform-apply.sh가 production.env에서 읽는 환경변수로
+#      자동으로 오버라이드됩니다!
+#
+# production.env (필수) → terraform-apply.sh → TF_VAR_* 환경변수 → Terraform
+#
+# Supabase 정보 예시:
+# db_host     = "aws-1-ap-northeast-2.pooler.supabase.com"
+# db_port     = 6543
+# db_username = "postgres.jqjkzzzijriofvqaacxh"
+# db_password = "your_supabase_password"
+#
+# ⚠️  절대 실제 비밀번호를 아래에 입력하지 말 것!
+#    production.env 파일(git 추적 안 함)에만 입력하세요
+
+# API Keys (아래 값들은 .env에서 자동으로 읽어옴)
+# openai_api_key = "sk-..."           # terraform-apply.sh가 .env에서 읽어옴
+# kakao_rest_api_key = "..."          # terraform-apply.sh가 .env에서 읽어옴
+# kakao_javascript_key = "..."        # terraform-apply.sh가 .env에서 읽어옴
+
+# Secrets Manager Configuration
+use_secrets_manager = true  # AWS Secrets Manager 사용 (권장)
+
+# HTTPS Configuration (선택사항)
+enable_https = false
+# ssl_certificate_arn = "arn:aws:acm:..."  # HTTPS 활성화 시 필요
+
+# ECS Configuration
+desired_count = 1
+min_capacity  = 1
+max_capacity  = 4
+
+backend_cpu     = 256
+backend_memory  = 512
+frontend_cpu    = 256
+frontend_memory = 512
+
+# Spring Profile
+spring_profiles_active = "prod"

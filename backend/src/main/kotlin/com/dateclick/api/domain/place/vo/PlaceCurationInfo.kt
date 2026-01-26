@@ -10,28 +10,24 @@ data class PlaceCurationInfo(
      * 10점에 가까울수록 데이트하기 좋은 장소
      */
     val dateScore: Int,
-
     /**
      * 분위기 태그 (최대 3개)
      * 예: #로맨틱, #아늑한, #트렌디
      */
     val moodTags: List<String>,
-
     /**
      * 1인당 예상 가격대 (원)
      */
     val priceRange: Int,
-
     /**
      * 추천 시간대
      * 예: "오후 2-5시", "저녁 7-9시"
      */
     val bestTime: String,
-
     /**
      * 한 줄 추천 이유
      */
-    val recommendation: String
+    val recommendation: String,
 ) {
     init {
         require(dateScore in 1..10) { "dateScore must be between 1 and 10" }

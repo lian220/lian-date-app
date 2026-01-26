@@ -17,6 +17,12 @@ class GetCourseUseCaseImpl(
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
+    /**
+     * 코스 ID로 코스 정보를 조회합니다.
+     *
+     * @param courseId 조회할 코스의 ID
+     * @return 코스 정보, 존재하지 않으면 null
+     */
     override fun execute(courseId: CourseId): Course? {
         logger.info("Getting course: courseId={}", courseId.value)
 

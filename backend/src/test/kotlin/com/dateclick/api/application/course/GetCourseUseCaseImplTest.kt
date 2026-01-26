@@ -14,6 +14,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
+/**
+ * GetCourseUseCaseImpl 단위 테스트
+ *
+ * 코스 조회 유스케이스의 동작을 검증합니다.
+ */
 class GetCourseUseCaseImplTest {
 
     private lateinit var courseRepository: CourseRepository
@@ -85,6 +90,12 @@ class GetCourseUseCaseImplTest {
         assertEquals("음식점", firstPlace?.category)
     }
 
+    /**
+     * 테스트용 코스 객체를 생성합니다.
+     *
+     * @param courseId 코스 ID
+     * @return 3개의 장소를 포함한 테스트 코스
+     */
     private fun createTestCourse(courseId: CourseId): Course {
         val places = listOf(
             createTestPlace(1, "테스트 레스토랑", "음식점"),
@@ -105,6 +116,14 @@ class GetCourseUseCaseImplTest {
         )
     }
 
+    /**
+     * 테스트용 장소 객체를 생성합니다.
+     *
+     * @param order 장소 순서
+     * @param name 장소명
+     * @param category 카테고리
+     * @return 테스트 장소 객체
+     */
     private fun createTestPlace(order: Int, name: String, category: String): CoursePlace {
         return CoursePlace(
             order = order,

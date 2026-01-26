@@ -133,3 +133,26 @@ module "ecs" {
 
   tags = var.common_tags
 }
+
+# Monitoring Module
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  name_prefix = local.name_prefix
+  alarm_email = var.alarm_email
+
+  # ECS Monitoring
+  ecs_cluster_name          = module.ecs.cluster_name
+  ecs_backend_service_name  = module.ecs.backend_service_name
+  ecs_frontend_service_name = module.ecs.frontend_service_name
+
+  # ALB Monitoring
+  alb_arn_suffix                   = module.alb.alb_arn_suffix
+  backend_target_group_arn_suffix  = module.alb.backend_target_group_arn_suffix
+  frontend_target_group_arn_suffix = module.alb.frontend_target_group_arn_suffix
+
+  # RDS Monitoring
+  db_instance_id = module.rds.db_instance_id
+
+  tags = var.common_tags
+}

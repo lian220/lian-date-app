@@ -104,6 +104,12 @@ variable "db_password" {
   sensitive   = true
 }
 
+# Monitoring Configuration
+variable "alarm_email" {
+  description = "Email address for CloudWatch alarm notifications"
+  type        = string
+}
+
 # Tags
 variable "common_tags" {
   description = "Common tags for all resources"

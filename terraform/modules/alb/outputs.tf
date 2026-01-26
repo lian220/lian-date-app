@@ -35,3 +35,19 @@ output "http_listener_arn" {
   description = "HTTP listener ARN"
   value       = aws_lb_listener.http.arn
 }
+
+# ARN Suffixes for CloudWatch
+output "alb_arn_suffix" {
+  description = "ALB ARN suffix (for CloudWatch metrics)"
+  value       = aws_lb.main.arn_suffix
+}
+
+output "backend_target_group_arn_suffix" {
+  description = "Backend target group ARN suffix (for CloudWatch metrics)"
+  value       = aws_lb_target_group.backend.arn_suffix
+}
+
+output "frontend_target_group_arn_suffix" {
+  description = "Frontend target group ARN suffix (for CloudWatch metrics)"
+  value       = aws_lb_target_group.frontend.arn_suffix
+}

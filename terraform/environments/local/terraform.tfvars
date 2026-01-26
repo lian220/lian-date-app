@@ -30,6 +30,9 @@ db_username       = "dateclick"
 db_password       = "dateclick"
 # Note: For production, use AWS Secrets Manager or environment variables
 
+# Monitoring Configuration
+alarm_email = "lian.dy220@gmail.com"
+
 # Tags
 common_tags = {
   Project     = "lian-date"

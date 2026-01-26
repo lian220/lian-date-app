@@ -125,3 +125,15 @@ output "frontend_log_group_name" {
   description = "Frontend CloudWatch log group name"
   value       = module.ecs.frontend_log_group_name
 }
+
+# Monitoring Outputs
+output "sns_topic_arn" {
+  description = "SNS topic ARN for alarms"
+  value       = module.monitoring.sns_topic_arn
+}
+
+output "alarm_email" {
+  description = "Email address receiving alarm notifications"
+  value       = var.alarm_email
+  sensitive   = true
+}

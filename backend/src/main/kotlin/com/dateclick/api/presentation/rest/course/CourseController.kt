@@ -1,7 +1,9 @@
 package com.dateclick.api.presentation.rest.course
 
 import com.dateclick.api.application.course.CreateCourseUseCase
+import com.dateclick.api.application.course.GetCourseUseCase
 import com.dateclick.api.application.course.RegenerateCourseUseCase
+import com.dateclick.api.domain.course.vo.CourseId
 import com.dateclick.api.presentation.mapper.CourseMapper
 import com.dateclick.api.presentation.rest.common.ApiResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/v1/courses")
 class CourseController(
     private val createCourseUseCase: CreateCourseUseCase?,
+    private val getCourseUseCase: GetCourseUseCase,
     private val regenerateCourseUseCase: RegenerateCourseUseCase,
     private val courseMapper: CourseMapper
 ) {
@@ -37,12 +40,23 @@ class CourseController(
         throw NotImplementedError("Use case implementation pending (LAD-XX)")
     }
 
+    /**
+     * 코스 상세 정보를 조회합니다.
+     *
+     * @param courseId 조회할 코스의 ID
+     * @return 코스 상세 정보를 포함한 API 응답
+     * @throws IllegalArgumentException 코스가 존재하지 않을 경우
+     */
+    @Operation(summary = "코스 상세 조회", description = "코스 ID로 코스 정보 조회")
     @GetMapping("/{courseId}")
     fun getCourse(
         @PathVariable courseId: String
     ): ApiResponse<CourseResponse> {
-        // TODO: Implement with GetCourseUseCase
-        throw NotImplementedError("To be implemented")
+        val course = getCourseUseCase.execute(CourseId(courseId))
+            ?: throw IllegalArgumentException("Course not found: $courseId")
+
+        val response = courseMapper.toResponse(course)
+        return ApiResponse.success(response)
     }
 
     @Operation(summary = "코스 재생성", description = "기존 코스와 다른 새로운 코스 생성")

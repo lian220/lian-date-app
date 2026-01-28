@@ -83,7 +83,6 @@ export default function KakaoMapComponent({
         script.parentNode.removeChild(script);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [center, zoom, onMapReady]);
 
   // 마커 업데이트

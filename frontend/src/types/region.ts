@@ -1,14 +1,16 @@
 // 백엔드 API 응답 형식에 맞춘 타입 정의
 export type City = 'seoul' | 'gyeonggi';
+export type AreaType = 'SEOUL' | 'GYEONGGI';
 
 export interface Region {
   id: string;
   name: string;
-  city: City;
-  description: string;
+  city?: City;
+  areaType?: AreaType;
+  description?: string;
   keywords: string[];
-  centerLat: number;
-  centerLng: number;
+  centerLat?: number;
+  centerLng?: number;
 }
 
 export interface RegionsResponse {

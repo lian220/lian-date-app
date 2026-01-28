@@ -2,7 +2,6 @@
  * 카카오맵 SDK 타입 정의
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare global {
   interface Window {
     kakao: {

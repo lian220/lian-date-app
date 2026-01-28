@@ -2,6 +2,9 @@
 # .claude
 .claude/settings.local.json
 
+# GitHub Workflows (private)
+.github/workflows/claude-review.yml
+
 # Environment variables
 .env
 .env.local

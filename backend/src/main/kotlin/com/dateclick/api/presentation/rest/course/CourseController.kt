@@ -44,7 +44,7 @@ class CourseController(
      *
      * @param courseId 조회할 코스의 ID
      * @return 코스 상세 정보를 포함한 API 응답
-     * @throws IllegalArgumentException 코스가 존재하지 않을 경우
+     * @throws NoSuchElementException 코스가 존재하지 않을 경우
      */
     @Operation(summary = "코스 상세 조회", description = "코스 ID로 코스 정보 조회")
     @GetMapping("/{courseId}")
@@ -53,7 +53,7 @@ class CourseController(
     ): ApiResponse<CourseResponse> {
         val course =
             getCourseUseCase.execute(CourseId(courseId))
-                ?: throw IllegalArgumentException("Course not found: $courseId")
+                ?: throw NoSuchElementException("Course not found: $courseId")
 
         val response = courseMapper.toResponse(course)
         return ApiResponse.success(response)

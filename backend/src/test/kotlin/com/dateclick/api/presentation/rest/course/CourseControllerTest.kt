@@ -48,7 +48,7 @@ class CourseControllerTest {
     @MockkBean
     private lateinit var courseMapper: CourseMapper
 
-    @MockkBean
+    @MockkBean(relaxed = true)
     private lateinit var rateLimitService: RateLimitService
 
     @Autowired

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
  * Local-only data loader for quick local testing.
  * Production environment uses Flyway migrations (V2__insert_regions_data.sql) instead.
  *
- * This loader is restricted to local profile only to avoid:
+ * This loader checks if the regions table is empty before loading data to avoid:
  * - Race conditions on concurrent application startups in production
  * - Duplicate key violations from non-atomic count-then-insert pattern
  *
@@ -207,6 +207,15 @@ class RegionDataLoader(
                     keywords = listOf("자연", "등산", "카페거리", "편안함", "힐링"),
                     centerLat = 37.6542,
                     centerLng = 127.0568,
+                ),
+                RegionEntity(
+                    id = "seocho",
+                    name = "서초",
+                    city = "seoul",
+                    description = "예술의전당과 법원이 위치한 서초. 고급스러운 분위기의 레스토랑과 카페, 문화시설이 어우러진 세련된 데이트 명소입니다.",
+                    keywords = listOf("예술", "문화", "고급", "세련됨", "카페"),
+                    centerLat = 37.4916,
+                    centerLng = 127.0078,
                 ),
                 // 경기 권역
                 RegionEntity(

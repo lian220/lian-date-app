@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Region, AreaType } from '@/types/region';
-import { MOCK_REGIONS } from '@/constants/regions';
+import { Region } from '@/types/region';
+import { getRegions } from '@/lib/api/regions';
 import { filterRegions } from '@/lib/search';
 import RegionTabs from './RegionTabs';
 import RegionCard from './RegionCard';
@@ -20,13 +20,33 @@ export default function RegionBottomSheet({
   onSelect,
   initialRegion,
 }: RegionBottomSheetProps) {
-  const [activeTab, setActiveTab] = useState<AreaType>('SEOUL');
-  // Note: If you need to reset selectedRegion when initialRegion changes,
-  // pass a unique key prop to this component from parent to remount it
+  const [activeTab, setActiveTab] = useState<'seoul' | 'gyeonggi'>('seoul');
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(
     initialRegion || null
   );
   const [searchQuery, setSearchQuery] = useState('');
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // 지역 데이터 로드 (컴포넌트 마운트 시 한 번만)
+  useEffect(() => {
+    const loadRegions = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getRegions();
+        setRegions(data);
+      } catch (err) {
+        console.error('Failed to load regions:', err);
+        setError('지역 정보를 불러올 수 없습니다');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRegions();
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -53,13 +73,13 @@ export default function RegionBottomSheet({
   // 탭별 권역 필터링 및 검색어 필터링 (useMemo로 성능 최적화)
   const currentRegions = useMemo(() => {
     // 1. 탭별 필터링
-    const regionsByTab = MOCK_REGIONS.filter(
-      region => region.areaType === activeTab
+    const regionsByTab = regions.filter(
+      region => region.city === activeTab
     );
 
     // 2. 검색어 필터링
     return filterRegions(regionsByTab, searchQuery);
-  }, [activeTab, searchQuery]);
+  }, [regions, activeTab, searchQuery]);
 
   return (
     <>
@@ -165,7 +185,36 @@ export default function RegionBottomSheet({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 py-6">
-          {currentRegions.length > 0 ? (
+          {error ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <svg
+                className="mb-4 h-16 w-16 text-red-300 dark:text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className="text-lg font-medium text-red-600 dark:text-red-400">
+                {error}
+              </p>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
+                잠시 후 다시 시도해주세요
+              </p>
+            </div>
+          ) : isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 dark:border-gray-600 dark:border-t-blue-400" />
+              <p className="text-lg font-medium text-gray-600 dark:text-gray-400">
+                지역 정보를 불러오는 중입니다
+              </p>
+            </div>
+          ) : currentRegions.length > 0 ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
               {currentRegions.map(region => (
                 <RegionCard

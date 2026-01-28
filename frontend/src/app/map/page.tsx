@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import KakaoMapComponent from '@/components/KakaoMap';
-import type { MapPlace, KakaoMap } from '@/types/kakao-map';
+import type { MapPlace } from '@/types/kakao-map';
 
 /**
  * 지도 페이지
@@ -58,11 +58,9 @@ export default function MapPage() {
   ]);
 
   const [selectedPlace, setSelectedPlace] = useState<MapPlace | null>(null);
-  const [mapInstance, setMapInstance] = useState<KakaoMap | null>(null);
 
-  const handleMapReady = (map: KakaoMap) => {
-    console.log('Map is ready', map);
-    setMapInstance(map);
+  const handleMapReady = () => {
+    console.log('Map is ready');
   };
 
   const handleMarkerClick = (place: MapPlace) => {

@@ -2,6 +2,7 @@
  * 카카오맵 SDK 타입 정의
  */
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare global {
   interface Window {
     kakao: {
@@ -12,8 +13,8 @@ declare global {
         InfoWindow: new (options: InfoWindowOptions) => InfoWindow;
         LatLngBounds: new () => LatLngBounds;
         event: {
-          addListener: (target: any, eventName: string, callback: Function) => void;
-          removeListener: (target: any, eventName: string, callback: Function) => void;
+          addListener: (target: unknown, eventName: string, callback: (this: unknown) => void) => void;
+          removeListener: (target: unknown, eventName: string, callback: (this: unknown) => void) => void;
         };
       };
     };
@@ -40,12 +41,12 @@ export interface KakaoMap {
   panTo: (latlng: LatLng) => void;
   getBounds: () => { contain: (latlng: LatLng) => boolean };
   setBounds: (bounds: LatLngBounds) => void;
-  addListener: (eventName: string, callback: Function) => void;
+  addListener: (eventName: string, callback: (this: unknown) => void) => void;
 }
 
 export interface MarkerOptions {
   position: LatLng;
-  map?: KakaoMap;
+  map?: KakaoMap | null;
   title?: string;
   image?: MarkerImage;
   clickable?: boolean;
@@ -56,7 +57,7 @@ export interface Marker {
   getMap: () => KakaoMap | null;
   getPosition: () => LatLng;
   setPosition: (latlng: LatLng) => void;
-  addListener: (eventName: string, callback: Function) => void;
+  addListener: (eventName: string, callback: (this: unknown) => void) => void;
 }
 
 export interface MarkerImage {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { KakaoMap, Marker, MapPlace, LatLng } from '@/types/kakao-map';
+import type { KakaoMap, Marker, MapPlace } from '@/types/kakao-map';
 
 interface KakaoMapProps {
   places: MapPlace[];
@@ -62,7 +62,7 @@ export default function KakaoMapComponent({
       map.current = new window.kakao.maps.Map(mapContainer.current!, mapOption);
 
       // 지도 레벨 변경 이벤트
-      window.kakao.maps.event.addListener(map.current, 'zoom_changed', () => {
+      window.kakao.maps.event.addListener(map.current, 'zoom_changed', function() {
         if (map.current) {
           setCurrentZoom(map.current.getLevel());
         }
@@ -83,7 +83,8 @@ export default function KakaoMapComponent({
         script.parentNode.removeChild(script);
       }
     };
-  }, [KAKAO_MAP_API_KEY, center, zoom, onMapReady]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [center, zoom, onMapReady]);
 
   // 마커 업데이트
   useEffect(() => {

@@ -9,7 +9,8 @@ export async function getRegions(city?: string): Promise<Region[]> {
   try {
     console.log(`[RegionAPI] Fetching regions${city ? ` for city: ${city}` : ''}...`);
 
-    const url = new URL('/regions', process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/v1');
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/v1';
+    const url = new URL(`${baseUrl}/regions`);
     if (city) {
       url.searchParams.append('city', city);
     }

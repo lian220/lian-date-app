@@ -90,9 +90,60 @@ resource "aws_iam_role_policy" "github_actions_ecs" {
           "ecs:UpdateService",
           "ecs:DescribeServices",
           "ecs:DescribeTasks",
-          "ecs:ListTasks"
+          "ecs:ListTasks",
+          "ecs:DescribeTaskDefinition",
+          "ecs:RegisterTaskDefinition"
         ]
         Resource = "*"
+      }
+    ]
+  })
+}
+
+# CodeDeploy Policy (Blue/Green Deployment)
+resource "aws_iam_role_policy" "github_actions_codedeploy" {
+  name = "${var.name_prefix}-github-actions-codedeploy"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentConfig",
+          "codedeploy:GetApplicationRevision",
+          "codedeploy:RegisterApplicationRevision",
+          "codedeploy:GetApplication",
+          "codedeploy:ListDeployments"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# IAM PassRole Policy (for ECS Task Execution)
+resource "aws_iam_role_policy" "github_actions_passrole" {
+  name = "${var.name_prefix}-github-actions-passrole"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:PassRole"
+        ]
+        Resource = "*"
+        Condition = {
+          StringLike = {
+            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+          }
+        }
       }
     ]
   })

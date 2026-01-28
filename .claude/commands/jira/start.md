@@ -1,18 +1,29 @@
 # Jira 티켓 시작
 
-**사용법**: `jira-start LAD-42 [브랜치명]`
-- 브랜치명 생략 시 티켓 제목으로 자동 생성 (예: `feature/LAD-42-implement-region-map`)
+**사용법**:
+- `jira:start LAD-42 [브랜치명]` - 티켓 ID 지정
+- `jira:start` - 현재 브랜치명에서 티켓 ID 자동 추출
 
 티켓 ID와 브랜치명을 받아 개발 환경을 설정하고 티켓 상태를 자동으로 업데이트합니다.
 
 ## 인자
-- 첫 번째: Jira 티켓 ID (필수, 예: LAD-42)
+- 첫 번째: Jira 티켓 ID (선택, 예: LAD-42)
+  - **생략 시**: 현재 브랜치명에서 자동 추출 (예: `feature/LAD-42-xxx` → `LAD-42`)
 - 두 번째: 브랜치명 (선택, 예: region-selection-map)
   - 없으면 티켓 제목 기반으로 자동 생성
 
 ## 실행 내용
 
 $ARGUMENTS
+
+### 단계 0: 티켓 ID 결정 (인자가 없는 경우)
+**인자가 없으면 현재 브랜치명에서 티켓 ID를 자동 추출**:
+1. `git branch --show-current`로 현재 브랜치명 확인
+2. 브랜치명에서 티켓 ID 패턴 추출 (정규식: `LAD-\d+`)
+   - 예: `feature/LAD-42-implement-region-map` → `LAD-42`
+   - 예: `LAD-53-docker-setup` → `LAD-53`
+3. 추출 실패 시 사용자에게 티켓 ID 입력 요청
+4. 추출 성공 시 해당 티켓 ID로 진행
 
 ### 단계 1: 티켓 정보 확인 및 상태 변경
 1. Jira 티켓 정보 조회 (mcp__atlassian__getJiraIssue)
@@ -24,7 +35,7 @@ $ARGUMENTS
    - 완료된 티켓은 경고 메시지 표시
    - mcp__atlassian__getTransitionsForJiraIssue로 가능한 전환 확인
    - mcp__atlassian__transitionJiraIssue로 상태 전환 실행
-5. 브랜치명이 없는 경우:
+5. 브랜치명이 없는 경우 (새 브랜치 생성 시에만):
    - 티켓 제목을 kebab-case로 변환
    - 형식: `feature/{티켓ID}-{티켓제목-kebab-case}`
    - 예: `feature/LAD-42-implement-region-selection-map`

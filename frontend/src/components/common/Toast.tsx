@@ -20,11 +20,16 @@ export default function Toast({
   duration = 2000,
 }: ToastProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (isVisible) {
       timerRef.current = setTimeout(() => {
-        onClose();
+        onCloseRef.current();
       }, duration);
     }
 
@@ -33,7 +38,7 @@ export default function Toast({
         clearTimeout(timerRef.current);
       }
     };
-  }, [isVisible, duration, onClose]);
+  }, [isVisible, duration]);
 
   if (!isVisible) return null;
 

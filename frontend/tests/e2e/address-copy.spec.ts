@@ -140,15 +140,15 @@ test.describe('Address Clipboard Copy E2E Test', () => {
       const addressButton = page.locator('button[aria-label*="주소 복사"]');
       await expect(addressButton).toBeVisible();
 
-      // Copy icon should be hidden initially (opacity-0)
+      // Copy icon should be hidden initially (opacity: 0)
       const copyIcon = addressButton.locator('svg').last();
-      await expect(copyIcon).toHaveClass(/opacity-0/);
+      await expect(copyIcon).toHaveCSS('opacity', '0');
 
       // Hover over address button
       await addressButton.hover();
 
-      // Copy icon should be visible on hover (opacity-100)
-      await expect(copyIcon).toHaveClass(/opacity-100/);
+      // Copy icon should be visible on hover (opacity: 1)
+      await expect(copyIcon).toHaveCSS('opacity', '1');
     }
   });
 });

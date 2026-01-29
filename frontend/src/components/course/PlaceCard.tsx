@@ -19,6 +19,9 @@ export default function PlaceCard({ place, order }: PlaceCardProps) {
 
   const handleCopyAddress = useCallback(async () => {
     try {
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard API not supported');
+      }
       await navigator.clipboard.writeText(place.address);
       setShowToast(true);
     } catch (err) {

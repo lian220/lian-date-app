@@ -30,8 +30,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Update Alpine packages, remove unused npm/yarn (security), and create non-root user
+# Update Alpine packages, install curl for healthcheck, remove unused npm/yarn (security), and create non-root user
 RUN apk update && apk upgrade --no-cache && \
+    apk add --no-cache curl && \
     rm -rf /usr/local/lib/node_modules/npm /opt/yarn-* /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/yarn /usr/local/bin/yarnpkg && \
     addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs

@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { KakaoMap, Marker, MapPlace } from '@/types/kakao-map';
+import type {
+  KakaoMap,
+  Marker,
+  MapPlace,
+  CustomOverlay,
+  Polyline,
+  LatLng,
+} from '@/types/kakao-map';
 
 interface KakaoMapProps {
   places: MapPlace[];
@@ -9,6 +16,8 @@ interface KakaoMapProps {
   zoom?: number;
   onMapReady?: (map: KakaoMap) => void;
   onMarkerClick?: (place: MapPlace) => void;
+  showRoute?: boolean; // 경로 점선 표시 여부
+  showNumberMarkers?: boolean; // 순서 번호 마커 표시 여부
 }
 
 const KAKAO_MAP_API_KEY = process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY;
@@ -30,10 +39,14 @@ export default function KakaoMapComponent({
   zoom = 3,
   onMapReady,
   onMarkerClick,
+  showRoute = false,
+  showNumberMarkers = false,
 }: KakaoMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<KakaoMap | null>(null);
   const markers = useRef<Map<string, Marker>>(new Map());
+  const customOverlays = useRef<Map<string, CustomOverlay>>(new Map());
+  const polyline = useRef<Polyline | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(zoom);
 
@@ -85,6 +98,38 @@ export default function KakaoMapComponent({
     };
   }, [center, zoom, onMapReady]);
 
+  // 순서 번호 마커용 HTML 생성
+  const createNumberMarkerContent = (
+    order: number,
+    isActive: boolean = false
+  ) => {
+    const bgColor = isActive ? '#3B82F6' : '#6366F1';
+    const size = isActive ? 40 : 32;
+    const fontSize = isActive ? 16 : 14;
+    const shadow = isActive
+      ? '0 4px 12px rgba(59, 130, 246, 0.5)'
+      : '0 2px 8px rgba(0, 0, 0, 0.2)';
+
+    return `
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: ${size}px;
+        height: ${size}px;
+        background: ${bgColor};
+        border: 3px solid white;
+        border-radius: 50%;
+        color: white;
+        font-size: ${fontSize}px;
+        font-weight: bold;
+        box-shadow: ${shadow};
+        cursor: pointer;
+        transition: all 0.2s ease;
+      ">${order}</div>
+    `;
+  };
+
   // 마커 업데이트
   useEffect(() => {
     if (!isMapReady || !map.current || !window.kakao) return;
@@ -95,35 +140,96 @@ export default function KakaoMapComponent({
     });
     markers.current.clear();
 
+    // 기존 CustomOverlay 제거
+    customOverlays.current.forEach((overlay) => {
+      overlay.setMap(null);
+    });
+    customOverlays.current.clear();
+
+    // 기존 Polyline 제거
+    if (polyline.current) {
+      polyline.current.setMap(null);
+      polyline.current = null;
+    }
+
     if (places.length === 0) return;
 
     // 새 마커 추가
     const bounds = new window.kakao.maps.LatLngBounds();
+    const pathPositions: LatLng[] = [];
 
-    places.forEach((place) => {
+    // places를 order 기준으로 정렬
+    const sortedPlaces = [...places].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0)
+    );
+
+    sortedPlaces.forEach((place, index) => {
       const position = new window.kakao.maps.LatLng(place.lat, place.lng);
-      const markerOptions = {
-        position,
-        map: map.current,
-        title: place.name,
-      };
+      pathPositions.push(position);
 
-      const marker = new window.kakao.maps.Marker(markerOptions);
+      if (showNumberMarkers) {
+        // 순서 번호 CustomOverlay 생성
+        const content = document.createElement('div');
+        content.innerHTML = createNumberMarkerContent(
+          place.order ?? index + 1
+        );
 
-      // 마커 클릭 이벤트
-      if (onMarkerClick) {
-        window.kakao.maps.event.addListener(marker, 'click', () => {
-          onMarkerClick(place);
+        // 클릭 이벤트 추가
+        if (onMarkerClick) {
+          content.style.cursor = 'pointer';
+          content.addEventListener('click', () => {
+            onMarkerClick(place);
+          });
+        }
+
+        const customOverlay = new window.kakao.maps.CustomOverlay({
+          position,
+          content,
+          map: map.current,
+          yAnchor: 0.5,
+          xAnchor: 0.5,
+          zIndex: 10,
         });
+
+        customOverlays.current.set(place.id, customOverlay);
+      } else {
+        // 기본 마커 사용
+        const markerOptions = {
+          position,
+          map: map.current,
+          title: place.name,
+        };
+
+        const marker = new window.kakao.maps.Marker(markerOptions);
+
+        // 마커 클릭 이벤트
+        if (onMarkerClick) {
+          window.kakao.maps.event.addListener(marker, 'click', () => {
+            onMarkerClick(place);
+          });
+        }
+
+        markers.current.set(place.id, marker);
       }
 
-      markers.current.set(place.id, marker);
       bounds.extend(position);
     });
 
+    // 경로 점선 그리기
+    if (showRoute && pathPositions.length >= 2) {
+      polyline.current = new window.kakao.maps.Polyline({
+        map: map.current,
+        path: pathPositions,
+        strokeWeight: 3,
+        strokeColor: '#6366F1',
+        strokeOpacity: 0.7,
+        strokeStyle: 'shortdash',
+      });
+    }
+
     // 모든 마커를 포함하는 영역으로 자동 맞춤
     map.current.setBounds(bounds);
-  }, [places, isMapReady, onMarkerClick]);
+  }, [places, isMapReady, onMarkerClick, showRoute, showNumberMarkers]);
 
   // 줌 인/아웃 함수
   const handleZoomIn = () => {

@@ -79,16 +79,18 @@ View logs:
 docker-compose logs -f [service]  # service: postgres, backend, frontend
 ```
 
-Stop services:
+Stop services (데이터 유지):
 ```bash
 docker-compose down
 ```
+**주의**: `docker-compose down`만 사용하면 데이터베이스 볼륨이 유지되어 데이터가 보존됩니다.
 
-Clean restart (removes volumes):
+Clean restart (볼륨 삭제 - 데이터 초기화):
 ```bash
 docker-compose down -v
 docker-compose up -d
 ```
+**주의**: `-v` 옵션은 모든 볼륨을 삭제하므로 **모든 데이터가 영구적으로 삭제**됩니다. 완전히 초기화가 필요한 경우에만 사용하세요.
 
 **Service URLs**:
 - Frontend: http://localhost:3000

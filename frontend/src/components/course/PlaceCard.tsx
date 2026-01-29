@@ -1,6 +1,8 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { Place } from '@/types/course';
+import Toast from '@/components/common/Toast';
 import { openKakaoMap } from '@/lib/kakaoMapLink';
 
 interface PlaceCardProps {
@@ -11,8 +13,27 @@ interface PlaceCardProps {
 /**
  * 코스 내 개별 장소 카드 컴포넌트
  * 장소명, 카테고리, 주소, 예상 비용, AI 추천 이유 표시
+ * 주소 탭 시 클립보드 복사 기능 제공
  */
 export default function PlaceCard({ place, order }: PlaceCardProps) {
+  const [showToast, setShowToast] = useState(false);
+
+  const handleCopyAddress = useCallback(async () => {
+    try {
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard API not supported');
+      }
+      await navigator.clipboard.writeText(place.address);
+      setShowToast(true);
+    } catch (err) {
+      console.error('주소 복사 실패:', err);
+    }
+  }, [place.address]);
+
+  const handleCloseToast = useCallback(() => {
+    setShowToast(false);
+  }, []);
+
   return (
     <div className="relative rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
       {/* 순서 번호 뱃지 */}
@@ -32,8 +53,14 @@ export default function PlaceCard({ place, order }: PlaceCardProps) {
           </p>
         </div>
 
-        {/* 주소 */}
-        <div className="flex items-start gap-2">
+        {/* 주소 - 클릭 시 복사 */}
+        <button
+          type="button"
+          onClick={handleCopyAddress}
+          className="group flex w-full items-start gap-2 rounded-lg p-2 -ml-2 text-left transition-colors hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600"
+          aria-label={`주소 복사: ${place.address}`}
+        >
+          {/* 위치 아이콘 */}
           <svg
             className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400"
             fill="none"
@@ -53,10 +80,24 @@ export default function PlaceCard({ place, order }: PlaceCardProps) {
               d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
             />
           </svg>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <span className="flex-1 text-sm text-gray-600 dark:text-gray-400">
             {place.address}
-          </p>
-        </div>
+          </span>
+          {/* 복사 아이콘 */}
+          <svg
+            className="h-4 w-4 flex-shrink-0 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+            />
+          </svg>
+        </button>
 
         {/* 전화번호 */}
         <div className="flex items-center gap-2">
@@ -142,6 +183,13 @@ export default function PlaceCard({ place, order }: PlaceCardProps) {
           카카오맵에서 보기
         </button>
       </div>
+
+      {/* 토스트 메시지 */}
+      <Toast
+        message="주소가 복사되었습니다"
+        isVisible={showToast}
+        onClose={handleCloseToast}
+      />
     </div>
   );
 }

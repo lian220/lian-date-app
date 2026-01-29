@@ -87,6 +87,8 @@ services:
       KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY}
       KAKAO_JAVASCRIPT_KEY: ${KAKAO_JAVASCRIPT_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # 로컬에서는 Chroma 미기동 → NoopPlaceMemory 사용 (벡터 검색 비활성화)
+      CHROMA_ENABLED: ${CHROMA_ENABLED:-false}
       CHROMA_DB_URL: ${CHROMA_DB_URL:-http://chroma:8000}
       JAVA_OPTS: "-Xmx512m -Xms256m"
     networks:

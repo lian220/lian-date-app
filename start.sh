@@ -85,32 +85,6 @@ wait_for_local_port() {
   done
 }
 
-# 로컬 Chroma heartbeat 확인
-is_chroma_healthy_on_localhost() {
-  local port="${1:?port required}"
-  if command -v curl &>/dev/null; then
-    curl -fsS "http://127.0.0.1:${port}/api/v2/heartbeat" >/dev/null 2>&1
-    return $?
-  fi
-  # curl 없으면 확인 불가 → 실패로 처리
-  return 1
-}
-
-# 사용 가능한 포트 찾기 (start~end)
-find_free_port() {
-  local start_port="${1:?start_port required}"
-  local end_port="${2:?end_port required}"
-
-  local p
-  for ((p=start_port; p<=end_port; p++)); do
-    if ! is_port_in_use "${p}"; then
-      echo "${p}"
-      return 0
-    fi
-  done
-  return 1
-}
-
 # 포트 사용 여부 확인 (LISTEN)
 is_port_in_use() {
   local port="${1:?port required}"
@@ -129,56 +103,12 @@ is_port_in_use() {
   return 1
 }
 
-# Chroma DB 안 떠 있으면 띄우기
-ensure_chroma() {
-  local chroma_port="${CHROMA_PORT:-8000}"
-
-  # 이미 chroma 컨테이너가 떠 있으면 헬스체크만 확인
-  if ! docker ps --filter "name=dateclick-chroma" --filter "status=running" -q | grep -q .; then
-    # 로컬 포트가 이미 사용 중이면:
-    # - 해당 포트가 "실제 Chroma"면 기존 Chroma를 사용 (컨테이너 기동 스킵)
-    # - Chroma가 아니면 비어있는 포트로 자동 변경 후 컨테이너 기동
-    if is_port_in_use "${chroma_port}"; then
-      if is_chroma_healthy_on_localhost "${chroma_port}"; then
-        echo "⚠️  ${chroma_port} 포트가 이미 사용 중이지만, 로컬 Chroma가 응답합니다. 기존 Chroma를 사용합니다."
-        export CHROMA_DB_URL="${CHROMA_DB_URL:-http://host.docker.internal:${chroma_port}}"
-        echo "   - 적용: CHROMA_DB_URL=${CHROMA_DB_URL}"
-        return 0
-      fi
-
-      local new_port
-      new_port="$(find_free_port 8001 8100 || true)"
-      if [[ -z "${new_port}" ]]; then
-        echo "❌ Chroma 포트(기본 ${chroma_port})가 사용 중이고, 8001-8100에서도 빈 포트를 찾지 못했습니다."
-        echo "   - 8000 포트를 사용하는 프로세스를 종료하거나 CHROMA_PORT를 다른 값으로 지정해주세요."
-        return 1
-      fi
-
-      echo "⚠️  ${chroma_port} 포트가 이미 사용 중이며 Chroma 응답이 없습니다. CHROMA_PORT를 ${new_port}로 변경하여 기동합니다."
-      export CHROMA_PORT="${new_port}"
-      export CHROMA_DB_URL="${CHROMA_DB_URL:-http://chroma:8000}"
-      chroma_port="${new_port}"
-    fi
-
-    echo "Chroma DB가 실행 중이 아닙니다. Chroma 실행 중..."
-    if [[ -n "${project_name}" ]]; then
-      docker compose -p "${project_name}" --profile db up -d chroma
-    else
-      docker compose --profile db up -d chroma
-    fi
-  fi
-
-  # chroma는 헬스체크가 있으니 기다림
-  wait_for_healthy "dateclick-chroma" 60
-}
-
-# DB(postgres, chroma) 안 떠 있으면 띄우기
+# DB(postgres) 안 떠 있으면 띄우기 (로컬에서는 Chroma 미사용, backend는 NoopPlaceMemory 사용)
 ensure_db() {
   # 1) 이미 postgres 컨테이너가 떠 있으면 "정상 기동(healthy)"까지 기다린 뒤 계속
   if docker ps --filter "name=dateclick-postgres" --filter "status=running" -q | grep -q .; then
     echo "Postgres 컨테이너가 이미 실행 중입니다. 정상 기동을 확인 중..."
     wait_for_healthy "dateclick-postgres" 60
-    ensure_chroma
     return 0
   fi
 
@@ -194,21 +124,19 @@ ensure_db() {
       return 1
     fi
 
-    ensure_chroma
     return 0
   fi
 
-  # 3) 5432가 비어있으면 postgres/chroma를 올리고, 둘 다 healthy까지 기다린다.
-  echo "DB가 실행 중이 아닙니다. DB(postgres, chroma) 실행 중..."
+  # 3) 5432가 비어있으면 postgres만 올리고 healthy까지 기다린다.
+  echo "DB가 실행 중이 아닙니다. Postgres 실행 중..."
   if [[ -n "${project_name}" ]]; then
-    docker compose -p "${project_name}" --profile db up -d postgres chroma
+    docker compose -p "${project_name}" --profile db up -d postgres
   else
-    docker compose --profile db up -d postgres chroma
+    docker compose --profile db up -d postgres
   fi
 
   echo "Postgres 정상 기동을 확인 중..."
   wait_for_healthy "dateclick-postgres" 60
-  ensure_chroma
 }
 
 usage() {
@@ -218,7 +146,7 @@ usage() {
 기본값: all
 설명:
   all      - DB, frontend, backend 모두 실행
-  db       - DB만 실행 (postgres, chroma)
+  db       - DB만 실행 (postgres)
   frontend - frontend만 재빌드 후 실행
   backend  - backend만 재빌드 후 실행
   -p, --project  - docker compose 프로젝트명 지정 (병렬 실행용)

@@ -276,93 +276,16 @@ jobs:
           container-name: backend
           image: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
 
-      - name: Register new task definition
-        id: register-task-def
-        run: |
-          # Clean up task definition for registration
-          cat ${{ steps.task-def.outputs.task-definition }} | \
-            jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
-            > new-task-definition.json
-
-          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://new-task-definition.json \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-          echo "task_definition_arn=$NEW_TASK_DEF_ARN" >> $GITHUB_OUTPUT
-
-      - name: Create AppSpec file and deploy
-        id: deploy
-        env:
-          TASK_DEF_ARN: ${{ steps.register-task-def.outputs.task_definition_arn }}
-        run: |
-          # Create AppSpec YAML using Python for reliable formatting
-          python3 << 'PYEOF'
-          import json
-          import base64
-          import os
-
-          task_def_arn = os.environ.get('TASK_DEF_ARN', '')
-
-          # Build AppSpec content line by line to ensure proper formatting
-          lines = [
-              'version: 0.0',
-              'Resources:',
-              '  - TargetService:',
-              '      Type: AWS::ECS::Service',
-              '      Properties:',
-              f'        TaskDefinition: "{task_def_arn}"',
-              '        LoadBalancerInfo:',
-              '          ContainerName: "backend"',
-              '          ContainerPort: 8080',
-          ]
-          appspec_content = '\n'.join(lines) + '\n'
-
-          with open('appspec.yaml', 'w') as f:
-              f.write(appspec_content)
-
-          print("=== Backend AppSpec ===")
-          print(appspec_content)
-
-          appspec_b64 = base64.b64encode(appspec_content.encode()).decode()
-          print(f"Base64 length: {len(appspec_b64)}")
-
-          revision = {
-              'revisionType': 'AppSpecContent',
-              'appSpecContent': {
-                  'content': appspec_b64
-              }
-          }
-
-          with open('revision.json', 'w') as f:
-              json.dump(revision, f)
-
-          print("=== Revision JSON ===")
-          print(json.dumps(revision, indent=2))
-          PYEOF
-
-          DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name ${{ env.CODEDEPLOY_BACKEND_APP }} \
-            --deployment-group-name ${{ env.CODEDEPLOY_BACKEND_DG }} \
-            --revision file://revision.json \
-            --description "Deployment from GitHub Actions - ${{ github.sha }}" \
-            --query 'deploymentId' \
-            --output text)
-          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
-          echo "Deployment ID: $DEPLOYMENT_ID"
-
-      - name: Wait for deployment to complete
-        run: |
-          echo "Waiting for deployment ${{ steps.deploy.outputs.deployment_id }} to complete..."
-          aws deploy wait deployment-successful \
-            --deployment-id ${{ steps.deploy.outputs.deployment_id }}
-          echo "Backend deployment completed successfully!"
-
-      - name: Get deployment status
-        if: always()
-        run: |
-          aws deploy get-deployment \
-            --deployment-id ${{ steps.deploy.outputs.deployment_id }} \
-            --query 'deploymentInfo.[status, deploymentOverview]'
+      - name: Deploy to ECS (Blue/Green)
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: lian-date-prod-backend-service
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          codedeploy-appspec: deploy/appspec-backend.yaml
+          codedeploy-application: ${{ env.CODEDEPLOY_BACKEND_APP }}
+          codedeploy-deployment-group: ${{ env.CODEDEPLOY_BACKEND_DG }}
 
   deploy-frontend:
     name: Deploy Frontend (Blue/Green)
@@ -407,93 +330,16 @@ jobs:
           container-name: frontend
           image: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
 
-      - name: Register new task definition
-        id: register-task-def
-        run: |
-          # Clean up task definition for registration
-          cat ${{ steps.task-def.outputs.task-definition }} | \
-            jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
-            > new-task-definition.json
-
-          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://new-task-definition.json \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-          echo "task_definition_arn=$NEW_TASK_DEF_ARN" >> $GITHUB_OUTPUT
-
-      - name: Create AppSpec file and deploy
-        id: deploy
-        env:
-          TASK_DEF_ARN: ${{ steps.register-task-def.outputs.task_definition_arn }}
-        run: |
-          # Create AppSpec YAML using Python for reliable formatting
-          python3 << 'PYEOF'
-          import json
-          import base64
-          import os
-
-          task_def_arn = os.environ.get('TASK_DEF_ARN', '')
-
-          # Build AppSpec content line by line to ensure proper formatting
-          lines = [
-              'version: 0.0',
-              'Resources:',
-              '  - TargetService:',
-              '      Type: AWS::ECS::Service',
-              '      Properties:',
-              f'        TaskDefinition: "{task_def_arn}"',
-              '        LoadBalancerInfo:',
-              '          ContainerName: "frontend"',
-              '          ContainerPort: 3000',
-          ]
-          appspec_content = '\n'.join(lines) + '\n'
-
-          with open('appspec.yaml', 'w') as f:
-              f.write(appspec_content)
-
-          print("=== Frontend AppSpec ===")
-          print(appspec_content)
-
-          appspec_b64 = base64.b64encode(appspec_content.encode()).decode()
-          print(f"Base64 length: {len(appspec_b64)}")
-
-          revision = {
-              'revisionType': 'AppSpecContent',
-              'appSpecContent': {
-                  'content': appspec_b64
-              }
-          }
-
-          with open('revision.json', 'w') as f:
-              json.dump(revision, f)
-
-          print("=== Revision JSON ===")
-          print(json.dumps(revision, indent=2))
-          PYEOF
-
-          DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name ${{ env.CODEDEPLOY_FRONTEND_APP }} \
-            --deployment-group-name ${{ env.CODEDEPLOY_FRONTEND_DG }} \
-            --revision file://revision.json \
-            --description "Deployment from GitHub Actions - ${{ github.sha }}" \
-            --query 'deploymentId' \
-            --output text)
-          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
-          echo "Deployment ID: $DEPLOYMENT_ID"
-
-      - name: Wait for deployment to complete
-        run: |
-          echo "Waiting for deployment ${{ steps.deploy.outputs.deployment_id }} to complete..."
-          aws deploy wait deployment-successful \
-            --deployment-id ${{ steps.deploy.outputs.deployment_id }}
-          echo "Frontend deployment completed successfully!"
-
-      - name: Get deployment status
-        if: always()
-        run: |
-          aws deploy get-deployment \
-            --deployment-id ${{ steps.deploy.outputs.deployment_id }} \
-            --query 'deploymentInfo.[status, deploymentOverview]'
+      - name: Deploy to ECS (Blue/Green)
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: lian-date-prod-frontend-service
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          codedeploy-appspec: deploy/appspec-frontend.yaml
+          codedeploy-application: ${{ env.CODEDEPLOY_FRONTEND_APP }}
+          codedeploy-deployment-group: ${{ env.CODEDEPLOY_FRONTEND_DG }}
 
   smoke-test:
     name: Smoke Tests

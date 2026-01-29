@@ -114,6 +114,7 @@ resource "aws_iam_role_policy" "github_actions_codedeploy" {
           "codedeploy:CreateDeployment",
           "codedeploy:GetDeployment",
           "codedeploy:GetDeploymentConfig",
+          "codedeploy:GetDeploymentGroup",
           "codedeploy:GetApplicationRevision",
           "codedeploy:RegisterApplicationRevision",
           "codedeploy:GetApplication",

@@ -151,16 +151,16 @@ output "alarm_email" {
   sensitive   = true
 }
 
-# GitHub OIDC Outputs (disabled)
-# output "github_actions_role_arn" {
-#   description = "ARN of the GitHub Actions IAM role (use as AWS_ROLE_ARN secret)"
-#   value       = module.github_oidc.github_actions_role_arn
-# }
-#
-# output "github_oidc_provider_arn" {
-#   description = "ARN of the GitHub OIDC provider"
-#   value       = module.github_oidc.oidc_provider_arn
-# }
+# GitHub OIDC Outputs
+output "github_actions_role_arn" {
+  description = "ARN of the GitHub Actions IAM role (use as AWS_ROLE_ARN secret)"
+  value       = module.github_oidc.github_actions_role_arn
+}
+
+output "github_oidc_provider_arn" {
+  description = "ARN of the GitHub OIDC provider"
+  value       = module.github_oidc.oidc_provider_arn
+}
 
 # Secrets Manager Outputs (disabled)
 # output "db_password_secret_arn" {

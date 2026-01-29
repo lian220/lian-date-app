@@ -2,6 +2,7 @@
 resource "aws_ecr_repository" "backend" {
   name                 = "${var.name_prefix}-backend"
   image_tag_mutability = var.image_tag_mutability
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = var.scan_on_push
@@ -23,6 +24,7 @@ resource "aws_ecr_repository" "backend" {
 resource "aws_ecr_repository" "frontend" {
   name                 = "${var.name_prefix}-frontend"
   image_tag_mutability = var.image_tag_mutability
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = var.scan_on_push

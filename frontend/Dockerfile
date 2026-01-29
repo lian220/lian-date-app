@@ -4,6 +4,9 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
+# Update Alpine packages for security patches
+RUN apk update && apk upgrade --no-cache
+
 # Install dependencies based on the preferred package manager
 COPY package*.json ./
 RUN npm ci
@@ -27,8 +30,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
+# Update Alpine packages, remove unused npm/yarn (security), and create non-root user
+RUN apk update && apk upgrade --no-cache && \
+    rm -rf /usr/local/lib/node_modules/npm /opt/yarn-* /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/yarn /usr/local/bin/yarnpkg && \
+    addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder

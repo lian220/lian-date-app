@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "node_modules/**",
     // Project-specific ignores (migrated from .eslintignore):
     "src/constants/regions.ts",
+    "playwright-report/**",
+    "ac-test.js",
   ]),
 ]);
 

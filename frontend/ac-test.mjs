@@ -1,4 +1,4 @@
-const { chromium } = require('@playwright/test');
+import { chromium } from '@playwright/test';
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -137,13 +137,11 @@ const { chromium } = require('@playwright/test');
     // 장소 칩은 scroll area 안에 있음
     const placeChipNames = ['카페', '커피', '레스토랑', '식당', '선릉', '나무', '스시', '스카이'];
     let foundChip = null;
-    let foundName = '';
 
     for (const name of placeChipNames) {
       const chip = page.locator(`button:has-text("${name}")`).first();
       if (await chip.isVisible({ timeout: 1000 }).catch(() => false)) {
         foundChip = chip;
-        foundName = name;
         break;
       }
     }

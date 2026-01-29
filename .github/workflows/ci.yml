@@ -270,9 +270,10 @@ jobs:
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
           ignore-unfixed: true
+          trivyignores: '.trivyignore'
 
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-results-${{ matrix.component }}.sarif'
@@ -286,6 +287,7 @@ jobs:
           format: 'table'
           output: 'trivy-report-${{ matrix.component }}.txt'
           severity: 'CRITICAL,HIGH,MEDIUM'
+          trivyignores: '.trivyignore'
 
       - name: Comment PR with scan results
         if: always()

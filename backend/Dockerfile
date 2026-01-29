@@ -18,8 +18,8 @@ COPY src ./src
 # 애플리케이션 빌드 (테스트 제외)
 RUN gradle bootJar --no-daemon -x test
 
-# Stage 2: Runtime
-FROM eclipse-temurin:21-jre-alpine
+# Stage 2: Runtime (Alpine 3.23 - 최신 패치 반영으로 Trivy CRITICAL/HIGH 감소)
+FROM eclipse-temurin:21-jre-alpine-3.23
 
 WORKDIR /app
 

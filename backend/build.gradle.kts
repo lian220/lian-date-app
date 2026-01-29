@@ -4,7 +4,7 @@ plugins {
     kotlin("jvm") version "1.9.25"
     kotlin("plugin.spring") version "1.9.25"
     kotlin("plugin.jpa") version "1.9.25"
-    id("org.springframework.boot") version "3.4.1"
+    id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
     jacoco
 }
@@ -38,6 +38,9 @@ dependencies {
 
     // Cache
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
+
+    // Security fix: CVE-2025-48924
+    implementation("org.apache.commons:commons-lang3:3.18.0")
 
     // Database
     runtimeOnly("org.postgresql:postgresql")

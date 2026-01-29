@@ -11,7 +11,11 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "dist/**",
     "next-env.d.ts",
+    "node_modules/**",
+    // Project-specific ignores (migrated from .eslintignore):
+    "src/constants/regions.ts",
   ]),
 ]);
 

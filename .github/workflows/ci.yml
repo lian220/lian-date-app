@@ -16,9 +16,36 @@ permissions:
   checks: write
 
 jobs:
+  # Detect which paths have changed
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/ci.yml'
+              - '.github/actions/build-and-test/**'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci.yml'
+              - '.github/actions/build-and-test/**'
+
   backend-test:
     name: Backend Tests
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
 
     services:
       postgres:
@@ -107,6 +134,8 @@ jobs:
   frontend-test:
     name: Frontend Tests
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
 
     steps:
       - name: Checkout code
@@ -147,6 +176,8 @@ jobs:
   lint-check:
     name: Code Quality
     runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
 
     steps:
       - name: Checkout code
@@ -166,13 +197,15 @@ jobs:
   build-check:
     name: Build Verification
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test]
+    needs: [changes, backend-test, frontend-test]
+    if: ${{ always() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
+        if: ${{ needs.changes.outputs.backend == 'true' }}
         uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -180,10 +213,12 @@ jobs:
           cache: 'gradle'
 
       - name: Build backend
+        if: ${{ needs.changes.outputs.backend == 'true' }}
         working-directory: ./backend
         run: ./gradlew build -x test --no-daemon
 
       - name: Set up Node.js
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -191,6 +226,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Build frontend
+        if: ${{ needs.changes.outputs.frontend == 'true' }}
         working-directory: ./frontend
         run: |
           npm ci
@@ -198,27 +234,40 @@ jobs:
 
       - name: Check build artifacts
         run: |
-          ls -la backend/build/libs/
-          ls -la frontend/.next/
+          if [ "${{ needs.changes.outputs.backend }}" == "true" ]; then
+            echo "📦 Backend build artifacts:"
+            ls -la backend/build/libs/
+          fi
+          if [ "${{ needs.changes.outputs.frontend }}" == "true" ]; then
+            echo "📦 Frontend build artifacts:"
+            ls -la frontend/.next/
+          fi
 
   docker-build:
     name: Docker Build (PR Validation)
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test]
-    if: github.event_name == 'pull_request'
+    needs: [changes, backend-test, frontend-test]
+    if: ${{ always() && github.event_name == 'pull_request' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') }}
 
     strategy:
       matrix:
-        component: [backend, frontend]
+        include:
+          - component: backend
+            changed: ${{ needs.changes.outputs.backend }}
+          - component: frontend
+            changed: ${{ needs.changes.outputs.frontend }}
 
     steps:
       - name: Checkout code
+        if: ${{ matrix.changed == 'true' }}
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
+        if: ${{ matrix.changed == 'true' }}
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
+        if: ${{ matrix.changed == 'true' }}
         uses: docker/build-push-action@v5
         with:
           context: ./${{ matrix.component }}
@@ -232,6 +281,7 @@ jobs:
           outputs: type=docker,dest=/tmp/${{ matrix.component }}-image.tar
 
       - name: Upload Docker image artifact
+        if: ${{ matrix.changed == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.component }}-image
@@ -241,27 +291,35 @@ jobs:
   security-scan:
     name: Security Scan (Trivy)
     runs-on: ubuntu-latest
-    needs: docker-build
-    if: github.event_name == 'pull_request'
+    needs: [changes, docker-build]
+    if: ${{ always() && github.event_name == 'pull_request' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') }}
 
     strategy:
       matrix:
-        component: [backend, frontend]
+        include:
+          - component: backend
+            changed: ${{ needs.changes.outputs.backend }}
+          - component: frontend
+            changed: ${{ needs.changes.outputs.frontend }}
 
     steps:
       - name: Checkout code
+        if: ${{ matrix.changed == 'true' }}
         uses: actions/checkout@v4
 
       - name: Download Docker image artifact
+        if: ${{ matrix.changed == 'true' }}
         uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.component }}-image
           path: /tmp
 
       - name: Load Docker image
+        if: ${{ matrix.changed == 'true' }}
         run: docker load --input /tmp/${{ matrix.component }}-image.tar
 
       - name: Run Trivy vulnerability scanner
+        if: ${{ matrix.changed == 'true' }}
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: lian-date-${{ matrix.component }}:pr-${{ github.event.pull_request.number }}
@@ -274,13 +332,13 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
+        if: ${{ always() && matrix.changed == 'true' }}
         with:
           sarif_file: 'trivy-results-${{ matrix.component }}.sarif'
           category: trivy-${{ matrix.component }}
 
       - name: Generate Trivy report
-        if: always()
+        if: ${{ always() && matrix.changed == 'true' }}
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: lian-date-${{ matrix.component }}:pr-${{ github.event.pull_request.number }}
@@ -290,7 +348,7 @@ jobs:
           trivyignores: '.trivyignore'
 
       - name: Comment PR with scan results
-        if: always()
+        if: ${{ always() && matrix.changed == 'true' }}
         uses: actions/github-script@v7
         with:
           script: |

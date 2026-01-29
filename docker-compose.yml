@@ -35,7 +35,7 @@ services:
 
   # Chroma DB (Vector Database)
   chroma:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.4.24
     container_name: dateclick-chroma
     restart: unless-stopped
     profiles:

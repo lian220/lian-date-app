@@ -311,10 +311,24 @@ jobs:
         run: |
           APPSPEC_CONTENT=$(base64 -w 0 < appspec.yaml)
           echo "Base64 length: ${#APPSPEC_CONTENT}"
+
+          # Create revision JSON file to avoid shell escaping issues
+          cat > revision.json << REVISION_EOF
+          {
+            "revisionType": "AppSpecContent",
+            "appSpecContent": {
+              "content": "${APPSPEC_CONTENT}"
+            }
+          }
+          REVISION_EOF
+
+          echo "=== Revision JSON ==="
+          cat revision.json
+
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name ${{ env.CODEDEPLOY_BACKEND_APP }} \
             --deployment-group-name ${{ env.CODEDEPLOY_BACKEND_DG }} \
-            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"${APPSPEC_CONTENT}\"}}" \
+            --revision file://revision.json \
             --description "Deployment from GitHub Actions - ${{ github.sha }}" \
             --query 'deploymentId' \
             --output text)
@@ -413,10 +427,24 @@ jobs:
         run: |
           APPSPEC_CONTENT=$(base64 -w 0 < appspec.yaml)
           echo "Base64 length: ${#APPSPEC_CONTENT}"
+
+          # Create revision JSON file to avoid shell escaping issues
+          cat > revision.json << REVISION_EOF
+          {
+            "revisionType": "AppSpecContent",
+            "appSpecContent": {
+              "content": "${APPSPEC_CONTENT}"
+            }
+          }
+          REVISION_EOF
+
+          echo "=== Revision JSON ==="
+          cat revision.json
+
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name ${{ env.CODEDEPLOY_FRONTEND_APP }} \
             --deployment-group-name ${{ env.CODEDEPLOY_FRONTEND_DG }} \
-            --revision "{\"revisionType\":\"AppSpecContent\",\"appSpecContent\":{\"content\":\"${APPSPEC_CONTENT}\"}}" \
+            --revision file://revision.json \
             --description "Deployment from GitHub Actions - ${{ github.sha }}" \
             --query 'deploymentId' \
             --output text)

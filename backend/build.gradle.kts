@@ -39,6 +39,9 @@ dependencies {
     // Cache
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
 
+    // Security fix: CVE-2025-48924
+    implementation("org.apache.commons:commons-lang3:3.18.0")
+
     // Database
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.flywaydb:flyway-core")

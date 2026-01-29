@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { CourseCreateResponse } from '@/types/course';
 import PlaceCard from './PlaceCard';
 import CourseTimeline from './CourseTimeline';
+import CourseMapView from './CourseMapView';
 
 interface CourseResultProps {
   course: CourseCreateResponse;
@@ -12,7 +13,7 @@ interface CourseResultProps {
   isRegenerating?: boolean;
 }
 
-type ViewMode = 'card' | 'timeline';
+type ViewMode = 'card' | 'timeline' | 'map';
 
 /**
  * 코스 생성 결과 표시 컴포넌트
@@ -62,17 +63,17 @@ export default function CourseResult({
       </div>
 
       {/* 뷰 모드 전환 탭 */}
-      <div className="flex gap-2 rounded-lg border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex gap-1 rounded-lg border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-800">
         <button
           onClick={() => setViewMode('card')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
             viewMode === 'card'
               ? 'bg-blue-600 text-white dark:bg-blue-500'
               : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
           }`}
         >
           <svg
-            className="h-5 w-5"
+            className="h-4 w-4"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -84,18 +85,18 @@ export default function CourseResult({
               d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
             />
           </svg>
-          카드 뷰
+          카드
         </button>
         <button
           onClick={() => setViewMode('timeline')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
             viewMode === 'timeline'
               ? 'bg-blue-600 text-white dark:bg-blue-500'
               : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
           }`}
         >
           <svg
-            className="h-5 w-5"
+            className="h-4 w-4"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -109,10 +110,33 @@ export default function CourseResult({
           </svg>
           타임라인
         </button>
+        <button
+          onClick={() => setViewMode('map')}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
+            viewMode === 'map'
+              ? 'bg-blue-600 text-white dark:bg-blue-500'
+              : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+          }`}
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+            />
+          </svg>
+          지도
+        </button>
       </div>
 
-      {/* 컨텐츠: 카드 뷰 또는 타임라인 뷰 */}
-      {viewMode === 'card' ? (
+      {/* 컨텐츠: 카드 뷰, 타임라인 뷰, 지도 뷰 */}
+      {viewMode === 'card' && (
         <div className="space-y-4">
           {course.places.map((place, index) => (
             <div key={place.placeId} className="relative">
@@ -139,9 +163,11 @@ export default function CourseResult({
             </div>
           ))}
         </div>
-      ) : (
+      )}
+      {viewMode === 'timeline' && (
         <CourseTimeline places={course.places} routes={course.routes} />
       )}
+      {viewMode === 'map' && <CourseMapView course={course} />}
 
       {/* 총 예상 비용 */}
       <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-950">

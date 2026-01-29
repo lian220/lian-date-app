@@ -9,11 +9,28 @@ declare global {
         LatLng: new (lat: number, lng: number) => LatLng;
         Map: new (container: HTMLElement, options: MapOptions) => KakaoMap;
         Marker: new (options: MarkerOptions) => Marker;
+        MarkerImage: new (
+          src: string,
+          size: Size,
+          options?: MarkerImageOptions
+        ) => KakaoMarkerImage;
         InfoWindow: new (options: InfoWindowOptions) => InfoWindow;
         LatLngBounds: new () => LatLngBounds;
+        Polyline: new (options: PolylineOptions) => Polyline;
+        CustomOverlay: new (options: CustomOverlayOptions) => CustomOverlay;
+        Size: new (width: number, height: number) => Size;
+        Point: new (x: number, y: number) => Point;
         event: {
-          addListener: (target: unknown, eventName: string, callback: (this: unknown) => void) => void;
-          removeListener: (target: unknown, eventName: string, callback: (this: unknown) => void) => void;
+          addListener: (
+            target: unknown,
+            eventName: string,
+            callback: (this: unknown) => void
+          ) => void;
+          removeListener: (
+            target: unknown,
+            eventName: string,
+            callback: (this: unknown) => void
+          ) => void;
         };
       };
     };
@@ -92,4 +109,64 @@ export interface MapPlace {
   lng: number;
   address?: string;
   category?: string;
+  order?: number;
+}
+
+export interface Size {
+  width: number;
+  height: number;
+}
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface MarkerImageOptions {
+  offset?: Point;
+  alt?: string;
+  coords?: string;
+  shape?: string;
+  spriteOrigin?: Point;
+  spriteSize?: Size;
+}
+
+// Kakao Maps MarkerImage 객체 (내부 구현은 SDK에서 제공)
+export type KakaoMarkerImage = object;
+
+export interface PolylineOptions {
+  map?: KakaoMap | null;
+  path: LatLng[];
+  strokeWeight?: number;
+  strokeColor?: string;
+  strokeOpacity?: number;
+  strokeStyle?: 'solid' | 'shortdash' | 'shortdot' | 'shortdashdot' | 'shortdashdotdot' | 'dot' | 'dash' | 'dashdot' | 'longdash' | 'longdashdot' | 'longdashdotdot';
+  endArrow?: boolean;
+}
+
+export interface Polyline {
+  setMap: (map: KakaoMap | null) => void;
+  getMap: () => KakaoMap | null;
+  setPath: (path: LatLng[]) => void;
+  getPath: () => LatLng[];
+  setOptions: (options: Partial<PolylineOptions>) => void;
+}
+
+export interface CustomOverlayOptions {
+  map?: KakaoMap | null;
+  position: LatLng;
+  content: string | HTMLElement;
+  xAnchor?: number;
+  yAnchor?: number;
+  zIndex?: number;
+  clickable?: boolean;
+}
+
+export interface CustomOverlay {
+  setMap: (map: KakaoMap | null) => void;
+  getMap: () => KakaoMap | null;
+  setPosition: (position: LatLng) => void;
+  getPosition: () => LatLng;
+  setContent: (content: string | HTMLElement) => void;
+  setZIndex: (zIndex: number) => void;
 }

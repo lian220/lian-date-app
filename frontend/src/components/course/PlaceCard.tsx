@@ -1,3 +1,5 @@
+'use client';
+
 import { Place } from '@/types/course';
 import { openKakaoMap } from '@/lib/kakaoMapLink';
 

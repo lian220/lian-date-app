@@ -51,8 +51,11 @@ export function openKakaoMap(
   placeId: string,
   kakaoPlaceUrl?: string | null
 ): void {
-  // 웹 URL 결정 (kakaoPlaceUrl이 있으면 사용, 없으면 placeId로 생성)
-  const webUrl = kakaoPlaceUrl || getKakaoMapWebUrl(placeId);
+  // 웹 URL 결정 (kakaoPlaceUrl이 유효하면 사용, 없으면 placeId로 생성)
+  const webUrl =
+    kakaoPlaceUrl && kakaoPlaceUrl.startsWith(KAKAO_MAP_WEB_BASE)
+      ? kakaoPlaceUrl
+      : getKakaoMapWebUrl(placeId);
 
   // 데스크톱: 바로 웹으로 열기
   if (!isMobile()) {
@@ -75,7 +78,8 @@ export function openKakaoMap(
     // 앱 열기 시도 후 너무 빨리 돌아왔으면 앱이 없는 것
     const elapsed = Date.now() - startTime;
     if (elapsed < APP_OPEN_TIMEOUT + 500) {
-      window.open(webUrl, '_blank', 'noopener,noreferrer');
+      // 모바일에서 window.open은 팝업 차단될 수 있으므로 location.href 사용
+      window.location.href = webUrl;
     }
   }, APP_OPEN_TIMEOUT);
 }

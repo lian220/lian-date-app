@@ -178,12 +178,48 @@ cleanup_orphaned_eips() {
     fi
 }
 
+# 함수: ALB 삭제 보호 해제 (destroy 전)
+disable_alb_deletion_protection() {
+    log_info "ALB 삭제 보호를 해제하는 중입니다..."
+
+    # ALB 조회 (Terraform 상태에서 생성된 ALB)
+    ALB_ARNS=$(aws elbv2 describe-load-balancers \
+        --region us-east-1 \
+        --query 'LoadBalancers[?LoadBalancerName==`lian-date-prod-alb`].LoadBalancerArn' \
+        --output text 2>/dev/null)
+
+    if [ -z "$ALB_ARNS" ]; then
+        log_warning "⚠️  ALB를 찾을 수 없습니다 (이미 삭제되었을 수 있음)"
+        return 0
+    fi
+
+    # 각 ALB의 삭제 보호 해제
+    for ALB_ARN in $ALB_ARNS; do
+        log_info "ALB 해제 중: $ALB_ARN"
+        if aws elbv2 modify-load-balancer-attributes \
+            --load-balancer-arn "$ALB_ARN" \
+            --attributes Key=deletion_protection.enabled,Value=false \
+            --region us-east-1 2>/dev/null; then
+            log_success "  ✓ ALB 삭제 보호 해제됨"
+        else
+            log_warning "  ✗ ALB 삭제 보호 해제 실패 (이미 삭제되었거나 오류 발생)"
+        fi
+    done
+}
+
 log_info "Terraform을 실행합니다..."
 echo ""
 
 # apply 액션 전에 고아 Elastic IP 정리
 if [ "$1" == "apply" ]; then
     cleanup_orphaned_eips
+    echo ""
+fi
+
+# destroy 액션 전에 ALB 삭제 보호 해제
+if [ "$1" == "destroy" ]; then
+    log_warning "⚠️  Destroy 전 리소스 정리를 진행합니다..."
+    disable_alb_deletion_protection
     echo ""
 fi
 

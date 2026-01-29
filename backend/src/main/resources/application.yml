@@ -2,10 +2,17 @@ spring:
   application:
     name: date-click-api
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:dateclick}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:dateclick}?sslmode=require
     username: ${DB_USERNAME:dateclick}
     password: ${DB_PASSWORD:dateclick}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      auto-commit: true
   jpa:
     hibernate:
       ddl-auto: update

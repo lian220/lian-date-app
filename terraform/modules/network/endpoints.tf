@@ -73,6 +73,44 @@ resource "aws_vpc_endpoint" "logs" {
   )
 }
 
+# Systems Manager (SSM) VPC Endpoint (Interface type)
+resource "aws_vpc_endpoint" "ssm" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.ssm"
+  vpc_endpoint_type   = "Interface"
+  private_dns_enabled = true
+
+  subnet_ids = aws_subnet.private[*].id
+
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name_prefix}-ssm-endpoint"
+    }
+  )
+}
+
+# EC2 Messages VPC Endpoint (Interface type) - Required for SSM
+resource "aws_vpc_endpoint" "ec2messages" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.ec2messages"
+  vpc_endpoint_type   = "Interface"
+  private_dns_enabled = true
+
+  subnet_ids = aws_subnet.private[*].id
+
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.name_prefix}-ec2messages-endpoint"
+    }
+  )
+}
+
 # Security Group for VPC Endpoints
 resource "aws_security_group" "vpc_endpoints" {
   name_prefix = "${var.name_prefix}-vpc-endpoints-"

@@ -40,6 +40,10 @@ resource "aws_codedeploy_app" "backend" {
       Name = "${var.name_prefix}-backend-codedeploy"
     }
   )
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # CodeDeploy Application for Frontend
@@ -53,6 +57,10 @@ resource "aws_codedeploy_app" "frontend" {
       Name = "${var.name_prefix}-frontend-codedeploy"
     }
   )
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # CodeDeploy Deployment Group for Backend

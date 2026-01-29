@@ -21,6 +21,10 @@ resource "aws_iam_role" "task_execution" {
       Name = "${var.name_prefix}-ecs-task-execution-role"
     }
   )
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Task Execution Role Policy Attachment
@@ -155,6 +159,10 @@ resource "aws_iam_role" "task" {
       Name = "${var.name_prefix}-ecs-task-role"
     }
   )
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Task Role - CloudWatch Logs Policy

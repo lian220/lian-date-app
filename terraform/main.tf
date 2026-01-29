@@ -40,7 +40,7 @@ module "network" {
   availability_zones = var.availability_zones
 
   enable_nat_gateway = true
-  single_nat_gateway = false
+  single_nat_gateway = true
 
   tags = var.common_tags
 }
@@ -144,7 +144,7 @@ module "ecs" {
 
   name_prefix       = local.name_prefix
   vpc_id            = module.network.vpc_id
-  subnet_ids        = module.network.private_subnet_ids
+  subnet_ids        = module.network.public_subnet_ids
   security_group_id = module.security.ecs_security_group_id
 
   backend_target_group_arn  = module.alb.backend_target_group_arn
@@ -228,33 +228,34 @@ module "monitoring" {
 }
 
 # CodeDeploy Module (Blue/Green Deployment)
-module "codedeploy" {
-  source = "./modules/codedeploy"
-
-  name_prefix = local.name_prefix
-
-  # ECS Configuration
-  ecs_cluster_name     = module.ecs.cluster_name
-  backend_service_name = module.ecs.backend_service_name
-  frontend_service_name = module.ecs.frontend_service_name
-
-  # Target Groups for Blue/Green
-  backend_target_group_name        = module.alb.backend_target_group_name
-  backend_green_target_group_name  = module.alb.backend_green_target_group_name
-  frontend_target_group_name       = module.alb.frontend_target_group_name
-  frontend_green_target_group_name = module.alb.frontend_green_target_group_name
-
-  # Listener ARN (use HTTPS if enabled, otherwise HTTP)
-  listener_arn = var.enable_https ? module.alb.https_listener_arn : module.alb.http_listener_arn
-
-  # Deployment Configuration
-  deployment_config     = "CodeDeployDefault.ECSLinear10PercentEvery1Minutes"
-  termination_wait_time = 5
-
-  tags = var.common_tags
-
-  depends_on = [module.ecs]
-}
+# Temporarily disabled due to pre-existing resources
+# module "codedeploy" {
+#   source = "./modules/codedeploy"
+#
+#   name_prefix = local.name_prefix
+#
+#   # ECS Configuration
+#   ecs_cluster_name     = module.ecs.cluster_name
+#   backend_service_name = module.ecs.backend_service_name
+#   frontend_service_name = module.ecs.frontend_service_name
+#
+#   # Target Groups for Blue/Green
+#   backend_target_group_name        = module.alb.backend_target_group_name
+#   backend_green_target_group_name  = module.alb.backend_green_target_group_name
+#   frontend_target_group_name       = module.alb.frontend_target_group_name
+#   frontend_green_target_group_name = module.alb.frontend_green_target_group_name
+#
+#   # Listener ARN (use HTTPS if enabled, otherwise HTTP)
+#   listener_arn = var.enable_https ? module.alb.https_listener_arn : module.alb.http_listener_arn
+#
+#   # Deployment Configuration
+#   deployment_config     = "CodeDeployDefault.ECSLinear10PercentEvery1Minutes"
+#   termination_wait_time = 5
+#
+#   tags = var.common_tags
+#
+#   depends_on = [module.ecs]
+# }
 
 # GitHub OIDC Module (for CI/CD)
 module "github_oidc" {

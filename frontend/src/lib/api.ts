@@ -12,21 +12,33 @@ import {
 
 /**
  * 백엔드 API 기본 URL
- * TODO: 환경변수로 관리 (NEXT_PUBLIC_API_URL)
+ * 함수로 구현하여 런타임에 동적으로 결정
+ * - 클라이언트: window.location.origin 사용 (프로덕션) 또는 localhost:8080 (로컬)
+ * - 서버(SSR): 환경변수 또는 내부 서비스 URL 사용
  */
-const LOCAL_API_BASE_URL = 'http://localhost:8080';
-const ENV_API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+export function getApiBaseUrl(): string {
+  // 환경변수가 설정되어 있으면 우선 사용
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl) {
+    return envUrl;
+  }
 
-// 배포 환경에서는 동일 오리진(ALB 도메인)으로 호출해야 CORS/localhost 오작동이 없다.
-// 로컬 개발(localhost)에서는 기존처럼 8080 백엔드를 기본으로 사용.
-const API_BASE_URL =
-  ENV_API_BASE_URL ||
-  (typeof window !== 'undefined'
-    ? window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1'
-      ? LOCAL_API_BASE_URL
-      : window.location.origin
-    : LOCAL_API_BASE_URL);
+  // 클라이언트 측: window.location 기반으로 결정
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8080';
+    }
+    // 프로덕션: 동일 오리진(ALB) 사용
+    return window.location.origin;
+  }
+
+  // SSR: 환경변수가 없으면 localhost (로컬 개발용)
+  return 'http://localhost:8080';
+}
+
+// 참고: API_BASE_URL 상수 대신 getApiBaseUrl() 함수 사용 권장
+// 상수는 모듈 로드 시점에 평가되어 클라이언트에서 잘못된 값이 될 수 있음
 
 /**
  * API 요청 타임아웃 (밀리초)
@@ -83,7 +95,7 @@ function generateSessionId(): string {
  * 의존성: [BE] 권역 목록 API (LAD-13) 완료 필요
  */
 export async function fetchRegions(): Promise<RegionsResponse> {
-  const response = await fetch(`${API_BASE_URL}/v1/regions`, {
+  const response = await fetch(`${getApiBaseUrl()}/v1/regions`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -114,7 +126,7 @@ export async function createCourse(
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/v1/courses`, {
+    const response = await fetch(`${getApiBaseUrl()}/v1/courses`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -186,7 +198,7 @@ export async function regenerateCourse(
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/v1/courses/${courseId}/regenerate`,
+      `${getApiBaseUrl()}/v1/courses/${courseId}/regenerate`,
       {
         method: 'POST',
         headers: {
@@ -256,7 +268,7 @@ export async function fetchPlaceCuration(
 ): Promise<PlaceCurationInfo> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/places/${placeId}/curation`,
+      `${getApiBaseUrl()}/api/v1/places/${placeId}/curation`,
       {
         method: 'GET',
         headers: {

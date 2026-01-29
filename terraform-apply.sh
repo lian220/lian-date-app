@@ -143,8 +143,49 @@ if [ ! -f "terraform.tfvars" ]; then
     exit 1
 fi
 
+# 함수: 고아 Elastic IP 정리
+cleanup_orphaned_eips() {
+    log_info "고아 Elastic IP를 정리하는 중입니다..."
+
+    # 현재 리전에서 할당되지 않은 Elastic IP 조회
+    ORPHANED_EIPS=$(aws ec2 describe-addresses \
+        --region us-east-1 \
+        --query 'Addresses[?AssociationId==null].AllocationId' \
+        --output text 2>/dev/null)
+
+    if [ -z "$ORPHANED_EIPS" ]; then
+        log_success "고아 Elastic IP가 없습니다"
+        return 0
+    fi
+
+    # 고아 Elastic IP 해제
+    EIP_COUNT=0
+    for ALLOCATION_ID in $ORPHANED_EIPS; do
+        log_warning "Elastic IP 해제 중: $ALLOCATION_ID"
+        if aws ec2 release-address \
+            --allocation-id "$ALLOCATION_ID" \
+            --region us-east-1 \
+            2>/dev/null; then
+            log_success "  ✓ 해제됨: $ALLOCATION_ID"
+            ((EIP_COUNT++))
+        else
+            log_error "  ✗ 해제 실패: $ALLOCATION_ID"
+        fi
+    done
+
+    if [ $EIP_COUNT -gt 0 ]; then
+        log_success "총 $EIP_COUNT개의 Elastic IP를 해제했습니다"
+    fi
+}
+
 log_info "Terraform을 실행합니다..."
 echo ""
+
+# apply 액션 전에 고아 Elastic IP 정리
+if [ "$1" == "apply" ]; then
+    cleanup_orphaned_eips
+    echo ""
+fi
 
 # 인자가 있으면 그대로 전달, 없으면 plan 실행
 if [ $# -eq 0 ]; then

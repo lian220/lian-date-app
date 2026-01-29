@@ -128,7 +128,10 @@ resource "aws_ecs_service" "frontend" {
     }
   )
 
-  depends_on = [var.frontend_target_group_arn]
+  depends_on = [
+    var.frontend_target_group_arn,
+    aws_ecs_service.backend
+  ]
 
   # Blue/Green 배포에서는 Terraform이 task_definition 변경을 무시
   # CodeDeploy가 배포를 관리함

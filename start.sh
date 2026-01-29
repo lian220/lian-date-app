@@ -1,0 +1,304 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# dateclick-shared-network 없으면 생성 (DB/백엔드/프론트 공용)
+ensure_network() {
+  if ! docker network inspect dateclick-shared-network &>/dev/null; then
+    echo "네트워크 dateclick-shared-network 생성 중..."
+    docker network create dateclick-shared-network
+  fi
+}
+
+# 컨테이너 헬스체크 대기
+wait_for_healthy() {
+  local container_name="${1:?container_name required}"
+  local timeout_seconds="${2:-60}"
+
+  local start_ts
+  start_ts="$(date +%s)"
+
+  while true; do
+    # 컨테이너가 running이 아니면 실패
+    if ! docker ps --filter "name=${container_name}" --filter "status=running" -q | grep -q .; then
+      echo "❌ ${container_name} 컨테이너가 실행 중이 아닙니다."
+      docker ps -a --filter "name=${container_name}" || true
+      docker logs --tail 50 "${container_name}" 2>/dev/null || true
+      return 1
+    fi
+
+    # healthcheck가 없을 수도 있으니, 있으면 healthy까지 대기
+    local health
+    health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' "${container_name}" 2>/dev/null || echo "unknown")"
+
+    case "${health}" in
+      healthy)
+        return 0
+        ;;
+      no-healthcheck)
+        # healthcheck 없는 컨테이너는 running이면 OK로 간주
+        return 0
+        ;;
+      unhealthy)
+        echo "❌ ${container_name} 헬스체크가 unhealthy 입니다."
+        docker logs --tail 80 "${container_name}" 2>/dev/null || true
+        return 1
+        ;;
+      starting|unknown)
+        # 계속 대기
+        ;;
+      *)
+        # 기타 상태도 대기
+        ;;
+    esac
+
+    local now_ts
+    now_ts="$(date +%s)"
+    if (( now_ts - start_ts >= timeout_seconds )); then
+      echo "❌ ${container_name} 헬스체크 대기 시간 초과 (${timeout_seconds}s)"
+      docker logs --tail 80 "${container_name}" 2>/dev/null || true
+      return 1
+    fi
+
+    sleep 2
+  done
+}
+
+# 로컬 포트 열림 대기
+wait_for_local_port() {
+  local port="${1:?port required}"
+  local timeout_seconds="${2:-30}"
+
+  local start_ts
+  start_ts="$(date +%s)"
+
+  while true; do
+    if is_port_in_use "${port}"; then
+      return 0
+    fi
+
+    local now_ts
+    now_ts="$(date +%s)"
+    if (( now_ts - start_ts >= timeout_seconds )); then
+      return 1
+    fi
+    sleep 1
+  done
+}
+
+# 로컬 Chroma heartbeat 확인
+is_chroma_healthy_on_localhost() {
+  local port="${1:?port required}"
+  if command -v curl &>/dev/null; then
+    curl -fsS "http://127.0.0.1:${port}/api/v2/heartbeat" >/dev/null 2>&1
+    return $?
+  fi
+  # curl 없으면 확인 불가 → 실패로 처리
+  return 1
+}
+
+# 사용 가능한 포트 찾기 (start~end)
+find_free_port() {
+  local start_port="${1:?start_port required}"
+  local end_port="${2:?end_port required}"
+
+  local p
+  for ((p=start_port; p<=end_port; p++)); do
+    if ! is_port_in_use "${p}"; then
+      echo "${p}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# 포트 사용 여부 확인 (LISTEN)
+is_port_in_use() {
+  local port="${1:?port required}"
+
+  if command -v lsof &>/dev/null; then
+    lsof -nP -iTCP:"${port}" -sTCP:LISTEN &>/dev/null
+    return $?
+  fi
+
+  if command -v nc &>/dev/null; then
+    nc -z 127.0.0.1 "${port}" &>/dev/null
+    return $?
+  fi
+
+  # lsof/nc 둘 다 없으면 포트 체크 생략 (사용 중 아님으로 간주)
+  return 1
+}
+
+# Chroma DB 안 떠 있으면 띄우기
+ensure_chroma() {
+  local chroma_port="${CHROMA_PORT:-8000}"
+
+  # 이미 chroma 컨테이너가 떠 있으면 헬스체크만 확인
+  if ! docker ps --filter "name=dateclick-chroma" --filter "status=running" -q | grep -q .; then
+    # 로컬 포트가 이미 사용 중이면:
+    # - 해당 포트가 "실제 Chroma"면 기존 Chroma를 사용 (컨테이너 기동 스킵)
+    # - Chroma가 아니면 비어있는 포트로 자동 변경 후 컨테이너 기동
+    if is_port_in_use "${chroma_port}"; then
+      if is_chroma_healthy_on_localhost "${chroma_port}"; then
+        echo "⚠️  ${chroma_port} 포트가 이미 사용 중이지만, 로컬 Chroma가 응답합니다. 기존 Chroma를 사용합니다."
+        export CHROMA_DB_URL="${CHROMA_DB_URL:-http://host.docker.internal:${chroma_port}}"
+        echo "   - 적용: CHROMA_DB_URL=${CHROMA_DB_URL}"
+        return 0
+      fi
+
+      local new_port
+      new_port="$(find_free_port 8001 8100 || true)"
+      if [[ -z "${new_port}" ]]; then
+        echo "❌ Chroma 포트(기본 ${chroma_port})가 사용 중이고, 8001-8100에서도 빈 포트를 찾지 못했습니다."
+        echo "   - 8000 포트를 사용하는 프로세스를 종료하거나 CHROMA_PORT를 다른 값으로 지정해주세요."
+        return 1
+      fi
+
+      echo "⚠️  ${chroma_port} 포트가 이미 사용 중이며 Chroma 응답이 없습니다. CHROMA_PORT를 ${new_port}로 변경하여 기동합니다."
+      export CHROMA_PORT="${new_port}"
+      export CHROMA_DB_URL="${CHROMA_DB_URL:-http://chroma:8000}"
+      chroma_port="${new_port}"
+    fi
+
+    echo "Chroma DB가 실행 중이 아닙니다. Chroma 실행 중..."
+    if [[ -n "${project_name}" ]]; then
+      docker compose -p "${project_name}" --profile db up -d chroma
+    else
+      docker compose --profile db up -d chroma
+    fi
+  fi
+
+  # chroma는 헬스체크가 있으니 기다림
+  wait_for_healthy "dateclick-chroma" 60
+}
+
+# DB(postgres, chroma) 안 떠 있으면 띄우기
+ensure_db() {
+  # 1) 이미 postgres 컨테이너가 떠 있으면 "정상 기동(healthy)"까지 기다린 뒤 계속
+  if docker ps --filter "name=dateclick-postgres" --filter "status=running" -q | grep -q .; then
+    echo "Postgres 컨테이너가 이미 실행 중입니다. 정상 기동을 확인 중..."
+    wait_for_healthy "dateclick-postgres" 60
+    ensure_chroma
+    return 0
+  fi
+
+  # 2) 컨테이너가 없는데 5432가 사용 중이면(다른 DB가 떠 있음) postgres 기동은 스킵하고,
+  #    backend가 호스트의 5432로 붙도록 POSTGRES_HOST를 host.docker.internal로 맞춘다.
+  if is_port_in_use 5432; then
+    echo "⚠️  5432 포트가 이미 사용 중입니다. postgres 컨테이너는 기동하지 않고 기존 DB를 사용합니다."
+    export POSTGRES_HOST="${POSTGRES_HOST:-host.docker.internal}"
+    echo "   - 적용: POSTGRES_HOST=${POSTGRES_HOST}"
+
+    if ! wait_for_local_port 5432 10; then
+      echo "❌ 5432 포트가 열려있지 않습니다. DB 상태를 확인해주세요."
+      return 1
+    fi
+
+    ensure_chroma
+    return 0
+  fi
+
+  # 3) 5432가 비어있으면 postgres/chroma를 올리고, 둘 다 healthy까지 기다린다.
+  echo "DB가 실행 중이 아닙니다. DB(postgres, chroma) 실행 중..."
+  if [[ -n "${project_name}" ]]; then
+    docker compose -p "${project_name}" --profile db up -d postgres chroma
+  else
+    docker compose --profile db up -d postgres chroma
+  fi
+
+  echo "Postgres 정상 기동을 확인 중..."
+  wait_for_healthy "dateclick-postgres" 60
+  ensure_chroma
+}
+
+usage() {
+  cat <<'EOF'
+사용법: ./start.sh [all|frontend|backend|db] [-p|--project 프로젝트명]
+
+기본값: all
+설명:
+  all      - DB, frontend, backend 모두 실행
+  db       - DB만 실행 (postgres, chroma)
+  frontend - frontend만 재빌드 후 실행
+  backend  - backend만 재빌드 후 실행
+  -p, --project  - docker compose 프로젝트명 지정 (병렬 실행용)
+예시:
+  ./start.sh all -p lian-date-app-main
+  ./start.sh backend --project lian-date-app-feature-1
+  ./start.sh db
+EOF
+}
+
+target="all"
+project_name=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    all|frontend|backend|db)
+      target="$1"
+      shift
+      ;;
+    -p|--project)
+      project_name="${2:-}"
+      if [[ -z "$project_name" ]]; then
+        echo "프로젝트명을 지정해주세요: -p <프로젝트명>"
+        exit 1
+      fi
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "알 수 없는 옵션: $1"
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+case "${target}" in
+  all)
+    ensure_network
+    ensure_db
+
+    # Backend, Frontend 빌드 후 재시작
+    echo "Backend, Frontend 빌드 및 재시작 중..."
+    services=(backend frontend)
+    if [[ -n "${project_name}" ]]; then
+      docker compose -p "${project_name}" up -d --build --force-recreate "${services[@]}"
+    else
+      docker compose up -d --build --force-recreate "${services[@]}"
+    fi
+    ;;
+  db)
+    ensure_network
+    ensure_db
+    ;;
+  frontend)
+    ensure_network
+    ensure_db
+    services=(frontend)
+    if [[ -n "${project_name}" ]]; then
+      docker compose -p "${project_name}" up -d --build --force-recreate "${services[@]}"
+    else
+      docker compose up -d --build --force-recreate "${services[@]}"
+    fi
+    ;;
+  backend)
+    ensure_network
+    ensure_db
+    services=(backend)
+    if [[ -n "${project_name}" ]]; then
+      docker compose -p "${project_name}" up -d --build --force-recreate "${services[@]}"
+    else
+      docker compose up -d --build --force-recreate "${services[@]}"
+    fi
+    ;;
+  *)
+    echo "알 수 없는 옵션: ${target}"
+    usage
+    exit 1
+    ;;
+esac

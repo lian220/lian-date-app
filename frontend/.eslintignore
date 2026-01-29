@@ -1,0 +1,5 @@
+src/constants/regions.ts
+node_modules
+.next
+dist
+build

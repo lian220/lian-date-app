@@ -292,18 +292,17 @@ jobs:
 
       - name: Create AppSpec file
         run: |
-          cat > appspec.yaml <<EOF
-          version: 0.0
-          Resources:
-            - TargetService:
-                Type: AWS::ECS::Service
-                Properties:
-                  TaskDefinition: "${{ steps.register-task-def.outputs.task_definition_arn }}"
-                  LoadBalancerInfo:
-                    ContainerName: "backend"
-                    ContainerPort: 8080
-          EOF
-          sed -i 's/^          //' appspec.yaml
+          {
+            echo 'version: 0.0'
+            echo 'Resources:'
+            echo '  - TargetService:'
+            echo '      Type: AWS::ECS::Service'
+            echo '      Properties:'
+            echo '        TaskDefinition: "${{ steps.register-task-def.outputs.task_definition_arn }}"'
+            echo '        LoadBalancerInfo:'
+            echo '          ContainerName: "backend"'
+            echo '          ContainerPort: 8080'
+          } > appspec.yaml
           echo "=== Backend AppSpec ==="
           cat appspec.yaml
 
@@ -395,18 +394,17 @@ jobs:
 
       - name: Create AppSpec file
         run: |
-          cat > appspec.yaml <<EOF
-          version: 0.0
-          Resources:
-            - TargetService:
-                Type: AWS::ECS::Service
-                Properties:
-                  TaskDefinition: "${{ steps.register-task-def.outputs.task_definition_arn }}"
-                  LoadBalancerInfo:
-                    ContainerName: "frontend"
-                    ContainerPort: 3000
-          EOF
-          sed -i 's/^          //' appspec.yaml
+          {
+            echo 'version: 0.0'
+            echo 'Resources:'
+            echo '  - TargetService:'
+            echo '      Type: AWS::ECS::Service'
+            echo '      Properties:'
+            echo '        TaskDefinition: "${{ steps.register-task-def.outputs.task_definition_arn }}"'
+            echo '        LoadBalancerInfo:'
+            echo '          ContainerName: "frontend"'
+            echo '          ContainerPort: 3000'
+          } > appspec.yaml
           echo "=== Frontend AppSpec ==="
           cat appspec.yaml
 

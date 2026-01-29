@@ -1,49 +1,12 @@
-import { Place, Route, TransportType } from '@/types/course';
+'use client';
+
+import { Place, Route } from '@/types/course';
+import { formatDuration } from '@/lib/kakaoMap';
+import RouteButton from './RouteButton';
 
 interface CourseTimelineProps {
   places: Place[];
   routes?: Route[];
-}
-
-/**
- * 이동 수단 표시 헬퍼 함수
- */
-function getTransportIcon(type: TransportType) {
-  switch (type) {
-    case 'WALK':
-      return '🚶';
-    case 'CAR':
-      return '🚗';
-    case 'PUBLIC_TRANSIT':
-      return '🚇';
-    default:
-      return '🚶';
-  }
-}
-
-function getTransportLabel(type: TransportType) {
-  switch (type) {
-    case 'WALK':
-      return '도보';
-    case 'CAR':
-      return '차량';
-    case 'PUBLIC_TRANSIT':
-      return '대중교통';
-    default:
-      return '이동';
-  }
-}
-
-/**
- * 시간 포맷 헬퍼 함수
- */
-function formatDuration(minutes: number): string {
-  if (minutes < 60) {
-    return `${minutes}분`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hours}시간 ${mins}분` : `${hours}시간`;
 }
 
 /**
@@ -160,31 +123,29 @@ export default function CourseTimeline({
               </div>
             </div>
 
-            {/* 이동 정보 (마지막 장소 제외) */}
+            {/* 이동 경로 버튼 (마지막 장소 제외) */}
             {index < places.length - 1 && routes[index] && (
               <div className="flex gap-4 pb-4">
                 {/* 왼쪽 여백 (인디케이터 너비만큼) */}
-                <div className="flex w-10 flex-shrink-0 items-center justify-center">
-                  <div className="text-2xl">
-                    {getTransportIcon(routes[index].transportType)}
-                  </div>
-                </div>
+                <div className="w-10 flex-shrink-0" />
 
-                {/* 이동 정보 */}
+                {/* 길찾기 버튼 */}
                 <div className="flex-1">
-                  <div className="rounded-lg bg-blue-50 px-4 py-2 dark:bg-blue-950">
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      {getTransportLabel(routes[index].transportType)}{' '}
-                      {formatDuration(routes[index].duration)}
-                      <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">
-                        (약{' '}
-                        {routes[index].distance >= 1000
-                          ? `${(routes[index].distance / 1000).toFixed(1)}km`
-                          : `${routes[index].distance}m`}
-                        )
-                      </span>
-                    </p>
-                  </div>
+                  <RouteButton
+                    from={{
+                      name: place.name,
+                      lat: place.lat,
+                      lng: place.lng,
+                    }}
+                    to={{
+                      name: places[index + 1].name,
+                      lat: places[index + 1].lat,
+                      lng: places[index + 1].lng,
+                    }}
+                    transportType={routes[index].transportType}
+                    duration={routes[index].duration}
+                    distance={routes[index].distance}
+                  />
                 </div>
               </div>
             )}

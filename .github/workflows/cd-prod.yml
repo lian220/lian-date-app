@@ -292,7 +292,7 @@ jobs:
 
       - name: Create AppSpec file
         run: |
-          cat > appspec.yaml << 'EOF'
+          cat > appspec.yaml <<EOF
           version: 0.0
           Resources:
             - TargetService:
@@ -303,14 +303,15 @@ jobs:
                     ContainerName: "backend"
                     ContainerPort: 8080
           EOF
-          # Remove leading whitespace from heredoc
           sed -i 's/^          //' appspec.yaml
+          echo "=== Backend AppSpec ==="
           cat appspec.yaml
 
       - name: Create CodeDeploy deployment
         id: deploy
         run: |
-          APPSPEC_CONTENT=$(cat appspec.yaml | base64 -w 0)
+          APPSPEC_CONTENT=$(base64 -w 0 < appspec.yaml)
+          echo "Base64 length: ${#APPSPEC_CONTENT}"
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name ${{ env.CODEDEPLOY_BACKEND_APP }} \
             --deployment-group-name ${{ env.CODEDEPLOY_BACKEND_DG }} \
@@ -394,7 +395,7 @@ jobs:
 
       - name: Create AppSpec file
         run: |
-          cat > appspec.yaml << 'EOF'
+          cat > appspec.yaml <<EOF
           version: 0.0
           Resources:
             - TargetService:
@@ -405,14 +406,15 @@ jobs:
                     ContainerName: "frontend"
                     ContainerPort: 3000
           EOF
-          # Remove leading whitespace from heredoc
           sed -i 's/^          //' appspec.yaml
+          echo "=== Frontend AppSpec ==="
           cat appspec.yaml
 
       - name: Create CodeDeploy deployment
         id: deploy
         run: |
-          APPSPEC_CONTENT=$(cat appspec.yaml | base64 -w 0)
+          APPSPEC_CONTENT=$(base64 -w 0 < appspec.yaml)
+          echo "Base64 length: ${#APPSPEC_CONTENT}"
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name ${{ env.CODEDEPLOY_FRONTEND_APP }} \
             --deployment-group-name ${{ env.CODEDEPLOY_FRONTEND_DG }} \

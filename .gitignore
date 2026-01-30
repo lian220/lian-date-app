@@ -62,6 +62,7 @@ frontend/.turbo/
 backend/.gradle/
 backend/build/
 backend/out/
+backend/bin/
 backend/*.jar
 backend/*.war
 

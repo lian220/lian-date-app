@@ -69,3 +69,20 @@ export interface CourseCreateError {
   code?: string;
   isTimeout?: boolean;
 }
+
+/**
+ * 저장된 코스 타입 (로컬 스토리지용)
+ * CourseCreateResponse를 확장하여 저장 메타데이터 추가
+ */
+export interface SavedCourse extends CourseCreateResponse {
+  savedAt: string; // ISO 8601 형식의 저장 시점
+}
+
+/**
+ * 코스 저장 결과 타입
+ */
+export interface SaveCourseResult {
+  success: boolean;
+  error?: 'STORAGE_FULL' | 'ALREADY_SAVED' | 'STORAGE_ERROR';
+  message?: string;
+}

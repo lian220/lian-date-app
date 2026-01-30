@@ -190,23 +190,22 @@ output "secrets_manager_enabled" {
 }
 
 # CodeDeploy Outputs (Blue/Green Deployment)
-# Temporarily disabled due to pre-existing resources
-# output "codedeploy_backend_app_name" {
-#   description = "CodeDeploy application name for backend"
-#   value       = module.codedeploy.backend_app_name
-# }
-#
-# output "codedeploy_frontend_app_name" {
-#   description = "CodeDeploy application name for frontend"
-#   value       = module.codedeploy.frontend_app_name
-# }
-#
-# output "codedeploy_backend_deployment_group" {
-#   description = "CodeDeploy deployment group name for backend"
-#   value       = module.codedeploy.backend_deployment_group_name
-# }
-#
-# output "codedeploy_frontend_deployment_group" {
-#   description = "CodeDeploy deployment group name for frontend"
-#   value       = module.codedeploy.frontend_deployment_group_name
-# }
+output "codedeploy_backend_app_name" {
+  description = "CodeDeploy application name for backend"
+  value       = module.codedeploy.backend_app_name
+}
+
+output "codedeploy_frontend_app_name" {
+  description = "CodeDeploy application name for frontend"
+  value       = module.codedeploy.frontend_app_name
+}
+
+output "codedeploy_backend_deployment_group" {
+  description = "CodeDeploy deployment group name for backend"
+  value       = module.codedeploy.backend_deployment_group_name
+}
+
+output "codedeploy_frontend_deployment_group" {
+  description = "CodeDeploy deployment group name for frontend"
+  value       = module.codedeploy.frontend_deployment_group_name
+}

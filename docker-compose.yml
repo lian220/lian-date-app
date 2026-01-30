@@ -128,6 +128,9 @@ services:
       # node_modules는 컨테이너 내부 것 사용 (호스트와 충돌 방지)
       - /app/node_modules
       - /app/.next
+      # Playwright 관련 디렉토리 제외 (Turbopack 충돌 방지)
+      - /app/playwright-report
+      - /app/test-results
     networks:
       - dateclick-network
     depends_on:

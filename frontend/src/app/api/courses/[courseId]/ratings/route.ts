@@ -5,10 +5,10 @@ const BACKEND_URL =
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
-    const { courseId } = params;
+    const { courseId } = await params;
     const body = await request.json();
 
     const response = await fetch(

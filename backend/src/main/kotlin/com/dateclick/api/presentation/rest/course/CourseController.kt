@@ -2,6 +2,8 @@ package com.dateclick.api.presentation.rest.course
 
 import com.dateclick.api.application.course.CreateCourseUseCase
 import com.dateclick.api.application.course.GetCourseUseCase
+import com.dateclick.api.application.course.RateCourseCommand
+import com.dateclick.api.application.course.RateCourseUseCase
 import com.dateclick.api.application.course.RegenerateCourseUseCase
 import com.dateclick.api.domain.course.vo.CourseId
 import com.dateclick.api.presentation.mapper.CourseMapper
@@ -18,6 +20,7 @@ class CourseController(
     private val createCourseUseCase: CreateCourseUseCase?,
     private val getCourseUseCase: GetCourseUseCase,
     private val regenerateCourseUseCase: RegenerateCourseUseCase,
+    private val rateCourseUseCase: RateCourseUseCase,
     private val courseMapper: CourseMapper,
 ) {
     @Operation(summary = "코스 생성", description = "조건 기반 AI 데이트 코스 생성")
@@ -72,12 +75,29 @@ class CourseController(
         return ApiResponse.success(response)
     }
 
+    @Operation(summary = "코스 만족도 평가", description = "코스에 대한 만족도 평가 제출 (1-5점)")
     @PostMapping("/{courseId}/ratings")
     fun rateCourse(
         @PathVariable courseId: String,
         @Valid @RequestBody request: RateCourseRequest,
     ): ApiResponse<RatingResponse> {
-        // TODO: Implement with RateCourseUseCase
-        throw NotImplementedError("To be implemented")
+        val command =
+            RateCourseCommand(
+                courseId = CourseId(courseId),
+                sessionId = request.sessionId,
+                score = request.score,
+            )
+
+        val rating = rateCourseUseCase.execute(command)
+
+        val response =
+            RatingResponse(
+                ratingId = rating.id,
+                courseId = rating.courseId.value,
+                score = rating.score,
+                createdAt = rating.createdAt,
+            )
+
+        return ApiResponse.success(response)
     }
 }

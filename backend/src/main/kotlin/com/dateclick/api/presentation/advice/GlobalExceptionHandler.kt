@@ -37,6 +37,13 @@ class GlobalExceptionHandler {
             .body(ApiResponse.error("NOT_FOUND", ex.message ?: "리소스를 찾을 수 없습니다"))
     }
 
+    @ExceptionHandler(IllegalStateException::class)
+    fun handleIllegalStateException(ex: IllegalStateException): ResponseEntity<ApiResponse<Nothing>> {
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(ApiResponse.error("CONFLICT", ex.message ?: "요청을 처리할 수 없습니다"))
+    }
+
     @ExceptionHandler(RateLimitException::class)
     fun handleRateLimitException(ex: RateLimitException): ResponseEntity<ApiResponse<Nothing>> {
         logger.warn("Rate limit exceeded: {}", ex.message)

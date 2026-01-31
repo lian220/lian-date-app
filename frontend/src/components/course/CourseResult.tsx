@@ -5,6 +5,7 @@ import { CourseCreateResponse } from '@/types/course';
 import PlaceCard from './PlaceCard';
 import CourseTimeline from './CourseTimeline';
 import CourseMapView from './CourseMapView';
+import SaveCourseButton from './SaveCourseButton';
 
 interface CourseResultProps {
   course: CourseCreateResponse;
@@ -244,14 +245,7 @@ export default function CourseResult({
             )}
           </button>
         )}
-        <button
-          className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-          onClick={() =>
-            alert('코스 저장 기능은 추후 구현 예정입니다 (LAD-5)')
-          }
-        >
-          이 코스 저장하기
-        </button>
+        <SaveCourseButton course={course} className="flex-1" />
       </div>
     </div>
   );

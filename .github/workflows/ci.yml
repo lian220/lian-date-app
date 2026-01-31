@@ -320,7 +320,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         if: ${{ matrix.changed == 'true' }}
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.31.0
         with:
           image-ref: lian-date-${{ matrix.component }}:pr-${{ github.event.pull_request.number }}
           format: 'sarif'
@@ -328,7 +328,6 @@ jobs:
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
           ignore-unfixed: true
-          trivyignores: '.trivyignore'
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4

@@ -6,6 +6,7 @@ import PlaceCard from './PlaceCard';
 import CourseTimeline from './CourseTimeline';
 import CourseMapView from './CourseMapView';
 import SaveCourseButton from './SaveCourseButton';
+import RatingWidget from './RatingWidget';
 
 interface CourseResultProps {
   course: CourseCreateResponse;
@@ -200,6 +201,9 @@ export default function CourseResult({
           </div>
         </div>
       </div>
+
+      {/* 만족도 평가 */}
+      <RatingWidget courseId={course.courseId} />
 
       {/* 액션 버튼 */}
       <div className="flex gap-3">

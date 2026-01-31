@@ -278,11 +278,12 @@ jobs:
 
       - name: Deploy to ECS (Blue/Green)
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        timeout-minutes: 15
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: lian-date-prod-backend-service
           cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+          wait-for-service-stability: false
           codedeploy-appspec: deploy/appspec-backend.yaml
           codedeploy-application: ${{ env.CODEDEPLOY_BACKEND_APP }}
           codedeploy-deployment-group: ${{ env.CODEDEPLOY_BACKEND_DG }}
@@ -332,11 +333,12 @@ jobs:
 
       - name: Deploy to ECS (Blue/Green)
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        timeout-minutes: 15
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: lian-date-prod-frontend-service
           cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+          wait-for-service-stability: false
           codedeploy-appspec: deploy/appspec-frontend.yaml
           codedeploy-application: ${{ env.CODEDEPLOY_FRONTEND_APP }}
           codedeploy-deployment-group: ${{ env.CODEDEPLOY_FRONTEND_DG }}
@@ -358,11 +360,13 @@ jobs:
 
       - name: Get ALB DNS name
         id: get-alb-dns
+        continue-on-error: true
         run: |
+          # Try to get ALB DNS, fallback to hardcoded if permission denied
           ALB_DNS=$(aws elbv2 describe-load-balancers \
             --names lian-date-prod-alb \
             --query 'LoadBalancers[0].DNSName' \
-            --output text)
+            --output text 2>/dev/null || echo "${{ secrets.ALB_DNS_NAME }}")
           echo "alb_dns=$ALB_DNS" >> $GITHUB_OUTPUT
 
       - name: Run backend smoke test

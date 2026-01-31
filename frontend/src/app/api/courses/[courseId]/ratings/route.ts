@@ -35,7 +35,6 @@ export async function POST(
       {
         success: false,
         message: "평가 제출 중 오류가 발생했습니다",
-        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

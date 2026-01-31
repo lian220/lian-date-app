@@ -3,13 +3,16 @@ package com.dateclick.api.application.course
 import com.dateclick.api.domain.course.port.outbound.CourseRepository
 import com.dateclick.api.domain.rating.entity.Rating
 import com.dateclick.api.domain.rating.port.RatingRepository
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class RateCourseUseCaseImpl(
     private val courseRepository: CourseRepository,
     private val ratingRepository: RatingRepository,
 ) : RateCourseUseCase {
+    @Transactional
     override fun execute(command: RateCourseCommand): Rating {
         // 1. 코스 존재 여부 확인
         val course =
@@ -29,6 +32,10 @@ class RateCourseUseCaseImpl(
                 score = command.score,
             )
 
-        return ratingRepository.save(rating)
+        return try {
+            ratingRepository.save(rating)
+        } catch (ex: DataIntegrityViolationException) {
+            throw IllegalStateException("이미 평가를 완료했습니다")
+        }
     }
 }

@@ -59,6 +59,10 @@ export default function RatingWidget({
       const data = await response.json();
       const newRating: Rating = data.data;
 
+      if (!newRating || typeof newRating !== "object") {
+        throw new Error("Invalid response from server");
+      }
+
       setRating(newRating);
 
       // localStorage에 저장 (1회 평가 제한)

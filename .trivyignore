@@ -1,6 +1,0 @@
-# 베이스 이미지(eclipse-temurin:21-jre-alpine-*, node:*-alpine)에서 보고되는 CVE
-# upstream 이미지 재빌드 전까지 허용. 정기적으로 제거 여부 검토.
-# Ref: https://github.com/docker-library/official-images/issues/18673
-
-# libexpat (Alpine base) - fix: 2.7.0-r0, eclipse-temurin Alpine 이미지에 아직 반영 전
-CVE-2024-8176

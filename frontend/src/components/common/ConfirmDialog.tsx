@@ -164,6 +164,7 @@ export default function ConfirmDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
+      aria-describedby="dialog-description"
     >
       {/* 배경 오버레이 */}
       <div
@@ -195,7 +196,7 @@ export default function ConfirmDialog({
 
           {/* 설명 */}
           {description && (
-            <p className="text-sm text-gray-500 text-center">{description}</p>
+            <p id="dialog-description" className="text-sm text-gray-500 text-center">{description}</p>
           )}
         </div>
 
@@ -213,6 +214,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={isLoading}
             className={`flex-1 py-3.5 text-sm font-medium transition-colors disabled:opacity-50 ${styles.confirmButton}`}
+            data-testid="confirm-dialog-confirm-button"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">

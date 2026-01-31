@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Course Save Feature E2E Test (LAD-5)', () => {
   test.beforeEach(async ({ page }) => {
     // localStorage 초기화
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.evaluate(() => {
       localStorage.removeItem('dateclick_saved_courses');
       localStorage.removeItem('dateclick_storage_notice_dismissed');
@@ -11,7 +11,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
   });
 
   test('내 코스 페이지 - 빈 상태 UI 표시', async ({ page }) => {
-    await page.goto('http://localhost:3000/my-courses');
+    await page.goto('//my-courses');
 
     // 빈 상태 UI 확인
     await expect(page.getByText('저장된 코스가 없어요')).toBeVisible();
@@ -20,15 +20,15 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
   });
 
   test('내 코스 페이지 - 코스 만들기 버튼 클릭 시 메인으로 이동', async ({ page }) => {
-    await page.goto('http://localhost:3000/my-courses');
+    await page.goto('//my-courses');
 
     await page.getByRole('button', { name: '코스 만들기' }).click();
-    await expect(page).toHaveURL('http://localhost:3000/');
+    await expect(page).toHaveURL('//');
   });
 
   test('코스 저장 버튼 동작 확인 (직접 localStorage 테스트)', async ({ page }) => {
     // localStorage에 코스를 직접 저장하여 저장 버튼 동작 테스트
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
 
     // courseStorage 모듈 함수들 테스트
     const result = await page.evaluate(() => {
@@ -81,7 +81,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
 
   test('저장된 코스가 내 코스 목록에 표시됨', async ({ page }) => {
     // 테스트용 코스 데이터 직접 저장
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.evaluate(() => {
       const testCourse = {
         courseId: 'test-course-1',
@@ -123,7 +123,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
     });
 
     // 내 코스 페이지로 이동
-    await page.goto('http://localhost:3000/my-courses');
+    await page.goto('//my-courses');
 
     // 저장된 코스 확인
     await expect(page.getByText('강남')).toBeVisible();
@@ -136,7 +136,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
 
   test('코스 삭제 다이얼로그 동작 확인', async ({ page }) => {
     // 테스트용 코스 저장
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.evaluate(() => {
       const testCourse = {
         courseId: 'test-course-delete',
@@ -165,7 +165,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
       localStorage.setItem('dateclick_saved_courses', JSON.stringify([testCourse]));
     });
 
-    await page.goto('http://localhost:3000/my-courses');
+    await page.goto('//my-courses');
 
     // 삭제 버튼 클릭 (aria-label이 정확히 '코스 삭제'인 버튼)
     await page.getByRole('button', { name: '코스 삭제', exact: true }).click();
@@ -175,7 +175,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
     await expect(page.getByText('삭제된 코스는 복구할 수 없어요')).toBeVisible();
 
     // 삭제 확인 (다이얼로그 내의 삭제 버튼 - 빨간색 버튼)
-    await page.locator('button:has-text("삭제"):not([aria-label])').click();
+    await page.getByTestId('confirm-dialog-confirm-button').click();
 
     // 토스트 메시지 확인
     await expect(page.getByText('코스가 삭제되었어요')).toBeVisible();
@@ -186,7 +186,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
 
   test('브라우저 저장 안내 배너 닫기 동작', async ({ page }) => {
     // 테스트용 코스 저장
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.evaluate(() => {
       const testCourse = {
         courseId: 'test-course-banner',
@@ -215,7 +215,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
       localStorage.setItem('dateclick_saved_courses', JSON.stringify([testCourse]));
     });
 
-    await page.goto('http://localhost:3000/my-courses');
+    await page.goto('//my-courses');
 
     // 배너 표시 확인
     await expect(page.getByText('브라우저에 저장됩니다')).toBeVisible();
@@ -233,7 +233,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
 
   test('저장 현황 표시 확인 (N/20)', async ({ page }) => {
     // 3개 코스 저장
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.evaluate(() => {
       const courses = [1, 2, 3].map((i) => ({
         courseId: `test-course-${i}`,
@@ -262,7 +262,7 @@ test.describe('Course Save Feature E2E Test (LAD-5)', () => {
       localStorage.setItem('dateclick_saved_courses', JSON.stringify(courses));
     });
 
-    await page.goto('http://localhost:3000/my-courses');
+    await page.goto('//my-courses');
 
     // 저장 현황 확인
     await expect(page.getByText('3/20')).toBeVisible();

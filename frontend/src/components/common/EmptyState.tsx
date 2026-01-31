@@ -145,6 +145,7 @@ export default function EmptyState({
       {/* 액션 버튼 */}
       {actionText && onAction && (
         <button
+          type="button"
           onClick={onAction}
           className="px-6 py-2.5 bg-pink-500 text-white text-sm font-medium rounded-full hover:bg-pink-600 active:bg-pink-700 transition-colors"
         >

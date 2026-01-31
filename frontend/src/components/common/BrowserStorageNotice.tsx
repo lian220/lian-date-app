@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useSyncExternalStore } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useSyncExternalStore } from 'react';
 
 /**
  * 로컬 스토리지 키 (배너 닫힘 상태 저장용)
@@ -53,13 +53,23 @@ export default function BrowserStorageNotice({
   );
   const [isAnimating, setIsAnimating] = useState(false);
   const [localDismissed, setLocalDismissed] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 언마운트 시 타임아웃 정리
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // 닫기 핸들러
   const handleDismiss = useCallback(() => {
     setIsAnimating(true);
 
     // 애니메이션 후 실제로 숨김
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setLocalDismissed(true);
       setIsAnimating(false);
 

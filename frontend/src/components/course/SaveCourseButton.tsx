@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useSyncExternalStore } from 'react';
+import React, { useState, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { CourseCreateResponse } from '@/types/course';
 import {
@@ -85,7 +85,10 @@ export default function SaveCourseButton({
   } | null>(null);
 
   // useSyncExternalStore를 사용하여 저장 상태 구독
-  const savedStore = createSavedStore(course.courseId);
+  const savedStore = useMemo(
+    () => createSavedStore(course.courseId),
+    [course.courseId]
+  );
   const saved = useSyncExternalStore(
     savedStore.subscribe,
     savedStore.getSnapshot,

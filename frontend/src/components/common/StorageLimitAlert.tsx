@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { MAX_COURSES } from '@/lib/courseStorage';
 
 /**
@@ -36,6 +36,17 @@ export default function StorageLimitAlert({
   currentCount = MAX_COURSES,
 }: StorageLimitAlertProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
+  // 포커스 관리
+  useEffect(() => {
+    if (isOpen) {
+      previousActiveElement.current = document.activeElement as HTMLElement;
+      dialogRef.current?.focus();
+    } else if (previousActiveElement.current) {
+      previousActiveElement.current.focus();
+    }
+  }, [isOpen]);
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -70,6 +81,7 @@ export default function StorageLimitAlert({
       aria-modal="true"
       aria-labelledby="alert-title"
       aria-describedby="alert-description"
+      tabIndex={-1}
     >
       {/* 배경 오버레이 */}
       <div
@@ -130,7 +142,7 @@ export default function StorageLimitAlert({
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className="h-full bg-orange-500 rounded-full transition-all duration-300"
-                style={{ width: `${(currentCount / MAX_COURSES) * 100}%` }}
+                style={{ width: `${MAX_COURSES > 0 ? (currentCount / MAX_COURSES) * 100 : 0}%` }}
               />
             </div>
           </div>

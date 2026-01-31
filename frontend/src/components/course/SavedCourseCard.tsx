@@ -77,10 +77,21 @@ export default function SavedCourseCard({
   const thumbnailPlace = course.places.find((p) => p.imageUrl);
   const thumbnailUrl = thumbnailPlace?.imageUrl;
 
+  // 키보드 활성화 핸들러
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) return;
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow dark:bg-gray-800 dark:border-gray-700"
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
     >

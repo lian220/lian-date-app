@@ -40,7 +40,7 @@ class OpenAiPlaceCurationAdapter(
                 )
 
             // 3. OpenAI API 호출
-            val response = openAiClient.createChatCompletion(request)
+            val response = openAiClient.createChatCompletion(request, traceName = "place-curation")
 
             // 4. 응답 파싱
             val curationResponse = parseResponse(response)

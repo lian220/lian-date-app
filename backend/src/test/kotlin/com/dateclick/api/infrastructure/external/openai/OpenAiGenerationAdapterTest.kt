@@ -50,7 +50,7 @@ class OpenAiGenerationAdapterTest {
         val budget = Budget(50000..100000)
 
         val mockResponse = createMockChatCompletionResponse()
-        every { openAiClient.createChatCompletion(any()) } returns mockResponse
+        every { openAiClient.createChatCompletion(any(), any(), any()) } returns mockResponse
 
         // When
         val result =
@@ -72,7 +72,7 @@ class OpenAiGenerationAdapterTest {
         assertEquals("14:00-15:00", result.places[0].recommendedTime)
         assertEquals("로맨틱한 데이트 코스입니다", result.summary)
 
-        verify(exactly = 1) { openAiClient.createChatCompletion(any()) }
+        verify(exactly = 1) { openAiClient.createChatCompletion(any(), any(), any()) }
     }
 
     @Test
@@ -82,7 +82,7 @@ class OpenAiGenerationAdapterTest {
         val dateType = DateType.FOOD
         val budget = Budget(0..30000)
 
-        every { openAiClient.createChatCompletion(any()) } throws OpenAiException("API call failed")
+        every { openAiClient.createChatCompletion(any(), any(), any()) } throws OpenAiException("API call failed")
 
         // When & Then
         assertThrows<AiGenerationException> {
@@ -103,7 +103,7 @@ class OpenAiGenerationAdapterTest {
         val budget = Budget(50000..100000)
 
         val emptyResponse = createMockChatCompletionResponse(choices = emptyList())
-        every { openAiClient.createChatCompletion(any()) } returns emptyResponse
+        every { openAiClient.createChatCompletion(any(), any(), any()) } returns emptyResponse
 
         // When & Then
         assertThrows<AiGenerationException> {
@@ -127,7 +127,7 @@ class OpenAiGenerationAdapterTest {
             createMockChatCompletionResponse(
                 messageContent = "Invalid JSON content",
             )
-        every { openAiClient.createChatCompletion(any()) } returns invalidResponse
+        every { openAiClient.createChatCompletion(any(), any(), any()) } returns invalidResponse
 
         // When & Then
         assertThrows<AiGenerationException> {

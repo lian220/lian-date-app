@@ -15,6 +15,7 @@ interface AiGenerationPort {
         dateType: DateType,
         budget: Budget,
         specialRequest: String?,
+        sessionId: String? = null,
     ): AiCourseRecommendation
 }
 

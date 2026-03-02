@@ -30,6 +30,7 @@ class OpenAiGenerationAdapter(
         dateType: DateType,
         budget: Budget,
         specialRequest: String?,
+        sessionId: String?,
     ): AiCourseRecommendation {
         logger.info(
             "Generating AI course recommendation for region={}, dateType={}, budget={}",
@@ -59,7 +60,7 @@ class OpenAiGenerationAdapter(
                 )
 
             // 3. OpenAI API 호출
-            val response = openAiClient.createChatCompletion(request)
+            val response = openAiClient.createChatCompletion(request, traceName = "course-recommendation", sessionId = sessionId)
 
             // 4. 응답 파싱 및 변환
             val aiCourseResponse = parseAiResponse(response)

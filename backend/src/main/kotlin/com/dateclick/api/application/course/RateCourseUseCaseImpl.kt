@@ -3,6 +3,7 @@ package com.dateclick.api.application.course
 import com.dateclick.api.domain.course.port.outbound.CourseRepository
 import com.dateclick.api.domain.rating.entity.Rating
 import com.dateclick.api.domain.rating.port.RatingRepository
+import com.dateclick.api.infrastructure.external.langfuse.LangfuseScoreClient
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 class RateCourseUseCaseImpl(
     private val courseRepository: CourseRepository,
     private val ratingRepository: RatingRepository,
+    private val langfuseScoreClient: LangfuseScoreClient,
 ) : RateCourseUseCase {
     @Transactional
     override fun execute(command: RateCourseCommand): Rating {
@@ -32,10 +34,21 @@ class RateCourseUseCaseImpl(
                 score = command.score,
             )
 
-        return try {
-            ratingRepository.save(rating)
-        } catch (ex: DataIntegrityViolationException) {
-            throw IllegalStateException("이미 평가를 완료했습니다")
-        }
+        val savedRating =
+            try {
+                ratingRepository.save(rating)
+            } catch (ex: DataIntegrityViolationException) {
+                throw IllegalStateException("이미 평가를 완료했습니다")
+            }
+
+        // 4. Langfuse user_satisfaction 점수 전송 (비동기, fire-and-forget)
+        // sessionId로 코스 생성 시의 Langfuse 트레이스와 연결
+        langfuseScoreClient.sendUserSatisfactionScore(
+            score = command.score,
+            sessionId = command.sessionId,
+            comment = "코스 ID: ${command.courseId.value}",
+        )
+
+        return savedRating
     }
 }

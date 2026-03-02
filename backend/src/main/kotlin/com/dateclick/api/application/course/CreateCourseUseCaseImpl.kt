@@ -48,6 +48,7 @@ class CreateCourseUseCaseImpl(
                 dateType = command.dateType,
                 budget = command.budget,
                 specialRequest = command.specialRequest,
+                sessionId = command.sessionId,
             )
 
         logger.info("AI recommended {} places", aiRecommendation.places.size)

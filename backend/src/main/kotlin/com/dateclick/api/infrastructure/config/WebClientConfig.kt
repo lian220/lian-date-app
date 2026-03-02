@@ -1,5 +1,6 @@
 package com.dateclick.api.infrastructure.config
 
+import com.dateclick.api.infrastructure.config.LangfuseProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.JdkClientHttpRequestFactory
@@ -42,5 +43,14 @@ class WebClientConfig {
     fun openAiRestClient(builder: RestClient.Builder): RestClient =
         builder
             .baseUrl("https://api.openai.com")
+            .build()
+
+    @Bean
+    fun langfuseRestClient(
+        builder: RestClient.Builder,
+        langfuseProperties: LangfuseProperties,
+    ): RestClient =
+        builder
+            .baseUrl(langfuseProperties.host)
             .build()
 }

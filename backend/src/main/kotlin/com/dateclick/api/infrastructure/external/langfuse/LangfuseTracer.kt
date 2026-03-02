@@ -2,8 +2,11 @@ package com.dateclick.api.infrastructure.external.langfuse
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.DisposableBean
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.UUID
@@ -11,9 +14,13 @@ import java.util.UUID
 @Component
 class LangfuseTracer(
     private val langfuseIngestionClient: LangfuseIngestionClient,
-) {
+) : DisposableBean {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    override fun destroy() {
+        scope.cancel()
+    }
 
     fun recordGeneration(
         traceName: String,

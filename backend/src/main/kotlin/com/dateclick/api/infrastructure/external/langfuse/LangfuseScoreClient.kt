@@ -4,8 +4,11 @@ import com.dateclick.api.infrastructure.config.LangfuseProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.DisposableBean
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
@@ -19,9 +22,13 @@ import java.util.Base64
 class LangfuseScoreClient(
     private val langfuseRestClient: RestClient,
     private val langfuseProperties: LangfuseProperties,
-) {
+) : DisposableBean {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    override fun destroy() {
+        scope.cancel()
+    }
 
     private val authHeader: String by lazy {
         val credentials = "${langfuseProperties.publicKey}:${langfuseProperties.secretKey}"
@@ -40,7 +47,7 @@ class LangfuseScoreClient(
         comment: String? = null,
     ) {
         if (!langfuseProperties.enabled) return
-        if (langfuseProperties.publicKey.isBlank()) return
+        if (langfuseProperties.publicKey.isBlank() || langfuseProperties.secretKey.isBlank()) return
 
         scope.launch {
             try {

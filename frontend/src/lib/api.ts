@@ -101,21 +101,16 @@ export async function createCourse(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
+      let errorMessage = `코스 생성에 실패했습니다: ${response.statusText}`;
+      let errorCode = response.status.toString();
       try {
         const body = await response.json();
-        const error: CourseCreateError = {
-          message: body.error?.message || body.message || `코스 생성에 실패했습니다: ${response.statusText}`,
-          code: body.error?.code || body.code || response.status.toString(),
-        };
-        throw error;
+        errorMessage = body.error?.message || body.message || errorMessage;
+        errorCode = body.error?.code || body.code || errorCode;
       } catch {
-        // JSON 파싱 실패 시 기본 에러
-        const error: CourseCreateError = {
-          message: `코스 생성에 실패했습니다: ${response.statusText}`,
-          code: response.status.toString(),
-        };
-        throw error;
+        // JSON 파싱 실패 시 기본 에러 메시지 사용
       }
+      throw { message: errorMessage, code: errorCode } as CourseCreateError;
     }
 
     const body = await response.json();
@@ -174,21 +169,16 @@ export async function regenerateCourse(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
+      let errorMessage = `코스 재생성에 실패했습니다: ${response.statusText}`;
+      let errorCode = response.status.toString();
       try {
         const body = await response.json();
-        const error: CourseCreateError = {
-          message: body.error?.message || body.message || `코스 재생성에 실패했습니다: ${response.statusText}`,
-          code: body.error?.code || body.code || response.status.toString(),
-        };
-        throw error;
+        errorMessage = body.error?.message || body.message || errorMessage;
+        errorCode = body.error?.code || body.code || errorCode;
       } catch {
-        // JSON 파싱 실패 시 기본 에러
-        const error: CourseCreateError = {
-          message: `코스 재생성에 실패했습니다: ${response.statusText}`,
-          code: response.status.toString(),
-        };
-        throw error;
+        // JSON 파싱 실패 시 기본 에러 메시지 사용
       }
+      throw { message: errorMessage, code: errorCode } as CourseCreateError;
     }
 
     const body = await response.json();
@@ -240,23 +230,16 @@ export async function fetchPlaceCuration(
     );
 
     if (!response.ok) {
+      let errorMessage = `장소 큐레이션 조회에 실패했습니다: ${response.statusText}`;
+      let errorCode = response.status.toString();
       try {
         const body: PlaceCurationResponse = await response.json();
-        const error: PlaceCurationError = {
-          message:
-            body.error?.message ||
-            `장소 큐레이션 조회에 실패했습니다: ${response.statusText}`,
-          code: body.error?.code || response.status.toString(),
-        };
-        throw error;
+        errorMessage = body.error?.message || errorMessage;
+        errorCode = body.error?.code || errorCode;
       } catch {
-        // JSON 파싱 실패 시 기본 에러
-        const error: PlaceCurationError = {
-          message: `장소 큐레이션 조회에 실패했습니다: ${response.statusText}`,
-          code: response.status.toString(),
-        };
-        throw error;
+        // JSON 파싱 실패 시 기본 에러 메시지 사용
       }
+      throw { message: errorMessage, code: errorCode } as PlaceCurationError;
     }
 
     const body: PlaceCurationResponse = await response.json();

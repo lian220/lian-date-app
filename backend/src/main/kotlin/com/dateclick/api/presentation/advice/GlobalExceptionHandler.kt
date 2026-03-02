@@ -1,5 +1,6 @@
 package com.dateclick.api.presentation.advice
 
+import com.dateclick.api.infrastructure.external.openai.AiGenerationException
 import com.dateclick.api.infrastructure.monitoring.SlackNotificationService
 import com.dateclick.api.infrastructure.ratelimit.RateLimitException
 import com.dateclick.api.presentation.rest.common.ApiResponse
@@ -49,6 +50,14 @@ class GlobalExceptionHandler(
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
             .body(ApiResponse.error("CONFLICT", "요청을 처리할 수 없습니다"))
+    }
+
+    @ExceptionHandler(AiGenerationException::class)
+    fun handleAiGenerationException(ex: AiGenerationException): ResponseEntity<ApiResponse<Nothing>> {
+        logger.warn("AI 코스 생성 실패 (외부 API 오류): {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(ApiResponse.error("AI_SERVICE_UNAVAILABLE", "AI 코스 생성에 실패했습니다. 잠시 후 다시 시도해주세요."))
     }
 
     @ExceptionHandler(RateLimitException::class)

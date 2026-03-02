@@ -49,7 +49,7 @@ class RateLimitInterceptorTest {
                 .andReturn()
 
         // IP 기반 Rate Limit이 적용되어 429여야 함
-        assert(result.response.status == 429) { "IP-based rate limit should apply without X-Session-Id, got ${result.response.status}" }
+        assertEquals(429, result.response.status, "IP-based rate limit should apply without X-Session-Id")
     }
 
     @Test

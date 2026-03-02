@@ -17,7 +17,8 @@ export default function TestSentryPage() {
   };
 
   const triggerBackendError = async () => {
-    const res = await fetch('http://localhost:8080/test/error/backend');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+    const res = await fetch(`${apiUrl}/test/error/backend`);
     alert(`백엔드 응답: ${res.status}`);
   };
 

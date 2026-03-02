@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: "sfn-oh",
-  project: "lian-date-app-frontend",
+  org: process.env.SENTRY_ORG ?? "sfn-oh",
+  project: process.env.SENTRY_PROJECT ?? "lian-date-app-frontend",
   // CI 환경에서만 source maps 업로드 (SENTRY_AUTH_TOKEN 필요)
   silent: !process.env.CI,
   widenClientFileUpload: true,

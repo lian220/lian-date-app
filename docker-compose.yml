@@ -90,6 +90,9 @@ services:
       # 로컬에서는 Chroma 미기동 → NoopPlaceMemory 사용 (벡터 검색 비활성화)
       CHROMA_ENABLED: ${CHROMA_ENABLED:-false}
       CHROMA_DB_URL: ${CHROMA_DB_URL:-http://chroma:8000}
+      SENTRY_DSN_BACKEND: ${SENTRY_DSN_BACKEND:-}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.1}
+      SLACK_WEBHOOK_URL_ERROR: ${SLACK_WEBHOOK_URL_ERROR:-}
       JAVA_OPTS: "-Xmx512m -Xms256m"
     networks:
       - dateclick-network
@@ -120,6 +123,8 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8080
       NODE_ENV: development
+      NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+      SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN:-}
       # Next.js 핫 리로딩을 위한 설정
       WATCHPACK_POLLING: "true"
     volumes:

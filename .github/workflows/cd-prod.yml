@@ -145,266 +145,267 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-  build-backend:
-    name: Build and Push Backend to ECR
-    needs: [detect-changes, test-backend]
-    if: needs.detect-changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    outputs:
-      image_uri: ${{ steps.build.outputs.image_uri }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Backend image
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-            ${{ env.BACKEND_IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Output image URI
-        id: output
-        run: echo "image_uri=${{ env.BACKEND_IMAGE }}:${{ github.sha }}" >> $GITHUB_OUTPUT
-
-  build-frontend:
-    name: Build and Push Frontend to ECR
-    needs: [detect-changes, test-frontend]
-    if: needs.detect-changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    outputs:
-      image_uri: ${{ steps.build.outputs.image_uri }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Frontend image
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-            ${{ env.FRONTEND_IMAGE }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Output image URI
-        id: output
-        run: echo "image_uri=${{ env.FRONTEND_IMAGE }}:${{ github.sha }}" >> $GITHUB_OUTPUT
-
-  deploy-backend:
-    name: Deploy Backend (Blue/Green)
-    needs: [detect-changes, build-backend]
-    if: needs.detect-changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Get current task definition
-        id: current-task-def
-        run: |
-          TASK_DEF=$(aws ecs describe-services \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --services lian-date-prod-backend-service \
-            --query 'services[0].taskDefinition' \
-            --output text)
-          echo "task_definition=$TASK_DEF" >> $GITHUB_OUTPUT
-
-      - name: Download task definition
-        run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ steps.current-task-def.outputs.task_definition }} \
-            --query 'taskDefinition' \
-            > task-definition.json
-
-      - name: Update task definition with new image
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: backend
-          image: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-
-      - name: Deploy to ECS (Blue/Green)
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        timeout-minutes: 15
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: lian-date-prod-backend-service
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: false
-          codedeploy-appspec: deploy/appspec-backend.yaml
-          codedeploy-application: ${{ env.CODEDEPLOY_BACKEND_APP }}
-          codedeploy-deployment-group: ${{ env.CODEDEPLOY_BACKEND_DG }}
-
-  deploy-frontend:
-    name: Deploy Frontend (Blue/Green)
-    needs: [detect-changes, build-frontend]
-    if: needs.detect-changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Get current task definition
-        id: current-task-def
-        run: |
-          TASK_DEF=$(aws ecs describe-services \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --services lian-date-prod-frontend-service \
-            --query 'services[0].taskDefinition' \
-            --output text)
-          echo "task_definition=$TASK_DEF" >> $GITHUB_OUTPUT
-
-      - name: Download task definition
-        run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ steps.current-task-def.outputs.task_definition }} \
-            --query 'taskDefinition' \
-            > task-definition.json
-
-      - name: Update task definition with new image
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: frontend
-          image: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-
-      - name: Deploy to ECS (Blue/Green)
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        timeout-minutes: 15
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: lian-date-prod-frontend-service
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: false
-          codedeploy-appspec: deploy/appspec-frontend.yaml
-          codedeploy-application: ${{ env.CODEDEPLOY_FRONTEND_APP }}
-          codedeploy-deployment-group: ${{ env.CODEDEPLOY_FRONTEND_DG }}
-
-  smoke-test:
-    name: Smoke Tests
-    needs: [detect-changes, deploy-backend, deploy-frontend]
-    if: always() && (needs.deploy-backend.result == 'success' || needs.deploy-frontend.result == 'success')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Get ALB DNS name
-        id: get-alb-dns
-        continue-on-error: true
-        run: |
-          # Try to get ALB DNS, fallback to hardcoded if permission denied
-          ALB_DNS=$(aws elbv2 describe-load-balancers \
-            --names lian-date-prod-alb \
-            --query 'LoadBalancers[0].DNSName' \
-            --output text 2>/dev/null || echo "${{ secrets.ALB_DNS_NAME }}")
-          echo "alb_dns=$ALB_DNS" >> $GITHUB_OUTPUT
-
-      - name: Run backend smoke test
-        if: needs.deploy-backend.result == 'success' && steps.get-alb-dns.outputs.alb_dns != ''
-        run: |
-          echo "Testing backend health endpoint..."
-          MAX_RETRIES=5
-          RETRY_COUNT=0
-
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            if curl -f http://${{ steps.get-alb-dns.outputs.alb_dns }}/health; then
-              echo "Backend health check passed!"
-              break
-            else
-              echo "Backend health check failed, retry $((RETRY_COUNT + 1))/$MAX_RETRIES"
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              sleep 10
-            fi
-          done
-
-          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-            echo "Backend health check failed after $MAX_RETRIES retries"
-            exit 1
-          fi
-
-      - name: Run frontend smoke test
-        if: needs.deploy-frontend.result == 'success' && steps.get-alb-dns.outputs.alb_dns != ''
-        run: |
-          echo "Testing frontend..."
-          if curl -f http://${{ steps.get-alb-dns.outputs.alb_dns }}/; then
-            echo "Frontend smoke test passed!"
-          else
-            echo "Frontend smoke test failed"
-            exit 1
-          fi
-
-      - name: Skip smoke test (ALB not available)
-        if: steps.get-alb-dns.outputs.alb_dns == ''
-        run: |
-          echo "⚠️ Smoke tests skipped: ALB DNS not available"
-          echo "Configure ALB_DNS_NAME secret or add elasticloadbalancing:DescribeLoadBalancers permission"
+# NOTE: AWS 배포 비활성화 - Vercel(frontend) + Render(backend) 로 전환
+#
+#  build-backend:
+#    name: Build and Push Backend to ECR
+#    needs: [detect-changes, test-backend]
+#    if: needs.detect-changes.outputs.backend == 'true'
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: read
+#      id-token: write
+#    outputs:
+#      image_uri: ${{ steps.build.outputs.image_uri }}
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#          aws-region: ${{ env.AWS_REGION }}
+#
+#      - name: Login to Amazon ECR
+#        id: login-ecr
+#        uses: aws-actions/amazon-ecr-login@v2
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v3
+#
+#      - name: Build and push Backend image
+#        id: build
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./backend
+#          platforms: linux/amd64
+#          push: true
+#          tags: |
+#            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+#            ${{ env.BACKEND_IMAGE }}:latest
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
+#
+#      - name: Output image URI
+#        id: output
+#        run: echo "image_uri=${{ env.BACKEND_IMAGE }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+#
+#  build-frontend:
+#    name: Build and Push Frontend to ECR
+#    needs: [detect-changes, test-frontend]
+#    if: needs.detect-changes.outputs.frontend == 'true'
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: read
+#      id-token: write
+#    outputs:
+#      image_uri: ${{ steps.build.outputs.image_uri }}
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#          aws-region: ${{ env.AWS_REGION }}
+#
+#      - name: Login to Amazon ECR
+#        id: login-ecr
+#        uses: aws-actions/amazon-ecr-login@v2
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v3
+#
+#      - name: Build and push Frontend image
+#        id: build
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./frontend
+#          platforms: linux/amd64
+#          push: true
+#          tags: |
+#            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+#            ${{ env.FRONTEND_IMAGE }}:latest
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
+#
+#      - name: Output image URI
+#        id: output
+#        run: echo "image_uri=${{ env.FRONTEND_IMAGE }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+#
+#  deploy-backend:
+#    name: Deploy Backend (Blue/Green)
+#    needs: [detect-changes, build-backend]
+#    if: needs.detect-changes.outputs.backend == 'true'
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: read
+#      id-token: write
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#          aws-region: ${{ env.AWS_REGION }}
+#
+#      - name: Get current task definition
+#        id: current-task-def
+#        run: |
+#          TASK_DEF=$(aws ecs describe-services \
+#            --cluster ${{ env.ECS_CLUSTER }} \
+#            --services lian-date-prod-backend-service \
+#            --query 'services[0].taskDefinition' \
+#            --output text)
+#          echo "task_definition=$TASK_DEF" >> $GITHUB_OUTPUT
+#
+#      - name: Download task definition
+#        run: |
+#          aws ecs describe-task-definition \
+#            --task-definition ${{ steps.current-task-def.outputs.task_definition }} \
+#            --query 'taskDefinition' \
+#            > task-definition.json
+#
+#      - name: Update task definition with new image
+#        id: task-def
+#        uses: aws-actions/amazon-ecs-render-task-definition@v1
+#        with:
+#          task-definition: task-definition.json
+#          container-name: backend
+#          image: ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+#
+#      - name: Deploy to ECS (Blue/Green)
+#        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+#        timeout-minutes: 15
+#        with:
+#          task-definition: ${{ steps.task-def.outputs.task-definition }}
+#          service: lian-date-prod-backend-service
+#          cluster: ${{ env.ECS_CLUSTER }}
+#          wait-for-service-stability: false
+#          codedeploy-appspec: deploy/appspec-backend.yaml
+#          codedeploy-application: ${{ env.CODEDEPLOY_BACKEND_APP }}
+#          codedeploy-deployment-group: ${{ env.CODEDEPLOY_BACKEND_DG }}
+#
+#  deploy-frontend:
+#    name: Deploy Frontend (Blue/Green)
+#    needs: [detect-changes, build-frontend]
+#    if: needs.detect-changes.outputs.frontend == 'true'
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: read
+#      id-token: write
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#          aws-region: ${{ env.AWS_REGION }}
+#
+#      - name: Get current task definition
+#        id: current-task-def
+#        run: |
+#          TASK_DEF=$(aws ecs describe-services \
+#            --cluster ${{ env.ECS_CLUSTER }} \
+#            --services lian-date-prod-frontend-service \
+#            --query 'services[0].taskDefinition' \
+#            --output text)
+#          echo "task_definition=$TASK_DEF" >> $GITHUB_OUTPUT
+#
+#      - name: Download task definition
+#        run: |
+#          aws ecs describe-task-definition \
+#            --task-definition ${{ steps.current-task-def.outputs.task_definition }} \
+#            --query 'taskDefinition' \
+#            > task-definition.json
+#
+#      - name: Update task definition with new image
+#        id: task-def
+#        uses: aws-actions/amazon-ecs-render-task-definition@v1
+#        with:
+#          task-definition: task-definition.json
+#          container-name: frontend
+#          image: ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+#
+#      - name: Deploy to ECS (Blue/Green)
+#        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+#        timeout-minutes: 15
+#        with:
+#          task-definition: ${{ steps.task-def.outputs.task-definition }}
+#          service: lian-date-prod-frontend-service
+#          cluster: ${{ env.ECS_CLUSTER }}
+#          wait-for-service-stability: false
+#          codedeploy-appspec: deploy/appspec-frontend.yaml
+#          codedeploy-application: ${{ env.CODEDEPLOY_FRONTEND_APP }}
+#          codedeploy-deployment-group: ${{ env.CODEDEPLOY_FRONTEND_DG }}
+#
+#  smoke-test:
+#    name: Smoke Tests
+#    needs: [detect-changes, deploy-backend, deploy-frontend]
+#    if: always() && (needs.deploy-backend.result == 'success' || needs.deploy-frontend.result == 'success')
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: read
+#      id-token: write
+#    steps:
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#          aws-region: ${{ env.AWS_REGION }}
+#
+#      - name: Get ALB DNS name
+#        id: get-alb-dns
+#        continue-on-error: true
+#        run: |
+#          ALB_DNS=$(aws elbv2 describe-load-balancers \
+#            --names lian-date-prod-alb \
+#            --query 'LoadBalancers[0].DNSName' \
+#            --output text 2>/dev/null || echo "${{ secrets.ALB_DNS_NAME }}")
+#          echo "alb_dns=$ALB_DNS" >> $GITHUB_OUTPUT
+#
+#      - name: Run backend smoke test
+#        if: needs.deploy-backend.result == 'success' && steps.get-alb-dns.outputs.alb_dns != ''
+#        run: |
+#          echo "Testing backend health endpoint..."
+#          MAX_RETRIES=5
+#          RETRY_COUNT=0
+#
+#          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+#            if curl -f http://${{ steps.get-alb-dns.outputs.alb_dns }}/health; then
+#              echo "Backend health check passed!"
+#              break
+#            else
+#              echo "Backend health check failed, retry $((RETRY_COUNT + 1))/$MAX_RETRIES"
+#              RETRY_COUNT=$((RETRY_COUNT + 1))
+#              sleep 10
+#            fi
+#          done
+#
+#          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+#            echo "Backend health check failed after $MAX_RETRIES retries"
+#            exit 1
+#          fi
+#
+#      - name: Run frontend smoke test
+#        if: needs.deploy-frontend.result == 'success' && steps.get-alb-dns.outputs.alb_dns != ''
+#        run: |
+#          echo "Testing frontend..."
+#          if curl -f http://${{ steps.get-alb-dns.outputs.alb_dns }}/; then
+#            echo "Frontend smoke test passed!"
+#          else
+#            echo "Frontend smoke test failed"
+#            exit 1
+#          fi
+#
+#      - name: Skip smoke test (ALB not available)
+#        if: steps.get-alb-dns.outputs.alb_dns == ''
+#        run: |
+#          echo "⚠️ Smoke tests skipped: ALB DNS not available"
+#          echo "Configure ALB_DNS_NAME secret or add elasticloadbalancing:DescribeLoadBalancers permission"

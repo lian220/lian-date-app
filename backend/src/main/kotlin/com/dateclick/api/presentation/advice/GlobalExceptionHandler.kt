@@ -1,7 +1,9 @@
 package com.dateclick.api.presentation.advice
 
+import com.dateclick.api.infrastructure.monitoring.SlackNotificationService
 import com.dateclick.api.infrastructure.ratelimit.RateLimitException
 import com.dateclick.api.presentation.rest.common.ApiResponse
+import io.sentry.Sentry
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -10,7 +12,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
-class GlobalExceptionHandler {
+class GlobalExceptionHandler(
+    private val slackNotificationService: SlackNotificationService,
+) {
     private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
@@ -64,6 +68,8 @@ class GlobalExceptionHandler {
     @ExceptionHandler(Exception::class)
     fun handleException(ex: Exception): ResponseEntity<ApiResponse<Nothing>> {
         logger.error("Unexpected error occurred", ex)
+        Sentry.captureException(ex)
+        slackNotificationService.sendErrorAlert(ex)
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ApiResponse.error("INTERNAL_ERROR", "서버 오류가 발생했습니다"))

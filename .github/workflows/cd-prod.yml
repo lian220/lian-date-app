@@ -10,12 +10,11 @@ env:
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
   BACKEND_IMAGE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/lian-date-prod-backend
-  FRONTEND_IMAGE: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/lian-date-prod-frontend
   ECS_CLUSTER: lian-date-prod-cluster
   CODEDEPLOY_BACKEND_APP: lian-date-prod-backend
-  CODEDEPLOY_FRONTEND_APP: lian-date-prod-frontend
   CODEDEPLOY_BACKEND_DG: lian-date-prod-backend-dg
-  CODEDEPLOY_FRONTEND_DG: lian-date-prod-frontend-dg
+
+# NOTE: Frontend는 Vercel이 main 푸시 시 자동 배포 처리
 
 jobs:
   detect-changes:
@@ -23,7 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,10 +33,6 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
-              - '.github/workflows/cd-prod.yml'
-              - 'docker-compose.yml'
-            frontend:
-              - 'frontend/**'
               - '.github/workflows/cd-prod.yml'
               - 'docker-compose.yml'
 
@@ -118,32 +112,6 @@ jobs:
         with:
           name: backend-test-reports
           path: backend/build/reports/tests/
-
-  test-frontend:
-    name: Test Frontend
-    needs: detect-changes
-    if: needs.detect-changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Run linter
-        working-directory: ./frontend
-        run: npm run lint
-
-      - name: Build application
-        working-directory: ./frontend
-        run: npm run build
 
 # NOTE: AWS 배포 비활성화 - Vercel(frontend) + Render(backend) 로 전환
 #

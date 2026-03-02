@@ -9,6 +9,7 @@ import {
   PlaceCurationInfo,
   PlaceCurationError,
 } from '@/types/place';
+import { getSessionId } from '@/lib/sessionManager';
 
 /**
  * 백엔드 API 기본 URL
@@ -43,47 +44,8 @@ export function getApiBaseUrl(): string {
 /**
  * API 요청 타임아웃 (밀리초)
  */
-const API_TIMEOUT = 30000; // 30초
+const API_TIMEOUT = 60000; // 60초 (OpenAI 응답 대기 여유)
 
-/**
- * 세션 ID 생성 (UUID v4)
- */
-function uuidV4(): string {
-  const c = globalThis.crypto;
-  if (c && typeof (c as Crypto).randomUUID === 'function') {
-    return (c as Crypto).randomUUID();
-  }
-
-  // 일부 브라우저/웹뷰(Safari 등)에서는 randomUUID 미지원 → getRandomValues로 폴백
-  if (c && typeof c.getRandomValues === 'function') {
-    const bytes = new Uint8Array(16);
-    c.getRandomValues(bytes);
-
-    // RFC 4122 v4: version(4) + variant(10)
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-
-    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-  }
-
-  // 최후의 폴백(보안적으로 약함). 세션 구분용 헤더 값이라 충돌 확률만 낮추면 됨.
-  return `fallback_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-}
-
-function generateSessionId(): string {
-  if (typeof window !== 'undefined') {
-    // 브라우저 환경에서는 sessionStorage 사용
-    let sessionId: string | null = sessionStorage.getItem('session-id');
-    if (!sessionId) {
-      sessionId = uuidV4();
-      sessionStorage.setItem('session-id', sessionId);
-    }
-    return sessionId;
-  }
-  // 서버 사이드에서는 매번 새로운 ID 생성
-  return uuidV4();
-}
 
 /**
  * 권역 목록 조회 API
@@ -130,7 +92,7 @@ export async function createCourse(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Session-Id': generateSessionId(),
+        'X-Session-Id': getSessionId(),
       },
       body: JSON.stringify(request),
       signal: controller.signal,
@@ -203,7 +165,7 @@ export async function regenerateCourse(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Session-Id': generateSessionId(),
+          'X-Session-Id': getSessionId(),
         },
         signal: controller.signal,
       }

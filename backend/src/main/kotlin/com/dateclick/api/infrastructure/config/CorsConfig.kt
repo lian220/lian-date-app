@@ -13,13 +13,18 @@ class CorsConfig {
         val source = UrlBasedCorsConfigurationSource()
         val config = CorsConfiguration()
 
-        // 허용할 Origin 설정
+        // 허용할 Origin 설정 (환경변수 CORS_ALLOWED_ORIGINS, 쉼표로 구분)
+        val allowedOriginsEnv = System.getenv("CORS_ALLOWED_ORIGINS")
         config.allowedOrigins =
-            listOf(
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://localhost:3002",
-            )
+            if (!allowedOriginsEnv.isNullOrBlank()) {
+                allowedOriginsEnv.split(",").map { it.trim() }
+            } else {
+                listOf(
+                    "http://localhost:3000",
+                    "http://localhost:3001",
+                    "http://localhost:3002",
+                )
+            }
 
         // 허용할 HTTP 메서드
         config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")

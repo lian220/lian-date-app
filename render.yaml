@@ -1,0 +1,49 @@
+databases:
+  - name: dateclick-db
+    databaseName: dateclick
+    user: dateclick_user
+    plan: free
+
+services:
+  - type: web
+    name: dateclick-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: dateclick-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: dateclick-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: dateclick-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: dateclick-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: dateclick-db
+          property: password
+      - key: DB_SSL_MODE
+        value: require
+      # 아래 키는 Render 대시보드에서 직접 입력
+      - key: KAKAO_REST_API_KEY
+        sync: false
+      - key: KAKAO_JAVASCRIPT_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      # Vercel 프론트엔드 URL로 설정 (예: https://your-app.vercel.app)
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CHROMA_ENABLED
+        value: "false"

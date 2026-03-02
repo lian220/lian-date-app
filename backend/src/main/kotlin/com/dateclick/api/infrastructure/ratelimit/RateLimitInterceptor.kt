@@ -20,17 +20,21 @@ class RateLimitInterceptor(
         response: HttpServletResponse,
         handler: Any,
     ): Boolean {
-        // X-Session-Id 헤더 확인
+        // X-Session-Id 헤더 확인, 없으면 IP 주소로 fallback
         val sessionId = request.getHeader("X-Session-Id")
-        if (sessionId.isNullOrBlank()) {
-            logger.debug("X-Session-Id header missing, skipping rate limit for {}", request.requestURI)
-            return true
-        }
+        val identifier =
+            if (!sessionId.isNullOrBlank()) {
+                sessionId
+            } else {
+                val ip = request.getHeader("X-Forwarded-For")?.split(",")?.firstOrNull()?.trim()
+                    ?: request.remoteAddr
+                "ip:$ip"
+            }
 
         val method = request.method
         val endpoint = request.requestURI
 
-        rateLimitService.checkRateLimit(sessionId, method, endpoint)
+        rateLimitService.checkRateLimit(identifier, method, endpoint)
         return true
     }
 }

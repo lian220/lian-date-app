@@ -25,23 +25,26 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<ApiResponse<Nothing>> {
+        logger.debug("IllegalArgumentException: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.error("INVALID_REQUEST", ex.message ?: "잘못된 요청입니다"))
+            .body(ApiResponse.error("INVALID_REQUEST", "잘못된 요청입니다"))
     }
 
     @ExceptionHandler(NoSuchElementException::class)
     fun handleNotFoundException(ex: NoSuchElementException): ResponseEntity<ApiResponse<Nothing>> {
+        logger.debug("NoSuchElementException: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
-            .body(ApiResponse.error("NOT_FOUND", ex.message ?: "리소스를 찾을 수 없습니다"))
+            .body(ApiResponse.error("NOT_FOUND", "리소스를 찾을 수 없습니다"))
     }
 
     @ExceptionHandler(IllegalStateException::class)
     fun handleIllegalStateException(ex: IllegalStateException): ResponseEntity<ApiResponse<Nothing>> {
+        logger.debug("IllegalStateException: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
-            .body(ApiResponse.error("CONFLICT", ex.message ?: "요청을 처리할 수 없습니다"))
+            .body(ApiResponse.error("CONFLICT", "요청을 처리할 수 없습니다"))
     }
 
     @ExceptionHandler(RateLimitException::class)

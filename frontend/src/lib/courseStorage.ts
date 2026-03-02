@@ -36,7 +36,11 @@ export function getCourses(): SavedCourse[] {
       return [];
     }
 
-    const courses: SavedCourse[] = JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    const courses: SavedCourse[] = parsed;
     // 최신순 정렬 (savedAt 기준 내림차순)
     return courses.sort(
       (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()

@@ -150,7 +150,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Run linter
         working-directory: ./frontend
@@ -191,7 +191,7 @@ jobs:
       - name: Run frontend linter
         working-directory: ./frontend
         run: |
-          npm ci
+          npm install --legacy-peer-deps
           npm run lint
 
   build-check:
@@ -229,7 +229,7 @@ jobs:
         if: ${{ needs.changes.outputs.frontend == 'true' }}
         working-directory: ./frontend
         run: |
-          npm ci
+          npm install --legacy-peer-deps
           npm run build
 
       - name: Check build artifacts

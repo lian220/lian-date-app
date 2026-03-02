@@ -53,6 +53,18 @@ openai:
   max-tokens: 2000
   temperature: 0.7
 
+# Sentry Error Monitoring
+sentry:
+  dsn: ${SENTRY_DSN_BACKEND:}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
+  environment: production
+  send-default-pii: false
+
+# Monitoring Alerting
+monitoring:
+  slack:
+    webhook-url: ${SLACK_WEBHOOK_URL_ERROR:}
+
 # Vector Database Configuration
 chroma:
   enabled: ${CHROMA_ENABLED:true}

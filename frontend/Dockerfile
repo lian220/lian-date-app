@@ -9,7 +9,7 @@ RUN apk update && apk upgrade --no-cache
 
 # Install dependencies based on the preferred package manager
 COPY package*.json ./
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder

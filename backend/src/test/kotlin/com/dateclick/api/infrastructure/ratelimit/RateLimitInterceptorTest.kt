@@ -2,6 +2,7 @@ package com.dateclick.api.infrastructure.ratelimit
 
 import com.dateclick.api.presentation.rest.course.CreateCourseRequest
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

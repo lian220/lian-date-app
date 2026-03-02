@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -17,7 +18,10 @@ class SlackNotificationService(
     @Value("\${monitoring.slack.webhook-url:}") private val webhookUrl: String,
 ) {
     private val logger = LoggerFactory.getLogger(SlackNotificationService::class.java)
-    private val restTemplate: RestTemplate = restTemplateBuilder.build()
+    private val restTemplate: RestTemplate = restTemplateBuilder
+        .connectTimeout(Duration.ofSeconds(3))
+        .readTimeout(Duration.ofSeconds(5))
+        .build()
     private val timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
     fun sendErrorAlert(ex: Exception) {
@@ -29,16 +33,17 @@ class SlackNotificationService(
             restTemplate.postForObject(webhookUrl, request, String::class.java)
             logger.info("Slack 에러 알림 전송 완료: {}", ex.javaClass.simpleName)
         } catch (e: Exception) {
-            logger.error("Slack 알림 전송 실패: {}", e.message)
+            logger.error("Slack 알림 전송 실패", e)
         }
     }
 
     private fun buildPayload(ex: Exception): Map<String, Any> {
         val timestamp = LocalDateTime.now().format(timeFormatter)
+        // 민감 정보 노출 방지: 에러 유형만 전송, 원문 메시지는 제외
+        val safeMessage = ex.javaClass.simpleName
         val text = buildString {
             append(":rotating_light: *서버 에러 발생*\n")
-            append(">*유형*: `${ex.javaClass.simpleName}`\n")
-            append(">*메시지*: ${ex.message?.take(300) ?: "알 수 없는 오류"}\n")
+            append(">*유형*: `$safeMessage`\n")
             append(">*시간*: $timestamp")
         }
         return mapOf("text" to text)

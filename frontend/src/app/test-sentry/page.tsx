@@ -3,6 +3,10 @@
 import * as Sentry from '@sentry/nextjs';
 
 export default function TestSentryPage() {
+  if (process.env.NEXT_PUBLIC_ENABLE_SENTRY_TEST_PAGE !== 'true') {
+    return null;
+  }
+
   const triggerFrontendError = () => {
     throw new Error('[Sentry 테스트] 프론트엔드 에러 강제 발생');
   };

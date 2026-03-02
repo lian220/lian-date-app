@@ -37,7 +37,6 @@ class SlackNotificationService(
         val timestamp = LocalDateTime.now().format(timeFormatter)
         val text = buildString {
             append(":rotating_light: *서버 에러 발생*\n")
-            append(">*환경*: `$environment`\n")
             append(">*유형*: `${ex.javaClass.simpleName}`\n")
             append(">*메시지*: ${ex.message?.take(300) ?: "알 수 없는 오류"}\n")
             append(">*시간*: $timestamp")

@@ -59,7 +59,6 @@ sentry:
   traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
   environment: production
   send-default-pii: false
-  debug: true
 
 # Monitoring Alerting
 monitoring:

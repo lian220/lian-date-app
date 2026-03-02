@@ -119,7 +119,7 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
-    command: npm run dev  # 개발 서버 실행
+    command: npm run dev
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8080
       NODE_ENV: development

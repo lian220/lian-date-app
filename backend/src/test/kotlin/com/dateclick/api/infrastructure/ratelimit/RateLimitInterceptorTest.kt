@@ -22,7 +22,7 @@ class RateLimitInterceptorTest {
     private lateinit var objectMapper: ObjectMapper
 
     @Test
-    fun `X-Session-Id가 없으면 Rate Limit을 적용하지 않는다`() {
+    fun `X-Session-Id가 없으면 IP 기반으로 Rate Limit을 적용한다`() {
         val request =
             CreateCourseRequest(
                 regionId = "1",
@@ -30,19 +30,26 @@ class RateLimitInterceptorTest {
                 budget = "50000",
             )
 
-        // X-Session-Id 없이 11번 요청 (정상적으로는 10번 제한)
-        repeat(11) {
-            val result =
-                mockMvc.perform(
-                    post("/v1/courses")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)),
-                )
-                    .andReturn()
-
-            // Rate Limit이 적용되지 않으므로 429가 아니어야 함
-            assertNotEquals(429, result.response.status, "Rate limit should not apply without X-Session-Id")
+        // X-Session-Id 없이 10번 요청 (IP 기반 Rate Limit 적용)
+        repeat(10) {
+            mockMvc.perform(
+                post("/v1/courses")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)),
+            )
         }
+
+        // 11번째 요청은 IP 기반 Rate Limit으로 429 응답
+        val result =
+            mockMvc.perform(
+                post("/v1/courses")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)),
+            )
+                .andReturn()
+
+        // IP 기반 Rate Limit이 적용되어 429여야 함
+        assert(result.response.status == 429) { "IP-based rate limit should apply without X-Session-Id, got ${result.response.status}" }
     }
 
     @Test

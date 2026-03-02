@@ -38,7 +38,7 @@
 
 #### 현재 에러 처리 흐름
 
-```
+```text
 에러 발생
   |
   v
@@ -85,7 +85,7 @@ fun handleException(ex: Exception): ResponseEntity<ApiResponse<Nothing>> {
 
 #### Slack Bot 중심 에러 처리 흐름
 
-```
+```text
 +---------------------------------------------------+
 |              Slack #error 채널 (허브)                |
 |                                                     |
@@ -134,7 +134,7 @@ fun handleException(ex: Exception): ResponseEntity<ApiResponse<Nothing>> {
 
 ### 2.1 전체 파이프라인 다이어그램
 
-```
+```text
 +--------------------------------------------------------------------+
 |                      Date Click 서비스                               |
 |                                                                      |
@@ -2047,3 +2047,1250 @@ JQL: project = LAD AND summary ~ "{키워드}" AND status != Done
      |
      +-- 유사 티켓 없음 --> 신규 티켓 생성
 ```
+
+---
+
+<a id="7-코드-변경-사항"></a>
+
+## 7. 코드 변경 사항
+
+### 7.1 GlobalExceptionHandler 수정 (Slack 직접 호출 제거)
+
+#### 변경 전 (현재 코드)
+
+파일: `backend/src/main/kotlin/com/dateclick/api/presentation/advice/GlobalExceptionHandler.kt`
+
+```kotlin
+@RestControllerAdvice
+class GlobalExceptionHandler(
+    private val slackNotificationService: SlackNotificationService,  // 제거 대상
+) {
+    private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
+
+    @ExceptionHandler(Exception::class)
+    fun handleException(ex: Exception): ResponseEntity<ApiResponse<Nothing>> {
+        logger.error("Unexpected error occurred", ex)
+        Sentry.captureException(ex)                      // 유지 (SDK 자동 캡처 보완)
+        slackNotificationService.sendErrorAlert(ex)       // 제거: Bot이 대체
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ApiResponse.error("INTERNAL_ERROR", "서버 오류가 발생했습니다"))
+    }
+}
+```
+
+#### 변경 후 (목표 코드)
+
+```kotlin
+@RestControllerAdvice
+class GlobalExceptionHandler {
+    // SlackNotificationService 의존성 완전 제거
+    // Slack 알림은 Sentry Alert Rule --> Slack #error 채널 --> Bot이 처리
+
+    private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidationException(ex: MethodArgumentNotValidException): ResponseEntity<ApiResponse<Nothing>> {
+        val message =
+            ex.bindingResult.fieldErrors.firstOrNull()?.defaultMessage
+                ?: "잘못된 요청입니다"
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error("INVALID_REQUEST", message))
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<ApiResponse<Nothing>> {
+        logger.debug("IllegalArgumentException: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error("INVALID_REQUEST", "잘못된 요청입니다"))
+    }
+
+    @ExceptionHandler(AiGenerationException::class)
+    fun handleAiGenerationException(ex: AiGenerationException): ResponseEntity<ApiResponse<Nothing>> {
+        logger.warn("AI 코스 생성 실패 (외부 API 오류): {}", ex.message)
+        Sentry.withScope { scope ->
+            scope.setTag("error.category", "external_api")
+            scope.setTag("external.service", "openai")
+            scope.level = io.sentry.SentryLevel.WARNING
+            Sentry.captureException(ex)
+        }
+        return ResponseEntity
+            .status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(ApiResponse.error("AI_SERVICE_UNAVAILABLE", "AI 코스 생성에 실패했습니다."))
+    }
+
+    @ExceptionHandler(Exception::class)
+    fun handleException(ex: Exception): ResponseEntity<ApiResponse<Nothing>> {
+        logger.error("Unexpected error occurred", ex)
+        // Sentry SDK가 자동 캡처. 추가 컨텍스트 태그만 첨부.
+        // Slack 알림은 Sentry Alert Rule이 #error 채널에 전송 -> Bot이 분석/Jira 생성
+        Sentry.withScope { scope ->
+            scope.setTag("error.category", "unhandled")
+            scope.level = io.sentry.SentryLevel.ERROR
+            Sentry.captureException(ex)
+        }
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ApiResponse.error("INTERNAL_ERROR", "서버 오류가 발생했습니다"))
+    }
+}
+```
+
+#### 변경 요약
+
+| 항목 | 변경 전 | 변경 후 |
+|------|---------|---------|
+| `SlackNotificationService` 의존성 | 생성자 주입 | **제거** |
+| `slackNotificationService.sendErrorAlert()` | 직접 호출 | **제거** (Bot이 대체) |
+| `Sentry.captureException()` | 단순 호출 | `Sentry.withScope`로 태그 추가 |
+| `AiGenerationException` 핸들러 | Sentry 미전송 | `external_api` 태그와 함께 전송 |
+
+### 7.2 SlackNotificationService 처리
+
+Bot이 Slack 알림을 완전히 대체하므로 `SlackNotificationService`를 삭제한다.
+
+```
+삭제 대상 파일:
+  backend/src/main/kotlin/.../monitoring/SlackNotificationService.kt
+
+application.yml에서 제거:
+  monitoring:
+    slack:
+      webhook-url: ${SLACK_WEBHOOK_URL_ERROR:}
+```
+
+**단계적 제거 전략**:
+- Phase 1-3 동안 `@Deprecated` 어노테이션을 추가하여 병렬 운영
+- Phase 5에서 Bot 안정성 검증 완료 후 완전 삭제
+
+### 7.3 Sentry SDK 최적화 (분석 도구 역할에 맞게)
+
+#### application.yml 변경
+
+```yaml
+sentry:
+  dsn: ${SENTRY_DSN_BACKEND:}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
+  environment: ${SENTRY_ENVIRONMENT:production}
+  send-default-pii: false
+
+  # 릴리스 추적 (Suspect Commits에 필요)
+  release: ${SENTRY_RELEASE:}
+
+  # 서버 식별
+  server-name: ${HOSTNAME:date-click-api}
+
+  # 예외 필터링 (불필요한 에러 무시)
+  ignored-exceptions-for-type:
+    - org.springframework.web.bind.MethodArgumentNotValidException
+    - org.springframework.web.HttpRequestMethodNotSupportedException
+    - org.springframework.web.servlet.resource.NoResourceFoundException
+
+  # In-App 패키지 (스택 트레이스에서 프로젝트 코드 강조)
+  in-app-includes:
+    - com.dateclick.api
+```
+
+### 7.4 Slack Bot 신규 개발
+
+Slack Bot은 별도 마이크로서비스로 개발한다. docker-compose에 추가한다.
+
+#### docker-compose.yml 추가
+
+```yaml
+services:
+  # ... 기존 서비스들 ...
+
+  error-bot:
+    build:
+      context: ./slack-error-bot
+      dockerfile: Dockerfile
+    container_name: dateclick-error-bot
+    environment:
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
+      - ERROR_CHANNEL_ID=${ERROR_CHANNEL_ID}
+      - SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+      - SENTRY_ORG=sfn-oh
+      - SENTRY_BACKEND_PROJECT=lian-date-app-backend
+      - SENTRY_FRONTEND_PROJECT=lian-date-app-frontend
+      - JIRA_HOST=${JIRA_HOST}
+      - JIRA_EMAIL=${JIRA_EMAIL}
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO=${GITHUB_REPO}
+      - AI_API_KEY=${AI_API_KEY:-}
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+    restart: unless-stopped
+    networks:
+      - dateclick-shared-network
+```
+
+#### Dockerfile
+
+```dockerfile
+# slack-error-bot/Dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --production
+
+COPY dist/ ./dist/
+
+USER node
+CMD ["node", "dist/app.js"]
+```
+
+### 7.5 환경별 설정
+
+#### Local 환경
+
+```yaml
+# Sentry 비활성화 (DSN 비워둠)
+sentry:
+  dsn: ""
+  environment: local
+
+# Bot: 실행하지 않음 (docker-compose에서 error-bot 서비스 제외)
+```
+
+#### Staging 환경
+
+```yaml
+sentry:
+  dsn: ${SENTRY_DSN_BACKEND}
+  environment: staging
+  traces-sample-rate: 1.0
+
+# Bot: #error-staging 채널에 연결하여 테스트
+# Alert Rule: staging 환경도 포함하도록 별도 Rule 생성
+```
+
+#### Production 환경
+
+```yaml
+sentry:
+  dsn: ${SENTRY_DSN_BACKEND}
+  environment: production
+  traces-sample-rate: 0.1
+  release: ${SENTRY_RELEASE}
+
+# Bot: #error 채널에 연결, 전체 기능 활성화
+# Alert Rule: production 환경만 대상
+```
+
+---
+
+<a id="8-구현-로드맵"></a>
+
+## 8. 구현 로드맵
+
+### 8.1 전체 일정 개요
+
+```
+Phase 1          Phase 2          Phase 3          Phase 4          Phase 5
+(2-3일)          (1-2일)          (1-2일)          (1일)            (0.5일)
++-----------+    +-----------+    +-----------+    +-----------+    +-----------+
+| Slack Bot  |    | Sentry API |    | Jira API  |    | AI 분석   |    | 정리     |
+| 기본 구조  |    | 연동       |    | 연동      |    | 연동      |    |          |
+|            |    |            |    |           |    |           |    | 기존 코드|
+| - App 설정 |    | - 이슈 조회|    | - 티켓 생성|   | - Claude  |    | 제거     |
+| - 메시지   |    | - 스택트레 |    | - 중복 방지|   |   API     |    | 테스트   |
+|   감지     |--->|   이스     |--->| - 담당자  |--->| - 수동접수|--->| 검증     |
+| - 분류기   |    | - Suspect  |    |   배정    |    |   분석    |    |          |
+| - 스레드   |    |   Commits  |    |           |    |           |    |          |
+|   댓글     |    | - Seer AI  |    |           |    |           |    |          |
++-----------+    +-----------+    +-----------+    +-----------+    +-----------+
+```
+
+### 8.2 Phase 1: Slack Bot 기본 구조 (2-3일)
+
+**목표**: Bot이 #error 채널의 메시지를 감지하고 스레드 댓글을 작성하는 기본 동작 확인
+
+#### 체크리스트
+
+```
+[ ] 1. Slack App 생성
+    +-- https://api.slack.com/apps에서 새 앱 생성
+    +-- Bot Token Scopes 설정 (channels:history, chat:write 등)
+    +-- Socket Mode 활성화
+    +-- Event Subscriptions 설정 (message.channels)
+    +-- 검증: Bot이 #error 채널에 초대되어 메시지 수신 확인
+
+[ ] 2. 프로젝트 초기화
+    +-- slack-error-bot/ 디렉토리 생성
+    +-- package.json 초기화 (Bolt, TypeScript 의존성)
+    +-- tsconfig.json 설정
+    +-- .env.example 작성
+    +-- 검증: npm run build 성공
+
+[ ] 3. 메시지 감지 구현
+    +-- app.ts 엔트리 포인트 작성
+    +-- Socket Mode 연결 확인
+    +-- Bot 자신의 메시지 무시 로직
+    +-- 검증: #error 채널에 테스트 메시지 전송 시 콘솔 로그 출력
+
+[ ] 4. 메시지 분류기 구현
+    +-- messageClassifier.ts 작성
+    +-- Sentry Alert 패턴 감지
+    +-- 수동 접수 키워드 감지
+    +-- 무시 대상 판별
+    +-- 검증: 다양한 테스트 메시지에 대한 분류 결과 확인
+
+[ ] 5. 기본 스레드 댓글 작성
+    +-- threadReplyComposer.ts 기본 구현
+    +-- "분석 중..." 임시 댓글 작성
+    +-- 리액션 추가/제거 (eyes -> checkmark)
+    +-- 검증: 테스트 메시지에 스레드 댓글이 달리는지 확인
+
+[ ] 6. Docker 설정
+    +-- Dockerfile 작성
+    +-- docker-compose.yml에 error-bot 서비스 추가
+    +-- 검증: docker-compose up error-bot 으로 정상 시작
+```
+
+### 8.3 Phase 2: Sentry API 연동 (1-2일)
+
+**목표**: Bot이 Sentry API를 호출하여 에러 상세 분석 정보를 스레드 댓글에 포함
+
+#### 체크리스트
+
+```
+[ ] 1. Sentry Internal Integration 생성
+    +-- Sentry > Settings > Developer Settings > Internal Integration
+    +-- 필요 권한: project:read, event:read, issue:read, org:read
+    +-- Auth Token 발급
+    +-- 검증: API 호출 테스트 (curl로 이슈 조회)
+
+[ ] 2. Sentry API 클라이언트 구현
+    +-- sentryClient.ts 작성
+    +-- getIssue(), getLatestEvent(), getSuspectCommits() 구현
+    +-- 에러 핸들링 (API 호출 실패 시 graceful degradation)
+    +-- 검증: 실제 Sentry 이슈 데이터 조회 확인
+
+[ ] 3. Sentry 분석기 구현
+    +-- sentryAnalyzer.ts 작성
+    +-- 이슈 상세 + 스택 트레이스 + Suspect Commits 통합
+    +-- Seer AI 결과 조회 (없으면 건너뜀)
+    +-- 검증: 분석 결과 객체가 올바르게 구성되는지 확인
+
+[ ] 4. 스레드 댓글 강화
+    +-- 자동 에러용 Block Kit 템플릿 구현
+    +-- Sentry 분석 결과를 포맷팅하여 포함
+    +-- 검증: 실제 Sentry Alert 메시지에 대해 분석 댓글이 달리는지 확인
+
+[ ] 5. GitHub Code Mapping 설정 (Sentry 측)
+    +-- Sentry > Settings > Projects > Source Code
+    +-- Backend/Frontend Code Mapping 설정
+    +-- 검증: Suspect Commits가 정상 표시되는지 확인
+```
+
+### 8.4 Phase 3: Jira API 연동 (1-2일)
+
+**목표**: Bot이 Jira API를 호출하여 에러 티켓을 자동 생성
+
+#### 체크리스트
+
+```
+[ ] 1. Jira API Token 발급
+    +-- Atlassian > Account Settings > API Tokens
+    +-- 검증: API 호출 테스트 (curl로 프로젝트 조회)
+
+[ ] 2. Jira API 클라이언트 구현
+    +-- jiraClient.ts 작성
+    +-- createIssue(), searchIssues(), addComment() 구현
+    +-- 중복 검사 로직 (Sentry Issue ID 라벨 기반)
+    +-- 검증: 테스트 티켓 생성/검색 확인
+
+[ ] 3. 자동 에러용 티켓 생성 구현
+    +-- buildAutoErrorTicket() 함수 구현
+    +-- 우선순위 자동 판정 로직
+    +-- Suspect Author 기반 담당자 배정
+    +-- 검증: Sentry 에러 기반 Jira 티켓이 올바르게 생성되는지 확인
+
+[ ] 4. 수동 접수용 티켓 생성 구현
+    +-- buildManualReportTicket() 함수 구현
+    +-- triage-needed 라벨 자동 추가
+    +-- 검증: 수동 접수 메시지 기반 Jira 티켓이 올바르게 생성되는지 확인
+
+[ ] 5. 중복 방지 검증
+    +-- 같은 Sentry 이슈에 대해 중복 티켓이 생성되지 않는지 확인
+    +-- 기존 티켓이 있을 때 코멘트만 추가되는지 확인
+    +-- 검증: 동일 에러 2회 발생 시 티켓 1개 + 코멘트 1개
+
+[ ] 6. 스레드 댓글에 Jira 정보 포함
+    +-- 티켓 키, URL, 담당자, 우선순위를 스레드 댓글에 포함
+    +-- 검증: 스레드 댓글에 Jira 티켓 링크가 포함되는지 확인
+```
+
+### 8.5 Phase 4: AI 분석 연동 - 선택적 (1일)
+
+**목표**: 수동 접수 메시지를 AI로 분석하여 문제를 자동 분류
+
+#### 체크리스트
+
+```
+[ ] 1. AI API 클라이언트 구현
+    +-- aiAnalyzer.ts 작성
+    +-- Claude API (또는 OpenAI API) 연동
+    +-- 프롬프트 설계 (문제 분류, 키워드 추출, 심각도 판단)
+    +-- 검증: 테스트 메시지에 대한 AI 분류 결과 확인
+
+[ ] 2. 수동 접수 분석 파이프라인 완성
+    +-- AI 분류 --> Sentry 유사 이슈 검색 --> Jira 생성
+    +-- 검증: "코스 생성이 안돼요" 등 실제 접수 메시지 처리 확인
+
+[ ] 3. AI 결과를 스레드 댓글에 포함
+    +-- 수동 접수용 Block Kit 템플릿 완성
+    +-- "이 분석은 AI 기반 초기 판단입니다" 안내 문구 포함
+    +-- 검증: 수동 접수 메시지에 분석 결과 댓글이 달리는지 확인
+```
+
+### 8.6 Phase 5: 기존 직접 Slack 웹훅 코드 제거 (0.5일)
+
+**목표**: Bot 안정성 검증 완료 후 기존 코드를 정리
+
+#### 체크리스트
+
+```
+[ ] 1. Bot 안정성 검증 (1-2주 운영 후)
+    +-- Bot이 에러 없이 메시지를 처리하고 있는지 확인
+    +-- 스레드 댓글 품질 확인
+    +-- Jira 티켓 생성 정확성 확인
+    +-- 중복 방지 로직 정상 동작 확인
+
+[ ] 2. GlobalExceptionHandler 최종 수정
+    +-- SlackNotificationService 의존성 완전 제거
+    +-- slackNotificationService.sendErrorAlert() 호출 완전 제거
+    +-- 컴파일 확인: ./gradlew build
+
+[ ] 3. SlackNotificationService 삭제
+    +-- SlackNotificationService.kt 파일 삭제
+    +-- 관련 테스트 파일 수정/삭제
+    +-- 컴파일 확인: ./gradlew build
+
+[ ] 4. 설정 파일 정리
+    +-- application.yml에서 monitoring.slack.webhook-url 제거
+    +-- .env.example에서 SLACK_WEBHOOK_URL_ERROR 제거
+    +-- Slack Bot 관련 환경변수 추가 (.env.example)
+
+[ ] 5. 테스트 실행 및 검증
+    +-- ./gradlew test (전체 테스트 통과 확인)
+    +-- docker-compose up -d (전체 서비스 기동 확인)
+    +-- 통합 테스트: 테스트 에러 발생 --> Bot 분석 --> Jira 생성 확인
+```
+
+---
+
+<a id="9-운영-가이드"></a>
+
+## 9. 운영 가이드
+
+### 9.1 에러 대응 플로우 (Slack 중심)
+
+```
+                    +------------------+
+                    | Slack #error     |
+                    | 채널 메시지 확인  |
+                    +--------+---------+
+                             |
+                             v
+                    +------------------+
+                    | Bot 스레드 댓글  |
+                    | 확인             |
+                    +--------+---------+
+                             |
+              +--------------+--------------+
+              |              |              |
+              v              v              v
+     +------------+  +------------+  +------------+
+     | P0/P1      |  | P2         |  | P3         |
+     | 즉시 대응   |  | 스프린트내  |  | 백로그     |
+     | Jira 확인   |  | Jira 확인  |  | 주간 리뷰  |
+     +-----+------+  +-----+------+  +-----+------+
+           |              |              |
+           v              v              v
+     +---------------------------------------------+
+     |          Sentry에서 이슈 상세 확인             |
+     |                                               |
+     |  1. 스택 트레이스 분석                         |
+     |  2. Suspect Commits 확인                      |
+     |  3. Seer AI 분석 결과 확인                    |
+     |  4. 영향 범위 파악 (사용자 수, 빈도)           |
+     |  5. 재현 조건 확인 (HTTP 요청 정보)            |
+     +---------------------+-------------------------+
+                            |
+                            v
+     +---------------------------------------------+
+     |            Jira 티켓 업데이트                   |
+     |                                               |
+     |  1. Bot이 생성한 티켓 확인 (이미 생성됨)       |
+     |  2. 담당자 확인/재배정                         |
+     |  3. 우선순위 확인/조정                         |
+     |  4. 분석 결과를 코멘트로 기록                   |
+     +---------------------+-------------------------+
+                            |
+                            v
+     +---------------------------------------------+
+     |              수정 및 배포                       |
+     |                                               |
+     |  1. 수정 코드 작성                             |
+     |  2. 테스트 작성/실행                           |
+     |  3. PR 생성 --> 코드 리뷰                     |
+     |  4. 배포 (Sentry Release 자동 등록)            |
+     |  5. Sentry에서 이슈 Resolve 처리              |
+     |  6. Jira 티켓 Done 처리                       |
+     +---------------------------------------------+
+```
+
+### 9.2 Bot 모니터링 (Bot 자체 장애 대응)
+
+Bot이 핵심 엔진이므로, Bot 자체의 가용성을 모니터링해야 한다.
+
+#### Bot 헬스체크
+
+```
++------------------------------------------------------------+
+|                   Bot 모니터링 전략                           |
++------------------------------------------------------------+
+|                                                              |
+|  1. Docker 헬스체크                                          |
+|     docker-compose.yml:                                      |
+|       healthcheck:                                           |
+|         test: ["CMD", "node", "-e",                          |
+|                "require('http').get('http://localhost:3001/   |
+|                health', (r) => process.exit(r.statusCode     |
+|                === 200 ? 0 : 1))"]                           |
+|         interval: 30s                                        |
+|         timeout: 10s                                         |
+|         retries: 3                                           |
+|                                                              |
+|  2. Bot 자체 에러 로깅                                       |
+|     +-- Bot 내부 에러를 별도 로그 파일에 기록                 |
+|     +-- Bot 재시작 시 Slack #error 채널에 공지               |
+|         "Bot이 재시작되었습니다. 최근 N분 메시지를             |
+|          처리하지 못했을 수 있습니다."                        |
+|                                                              |
+|  3. Docker restart policy                                    |
+|     +-- restart: unless-stopped                              |
+|     +-- Bot이 crash되면 자동 재시작                          |
+|                                                              |
+|  4. Bot 장애 시 대응 (수동 Fallback)                          |
+|     +-- Bot이 죽으면 Sentry Alert는 계속 Slack에 전송됨      |
+|     +-- 분석/Jira 생성만 수동으로 수행                       |
+|     +-- Bot 복구 후 밀린 메시지 수동 재처리 (필요 시)         |
+|                                                              |
++------------------------------------------------------------+
+```
+
+#### Bot 헬스체크 엔드포인트 구현
+
+```typescript
+// src/app.ts에 추가
+import http from 'http';
+
+// 간단한 헬스체크 HTTP 서버
+const healthServer = http.createServer((req, res) => {
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'ok',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    }));
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
+
+healthServer.listen(3001, () => {
+  console.log('Health check server listening on port 3001');
+});
+```
+
+### 9.3 On-call 프로세스
+
+```
++----------------------------------------------+
+|              On-call 주간 로테이션              |
++----------------------------------------------+
+|                                                |
+|  월-금: 업무 시간 (09:00-18:00)                |
+|  +-- 전체 팀원이 #error 채널 모니터링           |
+|  +-- Bot 스레드 댓글 확인                      |
+|  +-- P0/P1 Jira 티켓 즉시 대응                 |
+|                                                |
+|  월-금: 업무 외 시간 (18:00-09:00)             |
+|  +-- On-call 담당자 1명                        |
+|  +-- P0만 대응 (Bot이 P0 판정 시 @channel)     |
+|                                                |
+|  주말/공휴일:                                   |
+|  +-- On-call 담당자 1명                        |
+|  +-- P0만 대응                                 |
+|                                                |
+|  로테이션: 주 단위 교대                         |
++----------------------------------------------+
+```
+
+### 9.4 에스컬레이션 정책
+
+```
++------------------------------------------------------------+
+|                    에스컬레이션 정책                          |
++------------------------------------------------------------+
+|                                                              |
+|  Level 0: Bot 자동 감지                                      |
+|  |-- 시점: 메시지 수신 즉시 (1분 이내)                       |
+|  |-- 주체: Slack Bot                                        |
+|  +-- 액션: 분석 + Jira 생성 + 스레드 댓글                   |
+|                                                              |
+|  Level 1: 담당 엔지니어                                      |
+|  |-- 시점: Bot 댓글 확인 후                                  |
+|  |-- 주체: Jira 담당자 (Suspect Author 또는 On-call)        |
+|  +-- 액션: Sentry 상세 분석, 수정 착수                      |
+|                                                              |
+|  Level 2: 팀 리드                                            |
+|  |-- 시점: Level 1 대응 시간 초과 시                         |
+|  |   |-- P0: 2시간 미대응                                   |
+|  |   |-- P1: 8시간 미대응                                   |
+|  |   +-- P2: 2일 미대응                                     |
+|  |-- 주체: 팀 리드                                          |
+|  +-- 액션: 담당자 재배정, 지원 투입 결정                    |
+|                                                              |
+|  Level 3: 인시던트 매니저                                     |
+|  |-- 시점: P0 에러가 4시간 이상 미해결                       |
+|  |-- 주체: CTO 또는 인시던트 매니저                          |
+|  +-- 액션: 인시던트 선언, 전체 팀 동원                      |
+|                                                              |
++------------------------------------------------------------+
+```
+
+### 9.5 수동 접수 메시지 가이드
+
+#error 채널에 에러를 보고할 때 Bot이 더 정확하게 분석할 수 있도록 아래 형식을 권장한다.
+
+```
+[에러 보고 권장 형식]
+
+무엇이 안되나요: (증상을 구체적으로)
+어디서 발생하나요: (화면/기능명)
+재현 방법: (어떤 조건에서 발생하는지)
+스크린샷: (있으면 첨부)
+
+예시:
+"코스 생성이 안돼요.
+강남역 선택하고 '카페+맛집' 데이트 유형으로 생성 버튼 누르면
+로딩이 30초 넘게 돌다가 에러 메시지가 나와요.
+예산은 5만원으로 설정했어요."
+```
+
+Bot은 이 형식이 아닌 자유 형식 메시지("뭐가 안돼요")도 처리하지만, 구조화된 메시지일수록 분석 정확도가 높아진다.
+
+---
+
+<a id="10-전문가-패널-리뷰"></a>
+
+## 10. 전문가 패널 리뷰
+
+> **중요**: 아래 10.1-10.7 리뷰는 초기 Sentry 중심 아키텍처에 대한 검토이다. Slack Bot 중심 아키텍처로 변경된 이후 추가 검토가 필요한 항목은 **[Slack 중심 추가 검토]** 태그로 표시한다. 10.8에서 Slack 중심 아키텍처에 대한 추가 고려사항을 별도로 다룬다.
+
+### 10.1 SRE (Site Reliability Engineer) 리뷰
+
+#### 아키텍처 평가
+
+Sentry를 단일 진입점으로 설정하고 중복 제거와 빈도 추적을 위임하는 것은 SRE 핵심 원칙인 **Signal-to-Noise Ratio 최적화**에 부합한다. 현재 상태(1 error = 1 Slack message)는 전형적인 Alert Fatigue 패턴이며, 2-3명 규모 팀에서 이를 방치하면 실제 크리티컬 이슈를 놓치는 상황이 발생한다.
+
+**[Slack 중심 추가 검토]** Slack Bot이 중간에 추가됨으로써 Bot 자체의 가용성이 SRE 관점의 새로운 관심사가 된다. Bot 장애 시에도 Sentry Alert은 Slack에 계속 전송되므로 에러 인지 자체는 유지되지만, 자동 분석과 Jira 생성이 중단된다.
+
+#### 권고사항: Alert Rules 계층화
+
+```
+P0 (Critical): 서비스 전체 장애, DB 연결 실패
+  --> Slack DM + 전화/SMS (PagerDuty 또는 Slack 워크플로)
+  --> 즉시 Jira 티켓 생성 (Priority: Highest)
+  --> MTTR 목표: 30분 이내
+
+P1 (High): OpenAI API 실패, Kakao API 실패 (외부 의존성)
+  --> Slack #alerts-critical 채널
+  --> Jira 티켓 자동 생성 (Priority: High)
+  --> MTTR 목표: 4시간 이내
+
+P2 (Medium): 비즈니스 로직 에러, 유효성 검증 실패
+  --> Slack #alerts-warning 채널 (1시간 간격 다이제스트)
+  --> Jira 티켓은 빈도 임계값 초과 시에만 생성
+  --> MTTR 목표: 1 Sprint 이내
+
+P3 (Low): 경고 수준, 성능 저하 징후
+  --> Slack #alerts-info 채널 (일간 다이제스트)
+  --> Jira 티켓 생성 안함
+  --> 주간 리뷰 시 검토
+```
+
+#### 권고사항: Sentry Alert Rules 구체 설정
+
+```yaml
+# P0: 5분 내 동일 이슈 50회 이상
+- condition: "event frequency > 50 in 5 minutes"
+  action: "slack_critical + jira_highest + sms"
+
+# P1: 새로운 이슈 최초 발생 시 (외부 의존성)
+- condition: "first seen"
+  filter: "tag:service:openai OR tag:service:kakao"
+  action: "slack_critical + jira_high"
+
+# P2: 1시간 내 동일 이슈 10회 이상
+- condition: "event frequency > 10 in 1 hour"
+  action: "slack_warning_digest"
+
+# Regression 감지
+- condition: "regression detected"
+  action: "slack_critical + jira_reopen"
+```
+
+#### 식별된 리스크
+
+- **외부 API 의존성 폭포**: OpenAI/Kakao API 장애 시 연쇄적 에러 폭발 가능. Circuit Breaker 패턴과 Sentry Inbound Data Filter 병행 필요
+- **Sentry 단일 장애점**: Sentry 자체 장애 시 모든 모니터링 중단. Spring Boot Actuator 헬스체크는 별도 유지 필요
+
+#### 우선 액션
+
+1. Alert Rules P0-P3 계층화 설계
+2. Slack 채널 구조 설계 (#alerts-critical, #alerts-warning, #alerts-info)
+3. 외부 API 호출부 Circuit Breaker 확인
+4. Regression 알림 설정
+
+---
+
+### 10.2 Agile Coach / Scrum Master 리뷰
+
+#### 워크플로 평가
+
+자동화 파이프라인 자체는 훌륭하나, 2-3명 팀에서 가장 큰 위험은 **자동 생성된 Jira 티켓이 백로그를 오염시키는 것**이다. 프로덕트 백로그와 버그 백로그가 섞이면 Sprint Planning이 혼란스러워진다.
+
+**[Slack 중심 추가 검토]** Slack Bot이 수동 접수 메시지도 Jira 티켓으로 생성하므로, 자동 생성 티켓 수가 Sentry 직접 연동보다 더 많아질 수 있다. "triage-needed" 라벨을 통한 필터링과 주간 Triage 미팅이 더욱 중요하다.
+
+#### 권고사항: Jira 자동 생성 전략
+
+```
+모든 에러 --> Jira 티켓  (X 절대 하지 마세요)
+
+대신:
+P0/P1 에러 --> Jira 티켓 자동 생성 (즉시 대응 필요)
+P2 에러    --> 빈도 임계값 초과 시에만 Jira 티켓 생성
+P3 에러    --> Jira 티켓 생성 안함, 주간 리뷰에서 수동 판단
+```
+
+#### 권고사항: 자동 생성 티켓 워크플로
+
+```
+Bot Auto-Created --> Triage --> Accepted --> In Progress --> Done
+                      |
+                  Won't Fix / Duplicate (빠른 종료 경로)
+```
+
+**핵심**: "Triage" 단계. 자동 생성된 모든 티켓은 반드시 사람이 한 번 분류해야 한다.
+
+#### 권고사항: Sprint 통합
+
+```
+Daily Standup (15분):
+  - "어제 #error 채널에서 새로운 P0/P1이 있었나요?" (1분)
+  - Bot 스레드 댓글 리뷰
+  - 있다면 --> 현재 Sprint에 즉시 추가 여부 판단
+
+Sprint Planning:
+  - Triage 상태의 자동 생성 티켓 일괄 리뷰 (10분)
+  - Sprint 용량의 15-20%를 버그 수정에 할당
+
+Sprint Retrospective:
+  - 자동 생성 티켓 중 실제 유효했던 비율 리뷰
+  - Bot 분류 정확도 리뷰
+  - Alert Rules / Bot 분류기 튜닝 필요 여부 논의
+```
+
+#### 권고사항: 버그 예산 (Bug Budget)
+
+매 Sprint마다 버그 수정에 투입할 스토리 포인트의 상한선을 정하고, 초과분은 다음 Sprint로 이월. 기능 개발과 안정성 사이의 균형 유지에 필수.
+
+#### 식별된 리스크
+
+- **백로그 오염**: 자동 생성 티켓 과다 시 팀이 Jira를 신뢰하지 않게 됨
+- **컨텍스트 스위칭 비용**: 2-3명 팀에서 잦은 버그 대응은 Deep Work를 심각하게 방해
+- **Triage 부담**: 매일 자동 생성 티켓 분류 자체가 오버헤드
+
+#### 우선 액션
+
+1. Jira 자동 생성 임계값을 보수적으로 설정 (P0/P1만 자동 생성으로 시작)
+2. 주간 Triage 미팅 도입 (30분, P2 이하 일괄 리뷰)
+3. Sprint에 버그 예산 명시적 할당 (15-20%)
+4. 1개월 후 자동 생성 티켓 유효성 비율 리뷰
+
+---
+
+### 10.3 DevOps Architect 리뷰
+
+#### 아키텍처 평가
+
+Sentry의 네이티브 통합(Slack, Jira, GitHub) 활용은 기술적으로 건전하다. 직접 구현한 웹훅 코드는 그 자체가 유지보수 부담이 되므로, 네이티브 통합으로 전환하는 것은 2-3명 팀에서 매우 큰 이점이다.
+
+**[Slack 중심 추가 검토]** Bot을 별도 마이크로서비스로 운영하면 인프라 복잡도가 증가한다. Docker 컨테이너 1개가 추가되고, Slack/Sentry/Jira/GitHub 4개 외부 서비스의 인증 토큰을 관리해야 한다. 시크릿 관리와 컨테이너 모니터링이 중요해진다.
+
+#### 권고사항: GitHub Integration 상세
+
+```yaml
+# Sentry GitHub Integration 설정
+code_mapping:
+  # Backend: Spring Boot 패키지 매핑
+  stack_trace_root: "com.dateclick.api"
+  source_root: "backend/src/main/kotlin/com/dateclick/api/"
+  branch: "main"
+
+  # Frontend: Next.js 매핑
+  stack_trace_root: "app://"
+  source_root: "frontend/src/"
+  branch: "main"
+
+commit_tracking:
+  # CI/CD에서 Release 연동
+  - sentry-cli releases new $VERSION
+  - sentry-cli releases set-commits $VERSION --auto
+  - sentry-cli releases finalize $VERSION
+```
+
+#### 권고사항: 기존 웹훅 코드 전환 단계
+
+```
+단계 1: Bot 개발 + Sentry Slack Integration 활성화 (병렬 운영)
+단계 2: 1-2주 동안 기존 웹훅과 Bot 결과 비교 검증
+단계 3: 기존 웹훅 코드 비활성화 (코드 삭제가 아닌 비활성화)
+단계 4: 2주 추가 운영 후 기존 웹훅 코드 완전 제거
+```
+
+> **주의**: 즉시 제거하지 말고 병렬 운영 후 검증 완료 시 제거
+
+#### 권고사항: 환경 분리
+
+```yaml
+sentry_environments:
+  local:
+    dsn: null  # 로컬에서는 Sentry 비활성화
+    alerts: none
+    bot: 실행 안함
+
+  staging:
+    dsn: "staging DSN"
+    alerts: slack_only (P0/P1만)
+    bot: #error-staging 채널에 연결
+
+  production:
+    dsn: "production DSN"
+    alerts: full (모든 레벨)
+    bot: #error 채널에 연결, 전체 기능
+```
+
+#### 식별된 리스크
+
+- **Sentry SDK 호환성**: Spring Boot 3.4.1 + Kotlin 1.9.25와 Sentry Java SDK 호환성 검증 필요
+- **Source Map 누출**: Frontend Source Map이 프로덕션에 노출되면 소스 코드 공개. Sentry에만 업로드하고 프로덕션 서버에서는 제거해야 함
+- **CI/CD 빌드 시간 증가**: Release 생성, Commit 추적 등을 별도 Job으로 분리하여 병렬 실행 권장
+
+#### 우선 액션
+
+1. GitHub Code Mapping 설정 (Backend/Frontend 각각)
+2. CI/CD에 Sentry Release 생성 단계 추가
+3. 환경별 DSN 분리 (local에서 Sentry 이벤트 미발생)
+4. Source Map 프로덕션 서버 노출 방지 확인
+
+---
+
+### 10.4 Engineering Manager 리뷰
+
+#### ROI 분석
+
+```
+투입 비용:
+  - Phase 1-5 총: ~6-8일 (기존 대비 Bot 개발이 추가)
+  - Bot 개발: ~4-5일
+  - Sentry/Jira 설정: ~2-3일
+
+운영 비용:
+  - Sentry: Team Plan $26/month (무료 플랜으로 시작 가능)
+  - Bot 인프라: Docker 컨테이너 1개 (기존 인프라 활용)
+  - AI API (선택적): Claude API 비용 (수동 접수 분석당 ~$0.01)
+  - 주간 Triage: 30분/주
+  - Alert Rules 튜닝: 초기 2주간 1시간/주, 이후 안정화
+
+기대 효과:
+  - 중복 알림 제거: 개발자당 하루 ~15분 절약
+  - 자동 Jira 티켓: 수동 버그 리포트 작성 시간 ~10분/건 절약
+  - 수동 접수 자동화: QA/사용자 보고 처리 시간 ~15분/건 절약
+  - 근본 원인 분석: 디버깅 시간 ~20-30% 단축
+
+투자 회수:
+  - 하루 1건 실제 버그 기준, 약 4-5주에 투자 회수
+```
+
+#### 권고사항: 단계적 구현
+
+```
+Sprint N:     Phase 1 (Bot 기본 구조, ~2-3일)
+              --> 1주 운영하며 안정화
+
+Sprint N+1:   Phase 2 + 3 (Sentry/Jira 연동, ~2-3일)
+              --> 1-2주 운영하며 Alert Rules 튜닝
+
+Sprint N+2:   Phase 4 + 5 (AI 분석 + 정리, ~1.5일)
+```
+
+> **5개 Phase를 한꺼번에 진행하지 마십시오.**
+
+#### 권고사항: 경량 온콜 프로세스
+
+```
+평일 업무시간: 모든 팀원이 #error 채널 모니터링
+평일 업무외/주말: "이번 주 담당자" 1명이 P0만 대응
+  --> Slack 모바일 알림 설정 (P0 채널만)
+  --> P1 이하는 다음 업무일로 이월
+```
+
+#### 식별된 리스크
+
+- **Over-Engineering 위험**: MVP 단계에서 Phase 1+2만 먼저 구축하고, Phase 3+4는 실제 필요성 검증 후 진행 강력 권장
+- **도구 피로도**: Sentry + Slack + Jira + GitHub 알림이 사방에서 쏟아지면 생산성 저하. 알림의 최종 목적지를 Slack으로 단일화하는 것이 중요
+
+#### 우선 액션
+
+1. Phase 1을 이번 Sprint에 완료 (나머지는 다음 Sprint)
+2. 경량 온콜 프로세스 도입 ("이번 주 담당자" 수준)
+3. 2주 후 알림 유효성 리뷰 (False Positive 비율 측정)
+4. Phase 2-3 진행 여부를 리뷰 결과 기반으로 결정
+
+---
+
+### 10.5 Security Engineer 리뷰
+
+#### 보안 평가
+
+데이트 앱 특성상 사용자의 개인정보(위치, 선호도, 예산 등)가 에러 데이터에 포함될 가능성이 높다. Sentry --> Slack --> Jira로 데이터가 흐르는 과정에서 민감 정보 노출 가능성을 반드시 차단해야 한다.
+
+**[Slack 중심 추가 검토]** Slack Bot이 Sentry/Jira/GitHub의 인증 토큰을 모두 보유하므로, 토큰 유출 시 피해 범위가 넓다. 시크릿 관리가 매우 중요하다.
+
+#### 권고사항: Sentry Data Scrubbing
+
+```yaml
+data_scrubbing:
+  enabled: true
+  defaults: true
+
+  sensitive_fields:
+    - "password"
+    - "token"
+    - "authorization"
+    - "cookie"
+    - "phoneNumber"
+    - "email"
+    - "kakaoAccessToken"
+    - "openaiApiKey"
+    - "budget"          # 사용자 예산 정보
+    - "location"        # 위치 정보
+    - "latitude"
+    - "longitude"
+    - "address"         # 주소 정보
+```
+
+#### 권고사항: Before-Send Hook (Kotlin)
+
+```kotlin
+Sentry.init { options ->
+    options.beforeSend = SentryOptions.BeforeSendCallback { event, hint ->
+        // Request Body 민감 정보 제거
+        event.request?.data?.let { data ->
+            if (data is Map<*, *>) {
+                val scrubbed = data.toMutableMap()
+                SENSITIVE_KEYS.forEach { key ->
+                    if (scrubbed.containsKey(key)) {
+                        scrubbed[key] = "[Filtered]"
+                    }
+                }
+                event.request?.data = scrubbed
+            }
+        }
+        // 사용자 정보 최소화 (ID만 유지)
+        event.user?.let { user ->
+            user.email = null
+            user.ipAddress = null
+            user.username = null
+        }
+        event
+    }
+}
+```
+
+#### 권고사항: 채널 및 티켓 보안
+
+```
+Slack 채널:
+  - #error: 비공개 채널, 개발팀만 접근
+  - 외부 인원(투자자, 파트너) 초대 금지
+  - 메시지 보존 정책: 90일 자동 삭제 권장
+
+Jira 티켓 정보 범위:
+  O 에러 타입과 메시지 (scrubbed)
+  O 발생 빈도와 영향 범위
+  O Sentry 이슈 링크 (상세 정보는 Sentry에서 확인)
+  X 전체 Stack Trace (Sentry 링크로 대체)
+  X Request Body/Headers
+  X 사용자 식별 정보
+  X API 키나 인증 토큰
+```
+
+#### 식별된 리스크
+
+- **PII 노출 경로**: 데이트 코스 요청 정보(지역, 예산, 데이트 유형)가 Sentry --> Slack --> Jira로 전파될 위험
+- **API Key 노출**: OpenAI/Kakao API Key가 에러 컨텍스트에 포함되어 노출될 위험
+- **소스 코드 노출**: GitHub Code Mapping으로 Sentry 접근 가능한 모든 사람이 소스 코드 열람 가능
+
+#### 우선 액션
+
+1. Sentry Data Scrubbing 설정 (Phase 1과 **동시** 진행, 필수)
+2. Before-Send Hook에서 민감 필드 필터링 구현
+3. Slack 알림 채널 비공개 설정
+4. Jira 자동 생성 티켓의 정보 범위 제한 (Sentry 링크 중심)
+5. 기존 코드에서 API Key가 로그/에러에 포함되는지 감사
+
+---
+
+### 10.6 전문가 합의 사항 (Cross-Expert Consensus)
+
+#### 모든 전문가가 동의한 핵심 사항
+
+| # | 합의 내용 | 근거 |
+|---|----------|------|
+| 1 | **Sentry 단일 진입점 전략은 올바르다** | 중복 제거, 보안, 유지보수 모든 측면에서 우월 |
+| 2 | **단계적 구현이 필수다** | Phase 1+2 먼저 완료, 안정화 후 확장 |
+| 3 | **Alert 계층화 없이 자동화하면 오히려 악화된다** | P0-P3 분류 없이 동일 알림 --> 메시지 폭탄의 다른 형태 |
+| 4 | **PII/민감정보 필터링은 Day 1부터 적용해야 한다** | Data Scrubbing은 "나중에" 가 아니라 Phase 1과 동시 |
+
+#### 생산적 긴장 (Productive Tensions)
+
+**긴장 1: 자동화 범위 (SRE vs Engineering Manager)**
+
+| SRE | EM |
+|-----|-----|
+| 가능한 많은 것을 자동화하여 MTTR 단축 | MVP 단계에서 과도한 자동화는 기능 개발 시간 감소 |
+| **해결**: Phase 1+2 빠르게 구축, Phase 3+4는 실제 필요성 검증 후 진행 |
+
+**긴장 2: Jira 자동 생성 범위 (DevOps vs Agile Coach)**
+
+| DevOps | Agile Coach |
+|--------|-------------|
+| 모든 이슈를 Jira에 트래킹하는 것이 가능하고 바람직 | 자동 생성 티켓이 백로그를 오염시키면 효율성 저하 |
+| **해결**: P0/P1만 자동 생성, P2는 빈도 임계값 초과 시에만 생성 |
+
+**긴장 3: 정보 포함 범위 (SRE vs Security)**
+
+| SRE | Security |
+|-----|----------|
+| Stack Trace, Request Body 등 최대한 많은 컨텍스트 필요 | 민감 정보 Slack/Jira 전파 시 보안 위험 |
+| **해결**: Sentry에는 전체 정보 보관, Slack/Jira에는 최소 정보 + Sentry 링크만 포함 |
+
+---
+
+### 10.7 최종 통합 액션 플랜
+
+```
+=== 즉시 (Phase 1과 동시, ~1일) ===
+
+1. [보안] Sentry Data Scrubbing 설정 + Before-Send Hook 구현
+2. [SRE]  Alert 우선순위 체계 설계 (P0-P3 정의)
+
+=== Sprint N (~2-3일) ===
+
+3. [DevOps] Phase 1: Slack Bot 기본 구조 (메시지 감지 + 스레드 댓글)
+4. [DevOps] Phase 1: Sentry + GitHub Integration (Code Mapping)
+5. [DevOps] Sentry Alert Rule --> Slack #error 채널 전송 설정
+
+=== 안정화 기간 (1-2주) ===
+
+6. [EM]    Bot 안정성 모니터링 (에러 없이 동작하는지)
+7. [Agile] 스레드 댓글 품질 확인
+
+=== Sprint N+1 (~2-3일) ===
+
+8. [DevOps] Phase 2: Sentry API 연동 (이슈 상세 분석)
+9. [DevOps] Phase 3: Jira API 연동 (티켓 자동 생성)
+10. [Agile] 주간 Triage 프로세스 시작
+
+=== Sprint N+2 (~1.5일, 필요시에만) ===
+
+11. [DevOps] Phase 4: AI 분석 연동 (수동 접수 분석)
+12. [DevOps] Phase 5: 기존 웹훅 코드 완전 제거
+```
+
+#### 스타트업 팀을 위한 현실적 제언
+
+> 이 파이프라인은 기술적으로 우수하나, 한 가지 근본적인 질문이 필요하다:
+> **"현재 프로덕션 트래픽이 이 수준의 모니터링을 정당화하는가?"**
+>
+> - DAU 100명 미만이라면 **Phase 1만으로 충분** (Bot 기본 구조 + 스레드 댓글)
+> - Jira 자동화(Phase 3)와 AI 분석(Phase 4)는 트래픽이 늘어나서 수동 관리가 불가능해질 때 도입해도 늦지 않음
+> - **Phase 1 (약 2-3일)은 즉시 투자할 가치가 충분**
+> - 스타트업의 가장 큰 리스크는 서비스 장애가 아니라, 사용자가 없는 것
+
+---
+
+### 10.8 Slack 중심 아키텍처 추가 고려사항
+
+아키텍처가 Sentry 중심에서 Slack Bot 중심으로 변경됨에 따라, 기존 리뷰에서 다루지 않은 새로운 고려사항을 정리한다.
+
+#### 10.8.1 Slack Bot의 가용성/장애 대응
+
+Bot이 모든 분석과 Jira 생성을 담당하므로, Bot 장애 시 파이프라인이 부분적으로 중단된다.
+
+```
+Bot 정상 동작 시:
+  Slack 메시지 --> Bot 감지 --> 분석 --> Jira 생성 --> 스레드 댓글
+
+Bot 장애 시:
+  Slack 메시지 --> (Bot 미응답)
+  |
+  +-- Sentry Alert은 계속 Slack에 전송됨 (에러 인지는 유지)
+  +-- 하지만 분석/Jira 생성/스레드 댓글은 중단
+  +-- 수동 접수 메시지는 아무 반응 없음
+```
+
+**대응 전략**:
+- Docker `restart: unless-stopped` 정책으로 자동 재시작
+- 헬스체크 엔드포인트로 컨테이너 상태 모니터링
+- Bot 재시작 시 #error 채널에 복구 알림 전송
+- Bot 장애가 30분 이상 지속되면 수동 에러 대응 프로세스로 전환
+- Bot 자체 에러를 Sentry에 보내는 것도 고려 (별도 프로젝트)
+
+#### 10.8.2 Slack API Rate Limit 관리
+
+Slack API에는 Rate Limit이 있다. 에러가 폭발적으로 발생하면 Bot이 Slack API 호출 한도를 초과할 수 있다.
+
+| API | Rate Limit | 용도 |
+|-----|-----------|------|
+| `chat.postMessage` | Tier 3 (~50 req/min) | 스레드 댓글 작성 |
+| `reactions.add` | Tier 2 (~20 req/min) | 리액션 추가 |
+| `conversations.history` | Tier 3 (~50 req/min) | 채널 히스토리 조회 |
+
+**대응 전략**:
+- Bolt의 내장 Rate Limit 핸들러 활용 (자동 retry)
+- 에러 급증 시 Bot이 개별 분석 대신 "다수의 에러가 감지되었습니다" 요약 댓글 1건 작성
+- 메시지 처리에 큐(Queue) 도입하여 처리 속도 제어
+- Sentry Alert Rule의 Action Interval이 1차 방어선 역할
+
+#### 10.8.3 수동 접수 메시지의 AI 분류 정확도 우려
+
+AI가 수동 접수 메시지를 분석할 때, 분류 오류가 발생할 수 있다.
+
+| 위험 | 영향 | 완화 방안 |
+|------|------|-----------|
+| 일반 대화를 에러로 오분류 | 불필요한 Jira 티켓 생성 | 분류 confidence 임계값 설정 (0.5 이상만 처리) |
+| 에러 보고를 무시 | 실제 에러 미대응 | 분류 불가 메시지에 대해 "에러 보고인지 확인해주세요" 질문 |
+| 문제 유형 오분류 | 잘못된 Jira 티켓 내용 | 스레드 댓글에 "AI 기반 초기 판단" 면책 문구 포함 |
+| 관련 없는 Sentry 이슈 연결 | 혼란 유발 | 유사도 임계값 설정, "유사 이슈를 찾지 못했습니다" 표시 |
+
+**핵심 원칙**: AI 분석은 참고용이며 최종 판단은 사람이 한다. 스레드 댓글에 반드시 면책 문구를 포함한다.
+
+#### 10.8.4 Bot이 모든 메시지에 반응하면 노이즈 발생
+
+#error 채널에 에러 관련이 아닌 대화("이 이슈 어떻게 됐어?", "확인했습니다")도 오갈 수 있다. Bot이 모든 메시지에 스레드 댓글을 달면 채널이 노이즈로 가득 찬다.
+
+**대응 전략**:
+- 메시지 분류기에서 `ignore` 판정을 적극 활용
+- 에러 키워드가 없는 메시지는 무조건 무시
+- Bot 스레드 댓글에 대한 대화(스레드 내 후속 메시지)는 무시
+- 필요 시 Bot에 "분석해줘"와 같은 명시적 트리거 명령어 추가
+
+#### 10.8.5 보안: Bot의 인증 토큰 관리
+
+Bot이 4개 외부 서비스(Slack, Sentry, Jira, GitHub)의 인증 토큰을 보유하므로, 토큰 유출 시 피해 범위가 넓다.
+
+| 토큰 | 유출 시 위험 | 완화 방안 |
+|------|------------|-----------|
+| Slack Bot Token | 채널 메시지 읽기/쓰기 가능 | 최소 권한 원칙, #error 채널에만 설치 |
+| Sentry Auth Token | 에러 데이터 (PII 포함 가능) 접근 | Read-only 권한만 부여, Data Scrubbing 적용 |
+| Jira API Token | 프로젝트 티켓 생성/수정 가능 | Bot 전용 Jira 계정 사용, 프로젝트 범위 제한 |
+| GitHub Token | 소스 코드 접근 가능 | Read-only 권한, fine-grained PAT 사용 |
+
+**필수 보안 조치**:
+- 모든 토큰은 환경변수로 관리 (`.env` 파일, 절대 코드에 하드코딩 금지)
+- `.env` 파일은 `.gitignore`에 포함
+- 프로덕션 환경에서는 Docker Secret 또는 Vault 사용 권장
+- 토큰 로테이션 주기: 90일 권장
+- Bot 전용 서비스 계정 사용 (개인 계정 토큰 사용 금지)
+
+---
+
+## 부록
+
+### A. 용어 정리
+
+| 용어 | 설명 |
+|------|------|
+| MTTD (Mean Time To Detect) | 에러 발생부터 팀이 인지하기까지의 평균 시간 |
+| MTTR (Mean Time To Resolve) | 에러 발생부터 해결까지의 평균 시간 |
+| MTTA (Mean Time To Acknowledge) | 에러 발생부터 담당자가 확인하기까지의 평균 시간 |
+| Fingerprint | Sentry가 에러 이벤트를 이슈로 그루핑하는 데 사용하는 식별자 |
+| Suspect Commit | 에러를 유발했을 가능성이 있는 것으로 추정되는 Git 커밋 |
+| Suspect Author | Suspect Commit의 작성자 |
+| Code Mapping | Sentry 스택 트레이스의 파일 경로를 GitHub 저장소 경로로 변환하는 매핑 |
+| Seer | Sentry의 AI 기반 에러 분석 엔진 |
+| Regression | 이전에 해결(Resolved)된 이슈가 다시 발생하는 것 |
+| Alert Fatigue | 과도한 알림으로 인해 팀이 알림에 둔감해지는 현상 |
+| Issue Alert | Sentry 이슈의 상태 변경에 따라 트리거되는 알림 규칙 |
+| Metric Alert | 수치 기반 임계값 초과 시 트리거되는 알림 규칙 |
+| Bolt for Slack | Slack이 공식 제공하는 앱 개발 프레임워크 (Node.js, Python, Java) |
+| Socket Mode | Slack 앱이 WebSocket을 통해 이벤트를 수신하는 방식 (공인 URL 불필요) |
+| Event Subscription | Slack 앱이 특정 이벤트(메시지, 리액션 등)를 구독하여 수신하는 기능 |
+| Block Kit | Slack 메시지의 구조화된 UI 구성 요소 (섹션, 필드, 버튼 등) |
+| Thread Reply | Slack 메시지의 스레드(답글)로 작성되는 댓글 |
+| Triage | 자동 생성된 티켓을 사람이 검토하여 우선순위와 담당자를 결정하는 과정 |
+
+### B. 참고 자료
+
+| 자료 | URL |
+|------|-----|
+| Sentry 공식 문서 - Spring Boot | https://docs.sentry.io/platforms/java/guides/spring-boot/ |
+| Sentry 공식 문서 - Next.js | https://docs.sentry.io/platforms/javascript/guides/nextjs/ |
+| Sentry 공식 문서 - GitHub Integration | https://docs.sentry.io/organization/integrations/source-code-mgmt/github/ |
+| Sentry 공식 문서 - Slack Integration | https://docs.sentry.io/organization/integrations/notification-incidents/slack/ |
+| Sentry 공식 문서 - Alert Rules | https://docs.sentry.io/product/alerts/ |
+| Sentry 공식 문서 - Seer AI | https://docs.sentry.io/product/issues/issue-details/seer/ |
+| Sentry 공식 문서 - Fingerprint Rules | https://docs.sentry.io/concepts/data-management/event-grouping/ |
+| Sentry API 문서 | https://docs.sentry.io/api/ |
+| Slack API - Bolt for JavaScript | https://slack.dev/bolt-js/concepts |
+| Slack API - Socket Mode | https://api.slack.com/apis/connections/socket |
+| Slack API - Event Subscriptions | https://api.slack.com/events-api |
+| Slack API - Block Kit Builder | https://app.slack.com/block-kit-builder |
+| Slack API - Rate Limits | https://api.slack.com/docs/rate-limits |
+| Jira REST API v3 | https://developer.atlassian.com/cloud/jira/platform/rest/v3/ |
+| GitHub REST API | https://docs.github.com/en/rest |
+
+### C. 변경 영향 범위
+
+이 파이프라인 구현으로 영향받는 파일 목록:
+
+| 파일 | 변경 유형 | 설명 |
+|------|-----------|------|
+| `GlobalExceptionHandler.kt` | 수정 | Slack 직접 호출 제거, Sentry 태그 추가 |
+| `SlackNotificationService.kt` | 삭제 | Bot이 Slack 알림을 대체 |
+| `application.yml` | 수정 | Sentry 설정 최적화, Slack 웹훅 설정 제거 |
+| `.env.example` | 수정 | Bot 관련 환경변수 추가, Slack 웹훅 변수 제거 |
+| `sentry.client.config.ts` | 수정 | release, beforeSend 추가 |
+| `sentry.server.config.ts` | 수정 | release 추가 |
+| `sentry.edge.config.ts` | 수정 | release 추가 |
+| `.github/workflows/deploy.yml` | 수정 | Sentry Release 생성 단계 추가 |
+| `docker-compose.yml` | 수정 | error-bot 서비스 추가 |
+| `slack-error-bot/` | 신규 | Slack Bot 마이크로서비스 전체 (신규 디렉토리) |
+
+---

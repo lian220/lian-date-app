@@ -21,7 +21,7 @@ class LangfuseIngestionClient(
 
     fun ingest(request: LangfuseIngestionRequest) {
         if (!langfuseProperties.enabled) return
-        if (langfuseProperties.publicKey.isBlank()) return
+        if (langfuseProperties.publicKey.isBlank() || langfuseProperties.secretKey.isBlank()) return
 
         langfuseRestClient
             .post()

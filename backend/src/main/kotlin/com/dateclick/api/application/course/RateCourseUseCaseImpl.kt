@@ -3,7 +3,7 @@ package com.dateclick.api.application.course
 import com.dateclick.api.domain.course.port.outbound.CourseRepository
 import com.dateclick.api.domain.rating.entity.Rating
 import com.dateclick.api.domain.rating.port.RatingRepository
-import com.dateclick.api.infrastructure.external.langfuse.LangfuseScoreClient
+import com.dateclick.api.domain.rating.port.UserSatisfactionPort
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 class RateCourseUseCaseImpl(
     private val courseRepository: CourseRepository,
     private val ratingRepository: RatingRepository,
-    private val langfuseScoreClient: LangfuseScoreClient,
+    private val userSatisfactionPort: UserSatisfactionPort,
 ) : RateCourseUseCase {
     @Transactional
     override fun execute(command: RateCourseCommand): Rating {
@@ -43,7 +43,7 @@ class RateCourseUseCaseImpl(
 
         // 4. Langfuse user_satisfaction 점수 전송 (비동기, fire-and-forget)
         // sessionId로 코스 생성 시의 Langfuse 트레이스와 연결
-        langfuseScoreClient.sendUserSatisfactionScore(
+        userSatisfactionPort.sendUserSatisfactionScore(
             score = command.score,
             sessionId = command.sessionId,
             comment = "코스 ID: ${command.courseId.value}",

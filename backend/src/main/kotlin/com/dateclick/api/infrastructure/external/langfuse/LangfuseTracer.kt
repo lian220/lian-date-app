@@ -10,6 +10,7 @@ import org.springframework.beans.factory.DisposableBean
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.UUID
+import java.util.concurrent.Semaphore
 
 @Component
 class LangfuseTracer(
@@ -17,6 +18,7 @@ class LangfuseTracer(
 ) : DisposableBean {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val inFlight = Semaphore(200)
 
     override fun destroy() {
         scope.cancel()
@@ -34,6 +36,10 @@ class LangfuseTracer(
         endTime: Instant,
         sessionId: String? = null,
     ) {
+        if (!inFlight.tryAcquire()) {
+            logger.warn("Dropping Langfuse trace due to backpressure")
+            return
+        }
         scope.launch {
             try {
                 val traceId = UUID.randomUUID().toString()
@@ -81,7 +87,9 @@ class LangfuseTracer(
 
                 langfuseIngestionClient.ingest(LangfuseIngestionRequest(batch = events))
             } catch (ex: Exception) {
-                logger.warn("Failed to send trace to Langfuse: {}", ex.message)
+                logger.warn("Failed to send trace to Langfuse", ex)
+            } finally {
+                inFlight.release()
             }
         }
     }

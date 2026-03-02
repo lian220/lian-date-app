@@ -1,4 +1,4 @@
-name: CD - Production Deployment (Blue/Green)
+name: CD - Backend Test & Deploy (Frontend via Vercel)
 
 on:
   push:

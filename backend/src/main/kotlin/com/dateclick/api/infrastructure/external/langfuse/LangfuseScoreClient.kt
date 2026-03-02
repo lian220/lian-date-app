@@ -1,5 +1,6 @@
 package com.dateclick.api.infrastructure.external.langfuse
 
+import com.dateclick.api.domain.rating.port.UserSatisfactionPort
 import com.dateclick.api.infrastructure.config.LangfuseProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +23,7 @@ import java.util.Base64
 class LangfuseScoreClient(
     private val langfuseRestClient: RestClient,
     private val langfuseProperties: LangfuseProperties,
-) : DisposableBean {
+) : DisposableBean, UserSatisfactionPort {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -41,13 +42,17 @@ class LangfuseScoreClient(
      * @param sessionId 연결할 사용자 세션 ID (Langfuse Score 연결 필수)
      * @param comment 평가 코멘트 (선택)
      */
-    fun sendUserSatisfactionScore(
+    override fun sendUserSatisfactionScore(
         score: Int,
         sessionId: String,
-        comment: String? = null,
+        comment: String?,
     ) {
         if (!langfuseProperties.enabled) return
         if (langfuseProperties.publicKey.isBlank() || langfuseProperties.secretKey.isBlank()) return
+        if (score !in 1..5) {
+            logger.warn("Skipping Langfuse score send due to out-of-range score={}", score)
+            return
+        }
 
         scope.launch {
             try {
@@ -78,7 +83,7 @@ class LangfuseScoreClient(
                     normalizedValue,
                 )
             } catch (ex: Exception) {
-                logger.warn("Failed to send score to Langfuse: {}", ex.message)
+                logger.warn("Failed to send score to Langfuse", ex)
             }
         }
     }

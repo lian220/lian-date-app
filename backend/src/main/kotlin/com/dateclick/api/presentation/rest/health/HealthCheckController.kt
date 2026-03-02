@@ -6,9 +6,18 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/health")
 class HealthCheckController {
-    @GetMapping
+    @GetMapping("/")
+    fun root(): ResponseEntity<HealthResponse> {
+        return ResponseEntity.ok(
+            HealthResponse(
+                status = "UP",
+                service = "date-click-api",
+            ),
+        )
+    }
+
+    @GetMapping("/health")
     fun healthCheck(): ResponseEntity<HealthResponse> {
         return ResponseEntity.ok(
             HealthResponse(

@@ -106,9 +106,11 @@ $ARGUMENTS
 **[Q6] 에픽 연결** — 참조 티켓에서 에픽이 감지된 경우 확인, 없으면 질문
 ```
 🗂️  연결할 에픽이 있으면 에픽 ID를 입력해주세요.
-   (감지된 에픽: [에픽명] [에픽ID] / 없으면 Enter 건너뜀)
+   (감지된 에픽: [에픽명] [에픽ID] / 없으면 새 에픽 자동 생성)
 →
 ```
+- 에픽 ID를 입력하면 해당 에픽에 연결
+- **입력 없이 건너뛰면 새 에픽을 자동 생성**: 티켓 제목/내용 기반으로 에픽명 추론 후 `mcp__atlassian__createJiraIssue`로 에픽 먼저 생성, 이후 스토리에 `parent`로 연결
 
 **[Q7] 기타 메모**
 ```
@@ -126,7 +128,7 @@ $ARGUMENTS
   - 배경: [값 or "자동 생성"]
   - AC 힌트: [값 or "자동 생성"]
   - 스토리 포인트: [값]
-  - 에픽: [값 or "없음"]
+  - 에픽: [값 or "자동 생성"]
   - 기타 메모: [값 or "없음"]
 ```
 
@@ -186,14 +188,24 @@ $ARGUMENTS
 
 ### 단계 3: Jira 티켓 생성
 
-#### 3-1. 티켓 생성
-`mcp__atlassian__createJiraIssue`로 티켓 생성:
-- 프로젝트: `LAD`
-- 위에서 구성한 모든 필드 포함
+#### 3-1. 에픽 처리 (스토리 생성 전)
+- [Q6]에서 기존 에픽 ID가 입력된 경우 → 해당 에픽 사용
+- **입력 없는 경우 → 에픽 자동 생성**:
+  1. 티켓 제목/내용 기반으로 에픽명을 **간결하고 명확하게** 추론
+     - 좋은 예: `[Backend] Swagger API 문서화`, `[Frontend] 코스 결과 UI`, `[공통] 인증 시스템`
+     - 나쁜 예: `## 개요\n\n백엔드 REST API의...` (설명 텍스트를 그대로 사용 금지)
+     - 규칙: 10~30자 이내, prefix([Backend]/[Frontend]/[공통]) 포함, 기능 단위로 명명
+  2. `mcp__atlassian__createJiraIssue`로 에픽 먼저 생성 (issueTypeName: "에픽")
+  3. 생성된 에픽 ID를 스토리의 `parent`로 사용
 
-#### 3-2. 추가 설정 (생성 후)
+#### 3-2. 티켓 생성
+`mcp__atlassian__createJiraIssue`로 스토리 생성:
+- 프로젝트: `LAD` (lian-ai-date)
+- 위에서 구성한 모든 필드 포함
+- 에픽 연결: 생성 후 `mcp__atlassian__editJiraIssue`로 `parent` 필드에 에픽 key 설정
+
+#### 3-3. 추가 설정 (생성 후)
 - 스프린트 할당 (지원되는 경우)
-- 에픽 링크 연결
 - 참조 티켓과의 연관 관계 설정 (선택)
   - "relates to" 링크로 참조 티켓과 연결
 
@@ -230,7 +242,7 @@ $ARGUMENTS
 - LAD-42 (지역 선택 맵 구현) → 레이블, 컴포넌트 참조
 - LAD-45 (코스 평가 기능) → AC 형식, 스프린트 참조
 
-🔗 티켓 링크: https://lian220.atlassian.net/browse/LAD-57
+🔗 티켓 링크: https://liandy220-developer.atlassian.net/browse/LAD-57
 
 🚀 다음 단계:
 - 바로 작업 시작: `jira:start LAD-57`

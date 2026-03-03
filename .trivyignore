@@ -1,0 +1,10 @@
+# Trivy Vulnerability Ignore File
+#
+# 이 파일에 무시할 CVE를 추가합니다.
+# 형식: CVE-YYYY-NNNNN
+#
+# 예시:
+# CVE-2023-12345   # 이유: 해당 기능 미사용, 패치 일정: YYYY-MM
+#
+# 현재 base image: eclipse-temurin:21-jre-alpine
+# 취약점 확인: https://github.com/advisories

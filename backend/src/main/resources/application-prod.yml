@@ -1,4 +1,6 @@
 spring:
+  main:
+    lazy-initialization: true  # Defer bean init to reduce startup time on Render free plan
   datasource:
     # Supabase PostgreSQL connection (PgBouncer transaction mode)
     # prepareThreshold=0: Disable prepared statements for PgBouncer compatibility

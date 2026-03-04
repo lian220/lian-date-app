@@ -1,0 +1,3 @@
+[submodule ".claude"]
+	path = .claude
+	url = https://github.com/lian220/claude-master.git
